@@ -1,0 +1,1 @@
+-- Desativa temporariamente as restrições\nSET session_replication_role = 'replica';\n\n-- Remove os registros das tabelas\nDELETE FROM public.agendamentos;\nDELETE FROM public.clientes;\nDELETE FROM auth.users WHERE raw_user_meta_data->>'role' IS NULL OR raw_user_meta_data->>'role' != 'admin';\n\n-- Reativa as restrições\nSET session_replication_role = 'origin';

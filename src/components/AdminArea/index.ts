@@ -1,0 +1,8 @@
+export { default as Dashboard } from './Dashboard'
+export { default as Funcionarios } from './Funcionarios'
+export { default as Servicos } from './Servicos'
+export { default as Agendamentos } from './Agendamentos'
+export { default as Horarios } from './Horarios'
+export { default as Configuracoes } from './Configuracoes'
+export { default as Usuarios } from './Usuarios'
+export { default as Produtos } from './Produtos' 
