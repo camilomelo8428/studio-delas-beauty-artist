@@ -225,10 +225,10 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
             {activeTab === 'configuracoes' && <Configuracoes />}
             {activeTab === 'usuarios' && <Usuarios />}
             {activeTab === 'produtos' && <ProdutosAdmin />}
-          </div>
+                      </div>
         </main>
-      </div>
-    </div>
+                      </div>
+                    </div>
   )
 }
 
@@ -261,9 +261,9 @@ function FuncionarioPanel({ onLogout }: { onLogout: () => void }) {
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
               </svg>
-            </button>
-          </div>
-        </div>
+                      </button>
+                    </div>
+                        </div>
       </header>
 
       {/* Informações do Funcionário */}
@@ -283,17 +283,17 @@ function FuncionarioPanel({ onLogout }: { onLogout: () => void }) {
                 </span>
               </div>
             )}
-            <div>
+                              <div>
               <h2 className="text-xl font-bold text-white">{funcionario.nome}</h2>
               <div className="flex items-center gap-4 mt-1">
                 <p className="text-gray-400 text-sm">{funcionario.email}</p>
                 <span className="inline-block px-2 py-1 bg-red-600/20 text-red-500 text-xs rounded-full">
                   {funcionario.funcao.charAt(0).toUpperCase() + funcionario.funcao.slice(1)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+                            </span>
+                              </div>
+                              </div>
+                  </div>
+                </div>
 
         {/* Navegação */}
         <div className="flex gap-2 mb-6">
@@ -306,7 +306,7 @@ function FuncionarioPanel({ onLogout }: { onLogout: () => void }) {
             }`}
           >
             Meus Agendamentos
-          </button>
+                  </button>
           <button
             onClick={() => setActiveTab('perfil')}
             className={`px-4 py-2 rounded-lg transition-colors ${
@@ -316,17 +316,17 @@ function FuncionarioPanel({ onLogout }: { onLogout: () => void }) {
             }`}
           >
             Meu Perfil
-          </button>
-        </div>
+                  </button>
+                </div>
 
         {/* Conteúdo */}
-        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6">
+                  <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6">
           {activeTab === 'agendamentos' ? (
             <FuncionarioAgendamentos funcionarioId={funcionario.id} />
           ) : (
             <FuncionarioPerfil />
-          )}
-        </div>
+            )}
+          </div>
       </div>
     </div>
   )
@@ -351,14 +351,14 @@ function LoginModal({ isOpen, onClose, onLoginSuccess }: {
     setLoading(true)
 
     try {
-      if (tipoAcesso === 'administrador') {
-        if (email === 'camilomelo8428@gmail.com' && senha === '071012') {
+    if (tipoAcesso === 'administrador') {
+      if (email === 'camilomelo8428@gmail.com' && senha === '071012') {
           onLoginSuccess('admin')
-          onClose()
-        } else {
-          setErro('E-mail ou senha incorretos')
-        }
+        onClose()
       } else {
+        setErro('E-mail ou senha incorretos')
+      }
+    } else {
         const { success, error } = await authService.loginFuncionario(email, senha)
         
         if (success) {
@@ -1076,7 +1076,7 @@ function App() {
 
   if (isAuthenticated) {
     if (userType === 'admin') {
-      return <AdminPanel onLogout={handleLogout} />
+    return <AdminPanel onLogout={handleLogout} />
     } else if (userType === 'funcionario') {
       return <FuncionarioPanel onLogout={handleLogout} />
     }
