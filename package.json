@@ -41,6 +41,7 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3",
     "typescript-eslint": "^7.0.1",
-    "vite": "^5.1.3"
+    "vite": "^5.1.3",
+    "cursor-tools": "latest"
   }
 }

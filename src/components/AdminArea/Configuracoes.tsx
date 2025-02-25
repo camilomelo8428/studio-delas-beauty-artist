@@ -10,7 +10,7 @@ export default function Configuracoes() {
   const [config, setConfig] = useState<Configuracoes>({
     id: '1',
     nome_empresa: 'Barbearia Skull',
-    logo_url: 'https://i.pinimg.com/736x/6c/64/b0/6c64b09b27222ab9645868925391c2c0.jpg',
+    logo_url: null,
     telefone: '(91) 3333-4444',
     email: 'contato@barbeariaskull.com',
     endereco: 'Av. Principal, 1234',

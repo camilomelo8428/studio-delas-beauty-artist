@@ -450,7 +450,7 @@ INSERT INTO public.configuracoes (
     whatsapp
 ) VALUES (
     'CamiloTec',
-    'https://i.pinimg.com/736x/6c/64/b0/6c64b09b27222ab9645868925391c2c0.jpg',
+    null,
     '(91) 98184-5943',
     'contato@camilotec.com.br',
     'Av. Principal, 1234',
