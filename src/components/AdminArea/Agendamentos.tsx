@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { useAgendamentos } from '../../hooks/useAdmin'
 import type { Agendamento } from '../../services/admin'
 import ConfirmationModal from '../ConfirmationModal'
+import { supabase } from '../../lib/supabase'
+import { sounds } from '../../services/sounds'
+import { notificationService } from '../../services/notifications'
 
 export default function Agendamentos() {
   const { 
@@ -21,6 +24,25 @@ export default function Agendamentos() {
   const [visualizacao, setVisualizacao] = useState<'lista' | 'cards'>('cards')
   const [agendamentoParaExcluir, setAgendamentoParaExcluir] = useState<Agendamento | null>(null)
 
+  useEffect(() => {
+    // Inicializar o serviço de notificações em tempo real
+    const unsubscribe = notificationService.initializeRealtime()
+
+    // Registrar callback para atualizar dados quando receber novo agendamento
+    const unsubscribeCallback = notificationService.onNewAppointment(async () => {
+      if (filtroData) {
+        await carregarAgendamentosPorData(filtroData)
+      } else if (filtroStatus) {
+        await carregarAgendamentosPorStatus(filtroStatus)
+      }
+    })
+
+    return () => {
+      unsubscribe()
+      unsubscribeCallback()
+    }
+  }, [filtroData, filtroStatus, carregarAgendamentosPorData, carregarAgendamentosPorStatus])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -28,6 +50,7 @@ export default function Agendamentos() {
         await atualizarAgendamento(agendamentoEmEdicao.id, {
           status: agendamentoEmEdicao.status
         })
+        sounds.play('status-change')
       }
       setModalAberto(false)
       setAgendamentoEmEdicao(null)
@@ -40,6 +63,7 @@ export default function Agendamentos() {
       }
     } catch (err) {
       console.error('Erro ao salvar agendamento:', err)
+      sounds.play('erro')
     }
   }
 
@@ -47,6 +71,7 @@ export default function Agendamentos() {
     setFiltroData(data)
     setFiltroStatus('')
     await carregarAgendamentosPorData(data)
+    sounds.play('filter-change')
   }
 
   const handleFiltroStatusChange = async (status: typeof filtroStatus) => {
@@ -54,6 +79,37 @@ export default function Agendamentos() {
     setFiltroData('')
     if (status) {
       await carregarAgendamentosPorStatus(status)
+      sounds.play('filter-change')
+    }
+  }
+
+  const handleVisualizacaoChange = (tipo: 'cards' | 'lista') => {
+    setVisualizacao(tipo)
+    sounds.play('tab-change')
+  }
+
+  const handleEditarClick = (agendamento: Agendamento) => {
+    setAgendamentoEmEdicao(agendamento)
+    setModalAberto(true)
+    sounds.play('modal-open')
+  }
+
+  const handleModalClose = () => {
+    setModalAberto(false)
+    setAgendamentoEmEdicao(null)
+    sounds.play('modal-close')
+  }
+
+  const handleExcluirClick = (agendamento: Agendamento) => {
+    setAgendamentoParaExcluir(agendamento)
+    sounds.play('modal-open')
+  }
+
+  const handleConfirmarExclusao = async () => {
+    if (agendamentoParaExcluir) {
+      await excluirAgendamento(agendamentoParaExcluir.id)
+      setAgendamentoParaExcluir(null)
+      sounds.play('delete')
     }
   }
 
@@ -65,17 +121,6 @@ export default function Agendamentos() {
       'cancelado': 'bg-red-500/20 text-red-400'
     }
     return colors[status as keyof typeof colors] || ''
-  }
-
-  const handleExcluirClick = (agendamento: Agendamento) => {
-    setAgendamentoParaExcluir(agendamento)
-  }
-
-  const handleConfirmarExclusao = async () => {
-    if (agendamentoParaExcluir) {
-      await excluirAgendamento(agendamentoParaExcluir.id)
-      setAgendamentoParaExcluir(null)
-    }
   }
 
   if (loading) {
@@ -102,7 +147,7 @@ export default function Agendamentos() {
         <h2 className="text-2xl font-bold text-red-500">Agendamentos</h2>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setVisualizacao('cards')}
+              onClick={() => handleVisualizacaoChange('cards')}
               className={`p-2 rounded-lg transition-colors ${
                 visualizacao === 'cards' 
                   ? 'bg-red-600/20 text-red-500' 
@@ -114,7 +159,7 @@ export default function Agendamentos() {
               </svg>
             </button>
             <button
-              onClick={() => setVisualizacao('lista')}
+              onClick={() => handleVisualizacaoChange('lista')}
               className={`p-2 rounded-lg transition-colors ${
                 visualizacao === 'lista' 
                   ? 'bg-red-600/20 text-red-500' 
@@ -184,12 +229,10 @@ export default function Agendamentos() {
                         </div>
                   <div className="flex gap-2">
                     <button 
-                      onClick={() => {
-                        setAgendamentoEmEdicao(agendamento)
-                        setModalAberto(true)
-                      }}
+                      onClick={() => handleEditarClick(agendamento)}
                       className="p-1 text-blue-500 hover:text-blue-400 transition-colors"
                       title="Editar"
+                      onMouseEnter={() => sounds.play('hover')}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -199,6 +242,7 @@ export default function Agendamentos() {
                       onClick={() => handleExcluirClick(agendamento)}
                       className="p-1 text-red-500 hover:text-red-400 transition-colors"
                       title="Excluir"
+                      onMouseEnter={() => sounds.play('hover')}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -352,12 +396,10 @@ export default function Agendamentos() {
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button 
-                          onClick={() => {
-                            setAgendamentoEmEdicao(agendamento)
-                            setModalAberto(true)
-                          }}
+                          onClick={() => handleEditarClick(agendamento)}
                           className="p-1 text-blue-500 hover:text-blue-400 transition-colors"
                           title="Editar"
+                          onMouseEnter={() => sounds.play('hover')}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -367,6 +409,7 @@ export default function Agendamentos() {
                           onClick={() => handleExcluirClick(agendamento)}
                           className="p-1 text-red-500 hover:text-red-400 transition-colors"
                           title="Excluir"
+                          onMouseEnter={() => sounds.play('hover')}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -413,16 +456,15 @@ export default function Agendamentos() {
                 <button
                   type="submit"
                   className="flex-1 bg-gradient-to-r from-red-600 to-red-800 text-white py-3 rounded-lg hover:from-red-700 hover:to-red-900 transition-all"
+                  onMouseEnter={() => sounds.play('hover')}
                 >
                   Salvar
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setModalAberto(false)
-                    setAgendamentoEmEdicao(null)
-                  }}
+                  onClick={handleModalClose}
                   className="flex-1 border border-red-600/20 text-white py-3 rounded-lg hover:bg-red-600/10 transition-all"
+                  onMouseEnter={() => sounds.play('hover')}
                 >
                   Cancelar
                 </button>

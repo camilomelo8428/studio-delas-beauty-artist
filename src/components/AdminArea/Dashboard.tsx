@@ -15,13 +15,17 @@ import {
   Pie,
   Cell
 } from 'recharts'
+import { supabase } from '../../lib/supabase'
+import { sounds } from '../../services/sounds'
+import { notificationService } from '../../services/notifications'
 
 export default function Dashboard() {
   const { 
     agendamentos, 
     loading, 
     error,
-    carregarAgendamentosPorData
+    carregarAgendamentosPorData,
+    carregarAgendamentosPorStatus
   } = useAgendamentos()
 
   const [dataAtual] = useState(new Date().toISOString().split('T')[0])
@@ -108,6 +112,22 @@ export default function Dashboard() {
     }
   }, [agendamentos])
 
+  useEffect(() => {
+    // Inicializar o serviço de notificações em tempo real
+    const unsubscribe = notificationService.initializeRealtime()
+
+    // Registrar callback para atualizar dados quando receber novo agendamento
+    const unsubscribeCallback = notificationService.onNewAppointment(async () => {
+      const hoje = new Date().toISOString().split('T')[0]
+      await carregarAgendamentosPorData(hoje)
+    })
+
+    return () => {
+      unsubscribe()
+      unsubscribeCallback()
+    }
+  }, [carregarAgendamentosPorData])
+
   // Função para formatar o valor em reais
   const formatarMoeda = (valor: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -133,6 +153,17 @@ export default function Dashboard() {
   const ticketMedioHoje = clientesAtendidosHoje > 0 
     ? faturamentoHoje / clientesAtendidosHoje 
     : 0
+
+  // Adicionar som ao clicar em "Ver todos"
+  const handleVerTodosClick = () => {
+    sounds.play('click')
+    // Implementar navegação para a página de agendamentos
+  }
+
+  // Adicionar hover sound nos cards
+  const handleCardHover = () => {
+    sounds.play('hover')
+  }
 
   if (loading) {
     return (
@@ -172,7 +203,10 @@ export default function Dashboard() {
 
       {/* Cards de Métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6">
+        <div 
+          className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6"
+          onMouseEnter={handleCardHover}
+        >
           <h3 className="text-gray-400 text-sm mb-2">Agendamentos Hoje</h3>
           <p className="text-3xl font-bold text-white">{agendamentosHoje.length}</p>
           <div className="mt-4 space-y-1">
@@ -195,7 +229,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6">
+        <div 
+          className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6"
+          onMouseEnter={handleCardHover}
+        >
           <h3 className="text-gray-400 text-sm mb-2">Faturamento Hoje</h3>
           <p className="text-3xl font-bold text-white">{formatarMoeda(faturamentoHoje)}</p>
           <p className="mt-4 text-sm text-gray-400">
@@ -203,7 +240,10 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6">
+        <div 
+          className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6"
+          onMouseEnter={handleCardHover}
+        >
           <h3 className="text-gray-400 text-sm mb-2">Ticket Médio</h3>
           <p className="text-3xl font-bold text-white">{formatarMoeda(ticketMedioHoje)}</p>
           <p className="mt-4 text-sm text-gray-400">
@@ -211,7 +251,10 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6">
+        <div 
+          className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6"
+          onMouseEnter={handleCardHover}
+        >
           <h3 className="text-gray-400 text-sm mb-2">Taxa de Conclusão</h3>
           <p className="text-3xl font-bold text-white">
             {estatisticas.total > 0 
@@ -325,7 +368,11 @@ export default function Dashboard() {
       <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-white">Próximos Agendamentos</h3>
-          <button className="text-red-500 hover:text-red-400 transition-colors">
+          <button 
+            className="text-red-500 hover:text-red-400 transition-colors"
+            onClick={handleVerTodosClick}
+            onMouseEnter={handleCardHover}
+          >
             Ver todos
           </button>
         </div>
@@ -335,6 +382,7 @@ export default function Dashboard() {
             <div
               key={agendamento.id}
               className="flex items-center justify-between p-4 bg-[#1a1a1a] rounded-lg border border-red-600/10"
+              onMouseEnter={handleCardHover}
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-red-600/20 flex items-center justify-center">

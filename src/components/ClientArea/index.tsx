@@ -4,6 +4,7 @@ import Produtos from './Produtos'
 import ProdutosComponent from './Produtos'
 import ListaProdutos from './ListaProdutos'
 import ConfirmationModal from '../ConfirmationModal'
+import { sounds } from '../../services/sounds'
 
 export { AgendarHorario, MeusAgendamentos, Historico, MeuPerfil, Produtos, ListaProdutos }
 
@@ -151,13 +152,28 @@ function AgendarHorario() {
       setError('')
       setHorarios([])
 
-      // 1. Buscar horários de funcionamento para o dia selecionado
-      const diaSemana = new Date(selectedDate).getDay()
+      // Validar data selecionada
+      if (!selectedDate) {
+        setError('Selecione uma data válida')
+        return
+      }
+
+      // Converter para data e validar
+      const dataObj = new Date(selectedDate + 'T00:00:00')
+      if (isNaN(dataObj.getTime())) {
+        setError('Data inválida')
+        return
+      }
+
+      // Obter dia da semana (0-6)
+      const diaSemana = dataObj.getDay()
+
+      // Construir query com parâmetros nomeados para evitar injeção SQL
       const { data: horariosFunc, error: errorHorarios } = await supabase
         .from('horarios')
         .select('*')
         .eq('status', true)
-        .or(`dia_semana.eq.${diaSemana},tipo_horario.eq.especifico,data_especifica.eq.${selectedDate}`)
+        .or('dia_semana.eq.' + diaSemana + ',and(tipo_horario.eq.especifico,data_especifica.eq.' + selectedDate + ')')
 
       if (errorHorarios) throw errorHorarios
 
@@ -241,6 +257,7 @@ function AgendarHorario() {
     } catch (err) {
       console.error('Erro ao carregar horários:', err)
       setError('Erro ao carregar horários disponíveis')
+      sounds.play('erro')
     } finally {
       setLoading(false)
     }
@@ -248,68 +265,92 @@ function AgendarHorario() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedDate || !selectedTime || !selectedService || !selectedProfessional) {
+    
+    if (!selectedService || !selectedProfessional || !selectedDate || !selectedTime) {
       setError('Por favor, preencha todos os campos')
+      sounds.play('erro')
       return
     }
 
     try {
-    setLoading(true)
-    setError('')
+      setLoading(true)
+      setError('')
 
-      // Verificar sessão do usuário
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError) throw sessionError
-      if (!session?.user?.id) {
-        setError('Você precisa estar logado para fazer um agendamento')
-        return
-      }
-
-      // Verificar disponibilidade novamente
-      const { data: conflito, error: errorConflito } = await supabase
-        .from('agendamentos')
-        .select('id')
-        .eq('funcionario_id', selectedProfessional)
-        .eq('data', selectedDate)
-        .eq('horario', selectedTime)
-        .neq('status', 'cancelado')
-        .single()
-
-      if (errorConflito && errorConflito.code !== 'PGRST116') throw errorConflito
-      if (conflito) {
-        setError('Este horário acabou de ser agendado por outro cliente. Por favor, escolha outro horário.')
-        await carregarHorariosDisponiveis()
-        return
-      }
-
-      // Inserir agendamento
-      const { error: insertError } = await supabase
-        .from('agendamentos')
-        .insert([{
-          cliente_id: session.user.id,
-          data: selectedDate,
-          horario: selectedTime,
-          servico_id: selectedService,
-          funcionario_id: selectedProfessional,
-          status: 'pendente'
-        }])
-
-      if (insertError) throw insertError
-
-      setSuccess(true)
-      await carregarHorariosDisponiveis()
+      // Verificar se o horário ainda está disponível
+      const horarioSelecionado = horarios.find(h => h.hora === selectedTime)
       
-      // Limpar seleções
-      setSelectedDate('')
-      setSelectedTime('')
+      if (!horarioSelecionado?.disponivel) {
+        setError('Este horário não está mais disponível')
+        setHorarioSelecionadoIndisponivel(horarioSelecionado || null)
+        sounds.play('erro')
+        return
+      }
+
+      // Obter dados do usuário logado
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError || !session?.user) {
+        throw new Error('Usuário não autenticado')
+      }
+
+      // Criar o agendamento
+      const { error: agendamentoError } = await supabase
+        .from('agendamentos')
+        .insert([
+          {
+            cliente_id: session.user.id,
+            funcionario_id: selectedProfessional,
+            servico_id: selectedService,
+            data: selectedDate,
+            horario: selectedTime,
+            status: 'pendente'
+          }
+        ])
+
+      if (agendamentoError) throw agendamentoError
+
+      // Tocar som de sucesso
+      sounds.play('agendamento-cliente')
+      
+      setSuccess(true)
       setSelectedService('')
       setSelectedProfessional('')
+      setSelectedDate('')
+      setSelectedTime('')
+      
+      // Limpar sucesso após 3 segundos
+      setTimeout(() => {
+        setSuccess(false)
+      }, 3000)
+
     } catch (err) {
-      console.error('Erro ao agendar:', err)
-      setError('Erro ao confirmar agendamento')
+      console.error('Erro ao criar agendamento:', err)
+      setError('Erro ao criar agendamento. Tente novamente.')
+      sounds.play('erro')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleServicoChange = (servicoId: string) => {
+    setSelectedService(servicoId)
+    sounds.play('click')
+  }
+
+  const handleProfissionalChange = (profissionalId: string) => {
+    setSelectedProfessional(profissionalId)
+    sounds.play('click')
+  }
+
+  const handleDataChange = async (data: string) => {
+    setSelectedDate(data)
+    sounds.play('click')
+    await carregarHorariosDisponiveis()
+  }
+
+  const handleHorarioChange = (horario: string) => {
+    setSelectedTime(horario)
+    sounds.play('click')
   }
 
   return (
@@ -339,7 +380,7 @@ function AgendarHorario() {
               <label className="block text-gray-400 text-sm mb-2">Serviço</label>
           <select
             value={selectedService}
-            onChange={(e) => setSelectedService(e.target.value)}
+            onChange={(e) => handleServicoChange(e.target.value)}
                 className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
             required
           >
@@ -357,7 +398,7 @@ function AgendarHorario() {
           <select
                 value={selectedProfessional}
                 onChange={(e) => {
-                  setSelectedProfessional(e.target.value)
+                  handleProfissionalChange(e.target.value)
                   setSelectedTime('')
                 }}
                 className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
@@ -378,10 +419,7 @@ function AgendarHorario() {
             <input
               type="date"
               value={selectedDate}
-              onChange={(e) => {
-                setSelectedDate(e.target.value)
-                setSelectedTime('')
-              }}
+              onChange={(e) => handleDataChange(e.target.value)}
               min={new Date().toISOString().split('T')[0]}
               className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
               required
@@ -416,7 +454,7 @@ function AgendarHorario() {
                     type="button"
                     onClick={() => {
                       if (horario.disponivel) {
-                        setSelectedTime(horario.hora)
+                        handleHorarioChange(horario.hora)
                       } else {
                         setHorarioSelecionadoIndisponivel(horario)
                       }
@@ -464,6 +502,7 @@ function AgendarHorario() {
         <button 
           type="submit"
             disabled={loading || !selectedDate || !selectedTime || !selectedService || !selectedProfessional}
+            onMouseEnter={() => sounds.play('hover')}
             className="w-full bg-gradient-to-r from-red-600 to-red-800 text-white py-3 rounded-lg hover:from-red-700 hover:to-red-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
             {loading ? 'Confirmando...' : 'Confirmar Agendamento'}
@@ -548,9 +587,6 @@ function MeusAgendamentos() {
 
   const handleCancelarAgendamento = async (agendamentoId: number) => {
     try {
-      setLoading(true)
-      setError('')
-
       const { error } = await supabase
         .from('agendamentos')
         .update({ status: 'cancelado' })
@@ -558,15 +594,33 @@ function MeusAgendamentos() {
 
       if (error) throw error
 
-      // Atualiza a lista de agendamentos
+      // Som de cancelamento
+      sounds.play('delete')
+      
+      // Recarregar agendamentos
       await carregarAgendamentos()
-      setAgendamentoCancelamento(null)
-    } catch (err) {
-      console.error('Erro ao cancelar agendamento:', err)
-      setError('Não foi possível cancelar o agendamento')
-    } finally {
-      setLoading(false)
+    } catch (error) {
+      console.error('Erro ao cancelar agendamento:', error)
+      sounds.play('erro')
     }
+  }
+
+  const handleCancelarClick = (agendamento: Agendamento) => {
+    setAgendamentoCancelamento(agendamento)
+    sounds.play('modal-open')
+  }
+
+  const handleConfirmarCancelamento = async () => {
+    if (agendamentoCancelamento) {
+      await handleCancelarAgendamento(agendamentoCancelamento.id)
+      setAgendamentoCancelamento(null)
+      sounds.play('modal-close')
+    }
+  }
+
+  const handleCancelarCancelamento = () => {
+    setAgendamentoCancelamento(null)
+    sounds.play('modal-close')
   }
 
   if (loading) {
@@ -622,7 +676,8 @@ function MeusAgendamentos() {
             
               {agendamento.status === 'pendente' && (
                 <button 
-                  onClick={() => setAgendamentoCancelamento(agendamento)}
+                  onClick={() => handleCancelarClick(agendamento)}
+                  onMouseEnter={() => sounds.play('hover')}
                   disabled={loading}
                   className="mt-4 w-full bg-red-600/20 text-red-500 border border-red-600/20 py-2 rounded hover:bg-red-600/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -640,7 +695,7 @@ function MeusAgendamentos() {
           <div className="bg-[#1a1a1a] p-6 rounded-lg w-full max-w-md relative border border-red-600/30 animate-fadeIn">
             <div className="absolute top-4 right-4">
               <button
-                onClick={() => setAgendamentoCancelamento(null)}
+                onClick={handleCancelarCancelamento}
                 className="text-gray-400 hover:text-white transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -684,14 +739,14 @@ function MeusAgendamentos() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => handleCancelarAgendamento(agendamentoCancelamento.id)}
+                onClick={handleConfirmarCancelamento}
                 disabled={loading}
                 className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Cancelando...' : 'Confirmar Cancelamento'}
               </button>
               <button
-                onClick={() => setAgendamentoCancelamento(null)}
+                onClick={handleCancelarCancelamento}
                 disabled={loading}
                 className="flex-1 border border-gray-600 text-gray-400 hover:text-white hover:border-gray-500 py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -780,8 +835,10 @@ function Historico() {
     try {
       // Redirecionar para a tela de agendamento com os dados pré-preenchidos
       // Implementar lógica de navegação aqui
+      sounds.play('sucesso')
     } catch (err) {
       console.error('Erro ao agendar novamente:', err)
+      sounds.play('erro')
     }
   }
 
@@ -790,6 +847,25 @@ function Historico() {
       style: 'currency',
       currency: 'BRL'
     }).format(preco)
+  }
+
+  const handleFiltroChange = (tipo: string, valor: string) => {
+    if (tipo === 'mes') {
+      setFiltroMes(valor)
+    } else {
+      setFiltroServico(valor)
+    }
+    sounds.play('filter-change')
+  }
+
+  const handleDetalhesClick = (agendamento: Agendamento) => {
+    setDetalhesAgendamento(agendamento)
+    sounds.play('modal-open')
+  }
+
+  const handleFecharDetalhes = () => {
+    setDetalhesAgendamento(null)
+    sounds.play('modal-close')
   }
 
   if (loading) {
@@ -823,7 +899,7 @@ function Historico() {
               <input
                 type="month"
                 value={filtroMes}
-                onChange={e => setFiltroMes(e.target.value)}
+                onChange={e => handleFiltroChange('mes', e.target.value)}
                 className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
               />
             </div>
@@ -831,7 +907,7 @@ function Historico() {
               <label className="block text-gray-400 text-sm mb-2">Filtrar por Serviço</label>
               <select
                 value={filtroServico}
-                onChange={e => setFiltroServico(e.target.value)}
+                onChange={e => handleFiltroChange('servico', e.target.value)}
                 className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
               >
                 <option value="">Todos os serviços</option>
@@ -889,7 +965,7 @@ function Historico() {
 
                     <div className="flex gap-2 w-full sm:w-auto">
                       <button
-                        onClick={() => setDetalhesAgendamento(item)}
+                        onClick={() => handleDetalhesClick(item)}
                         className="flex-1 sm:flex-none bg-[#1a1a1a] hover:bg-[#2f2f2f] text-gray-400 hover:text-white px-4 py-2 rounded-lg transition-colors text-sm"
                       >
                         Ver Detalhes
@@ -914,7 +990,7 @@ function Historico() {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#1a1a1a] p-6 rounded-lg w-full max-w-2xl relative border border-red-600/30">
             <button
-              onClick={() => setDetalhesAgendamento(null)}
+              onClick={handleFecharDetalhes}
               className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
             >
               ✕
@@ -1136,9 +1212,10 @@ function MeuPerfil() {
         .getPublicUrl(fileName)
 
       setDadosPerfil(prev => ({ ...prev, foto_url: urlData.publicUrl }))
+      sounds.play('sucesso')
     } catch (err) {
       console.error('Erro ao fazer upload:', err)
-      setError('Erro ao fazer upload da foto. Tente novamente.')
+      sounds.play('erro')
     } finally {
       setUploadingFoto(false)
     }
@@ -1221,6 +1298,7 @@ function MeuPerfil() {
       setConfirmarSenhaTemp('')
       setShowSenhaModal(false)
       setSuccess(true)
+      sounds.play('sucesso')
     } catch (err: any) {
       console.error('Erro ao atualizar senha:', err)
       setError(err.message || 'Erro ao atualizar senha. Tente novamente.')
@@ -1501,6 +1579,7 @@ function MeuPerfil() {
 
         <button
           type="submit"
+          onMouseEnter={() => sounds.play('hover')}
           disabled={loading || uploadingFoto}
           className="w-full bg-gradient-to-r from-red-600 to-red-800 text-white py-3 rounded-lg hover:from-red-700 hover:to-red-900 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >

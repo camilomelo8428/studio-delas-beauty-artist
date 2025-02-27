@@ -3,12 +3,13 @@ import './App.css'
 import { AgendarHorario, MeusAgendamentos, Historico, MeuPerfil as ClientePerfil } from './components/ClientArea'
 import { Dashboard, Funcionarios, Servicos, Agendamentos as AdminAgendamentos, Horarios, Configuracoes, Usuarios, Produtos as ProdutosAdmin } from './components/AdminArea'
 import { Agendamentos as FuncionarioAgendamentos, MeuPerfil as FuncionarioPerfil } from './components/FuncionarioArea'
-import { auth } from './lib/supabase'
+import { auth, supabase } from './lib/supabase'
 import { authService } from './services/auth'
 import type { FuncionarioAuth } from './services/auth'
 import SuccessScreen from './components/SuccessScreen'
 import { configuracoes } from './services/configuracoes'
 import type { Configuracoes as ConfiguracoesType } from './services/configuracoes'
+import { sounds } from './services/sounds'
 import ListaProdutos from './components/ClientArea/ListaProdutos'
 import ReactInputMask from 'react-input-mask'
 import { formatarTelefone, validarTelefone, limparTelefone } from './utils/formatters'
@@ -564,13 +565,16 @@ function ClientLoginModal({ isOpen, onClose, config, initialTab }: {
       
       if (success) {
         setIsAuthenticated(true)
+        sounds.play('sucesso')
         toast.success('Login realizado com sucesso!')
       } else {
         setErro(typeof error === 'string' ? error : 'E-mail ou senha incorretos')
+        sounds.play('erro')
       }
     } catch (error) {
       console.error('Erro ao fazer login:', error)
       setErro('Erro ao fazer login. Tente novamente.')
+      sounds.play('erro')
     } finally {
       setLoading(false)
     }
@@ -578,17 +582,18 @@ function ClientLoginModal({ isOpen, onClose, config, initialTab }: {
 
   const handleLogout = async () => {
     try {
-      const { success } = await auth.logout()
-      if (success) {
-        setIsAuthenticated(false)
-        setEmail('')
-        setSenha('')
-        onClose()
-      }
+      await supabase.auth.signOut()
+      sounds.play('click')
+      onClose()
     } catch (error) {
       console.error('Erro ao fazer logout:', error)
-      toast.error('Erro ao fazer logout')
+      sounds.play('erro')
     }
+  }
+
+  const handleTabChange = (tab: typeof activeTab) => {
+    setActiveTab(tab)
+    sounds.play('tab-change')
   }
 
   // Se estiver mostrando a tela de sucesso
@@ -598,11 +603,13 @@ function ClientLoginModal({ isOpen, onClose, config, initialTab }: {
         onClose={() => {
           setShowSuccess(false)
           setShowCadastro(false)
+          sounds.play('modal-close')
           onClose()
         }}
         onLogin={() => {
           setShowSuccess(false)
           setShowCadastro(false)
+          sounds.play('click')
         }}
       />
     )
@@ -636,7 +643,8 @@ function ClientLoginModal({ isOpen, onClose, config, initialTab }: {
               <div className="flex gap-3 min-w-max">
                 {/* Agendar Horário */}
                 <button 
-                  onClick={() => setActiveTab('agendar')}
+                  onClick={() => handleTabChange('agendar')}
+                  onMouseEnter={() => sounds.play('hover')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                     activeTab === 'agendar' 
                       ? 'bg-red-600 text-white' 
@@ -649,7 +657,8 @@ function ClientLoginModal({ isOpen, onClose, config, initialTab }: {
 
                 {/* Meus Agendamentos */}
                 <button 
-                  onClick={() => setActiveTab('agendamentos')}
+                  onClick={() => handleTabChange('agendamentos')}
+                  onMouseEnter={() => sounds.play('hover')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                     activeTab === 'agendamentos' 
                       ? 'bg-red-600 text-white' 
@@ -662,20 +671,22 @@ function ClientLoginModal({ isOpen, onClose, config, initialTab }: {
 
                 {/* Histórico */}
                 <button 
-                  onClick={() => setActiveTab('historico')}
+                  onClick={() => handleTabChange('historico')}
+                  onMouseEnter={() => sounds.play('hover')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                     activeTab === 'historico' 
                       ? 'bg-red-600 text-white' 
                       : 'bg-[#2a2a2a] text-gray-400 hover:bg-red-600/10 hover:text-white'
                   }`}
                 >
-                  <span className="text-xl">📋</span>
+                  <span className="text-xl">📊</span>
                   <span>Histórico</span>
                 </button>
 
-                {/* Perfil */}
+                {/* Meu Perfil */}
                 <button 
-                  onClick={() => setActiveTab('perfil')}
+                  onClick={() => handleTabChange('perfil')}
+                  onMouseEnter={() => sounds.play('hover')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                     activeTab === 'perfil' 
                       ? 'bg-red-600 text-white' 
@@ -1198,6 +1209,11 @@ function App() {
     authService.logout()
   }
 
+  // Pré-carregar sons ao iniciar o app
+  useEffect(() => {
+    sounds.preloadAll()
+  }, [])
+
   if (isAuthenticated) {
     if (userType === 'admin') {
     return <AdminPanel onLogout={handleLogout} />
@@ -1426,10 +1442,15 @@ function App() {
                     <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-red-600 group-hover/item:bg-red-500 transition-colors"></span>
                     {config.telefone}
                   </p>
-                  <p className="flex items-center gap-2 sm:gap-3 group/item">
+                  <a 
+                    href={`https://wa.me/55${config.whatsapp.replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 sm:gap-3 group/item hover:text-red-500 transition-colors cursor-pointer"
+                  >
                     <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-red-600 group-hover/item:bg-red-500 transition-colors"></span>
                     {config.whatsapp}
-                  </p>
+                  </a>
                 </div>
               </div>
             </div>
@@ -1449,14 +1470,24 @@ function App() {
                   REDES SOCIAIS
                 </h2>
                 <div className="space-y-2 sm:space-y-3 text-sm sm:text-base text-gray-400">
-                  <p className="flex items-center gap-2 sm:gap-3 group/item hover:text-red-500 transition-colors cursor-pointer">
+                  <a 
+                    href={`https://instagram.com/${config.instagram.replace('@', '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer" 
+                    className="flex items-center gap-2 sm:gap-3 group/item hover:text-red-500 transition-colors cursor-pointer"
+                  >
                     <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-red-600 group-hover/item:bg-red-500 transition-colors"></span>
                     {config.instagram}
-                  </p>
-                  <p className="flex items-center gap-2 sm:gap-3 group/item hover:text-red-500 transition-colors cursor-pointer">
+                  </a>
+                  <a 
+                    href={`https://facebook.com${config.facebook}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 sm:gap-3 group/item hover:text-red-500 transition-colors cursor-pointer"
+                  >
                     <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-red-600 group-hover/item:bg-red-500 transition-colors"></span>
                     {config.facebook}
-                  </p>
+                  </a>
                 </div>
               </div>
             </div>
