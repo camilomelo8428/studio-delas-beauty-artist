@@ -204,7 +204,7 @@ export default function Dashboard() {
       {/* Cards de Métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div 
-          className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6"
+          className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-gold-600/20 p-6"
           onMouseEnter={handleCardHover}
         >
           <h3 className="text-gray-400 text-sm mb-2">Agendamentos Hoje</h3>
@@ -230,7 +230,7 @@ export default function Dashboard() {
         </div>
 
         <div 
-          className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6"
+          className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-gold-600/20 p-6"
           onMouseEnter={handleCardHover}
         >
           <h3 className="text-gray-400 text-sm mb-2">Faturamento Hoje</h3>
@@ -241,7 +241,7 @@ export default function Dashboard() {
         </div>
 
         <div 
-          className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6"
+          className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-gold-600/20 p-6"
           onMouseEnter={handleCardHover}
         >
           <h3 className="text-gray-400 text-sm mb-2">Ticket Médio</h3>
@@ -252,7 +252,7 @@ export default function Dashboard() {
         </div>
 
         <div 
-          className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6"
+          className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-gold-600/20 p-6"
           onMouseEnter={handleCardHover}
         >
           <h3 className="text-gray-400 text-sm mb-2">Taxa de Conclusão</h3>
@@ -271,7 +271,7 @@ export default function Dashboard() {
       {/* Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Gráfico de Faturamento */}
-        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6">
+        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-gold-600/20 p-6">
           <h3 className="text-white text-lg font-semibold mb-4">Faturamento dos Últimos 7 Dias</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -282,7 +282,7 @@ export default function Dashboard() {
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: '#1a1a1a',
-                    border: '1px solid rgba(220, 38, 38, 0.2)',
+                    border: '1px solid rgba(255, 192, 0, 0.2)',
                     borderRadius: '0.5rem'
                   }}
                   formatter={(value: number) => [formatarMoeda(value), 'Faturamento']}
@@ -290,9 +290,9 @@ export default function Dashboard() {
                 <Line 
                   type="monotone" 
                   dataKey="valor" 
-                  stroke="#dc2626" 
+                  stroke="#FFC000" 
                   strokeWidth={2}
-                  dot={{ fill: '#dc2626' }}
+                  dot={{ fill: '#FFC000' }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -300,7 +300,7 @@ export default function Dashboard() {
         </div>
 
         {/* Gráfico de Status */}
-        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6">
+        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-gold-600/20 p-6">
           <h3 className="text-white text-lg font-semibold mb-4">Distribuição de Status</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -321,7 +321,7 @@ export default function Dashboard() {
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: '#1a1a1a',
-                    border: '1px solid rgba(220, 38, 38, 0.2)',
+                    border: '1px solid rgba(255, 192, 0, 0.2)',
                     borderRadius: '0.5rem'
                   }}
                 />
@@ -342,7 +342,7 @@ export default function Dashboard() {
         </div>
 
         {/* Gráfico de Agendamentos por Hora */}
-        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6 lg:col-span-2">
+        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-gold-600/20 p-6 lg:col-span-2">
           <h3 className="text-white text-lg font-semibold mb-4">Agendamentos por Horário</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -353,11 +353,11 @@ export default function Dashboard() {
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: '#1a1a1a',
-                    border: '1px solid rgba(220, 38, 38, 0.2)',
+                    border: '1px solid rgba(255, 192, 0, 0.2)',
                     borderRadius: '0.5rem'
                   }}
                 />
-                <Bar dataKey="quantidade" fill="#dc2626" />
+                <Bar dataKey="quantidade" fill="#FFC000" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -365,11 +365,11 @@ export default function Dashboard() {
       </div>
 
       {/* Próximos Agendamentos */}
-      <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6">
+      <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-gold-600/20 p-6">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-white">Próximos Agendamentos</h3>
           <button 
-            className="text-red-500 hover:text-red-400 transition-colors"
+            className="text-gold-500 hover:text-gold-400 transition-colors"
             onClick={handleVerTodosClick}
             onMouseEnter={handleCardHover}
           >
@@ -381,11 +381,11 @@ export default function Dashboard() {
           {agendamentosFiltrados.map(agendamento => (
             <div
               key={agendamento.id}
-              className="flex items-center justify-between p-4 bg-[#1a1a1a] rounded-lg border border-red-600/10"
+              className="flex items-center justify-between p-4 bg-[#1a1a1a] rounded-lg border border-gold-600/10"
               onMouseEnter={handleCardHover}
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-red-600/20 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-gold-600/20 flex items-center justify-center">
                   <span className="text-lg font-semibold">
                     {agendamento.horario}
                   </span>

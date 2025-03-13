@@ -297,7 +297,7 @@ export default function ListaProdutos() {
                   {/* Tags */}
                   <div className="absolute top-4 right-4 flex flex-col gap-2">
                     {produtoSelecionado.destaque && (
-                      <span className="px-3 py-1 bg-red-600 text-white text-sm rounded-full">
+                      <span className="px-3 py-1 bg-gold-600 text-white text-sm rounded-full">
                         Destaque
                       </span>
                     )}
@@ -341,26 +341,20 @@ export default function ListaProdutos() {
                   </div>
 
                   {/* Preço */}
-                  <div className="pt-4 border-t border-red-600/20">
+                  <div className="absolute bottom-4 left-4 flex items-center gap-2">
                     {produtoSelecionado.preco_promocional ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm text-gray-400">De:</p>
-                          <p className="text-lg text-gray-500 line-through">
-                            {formatarPreco(produtoSelecionado.preco)}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm text-gray-400">Por:</p>
-                          <p className="text-3xl font-bold text-red-500">
-                            {formatarPreco(produtoSelecionado.preco_promocional)}
-                          </p>
-                        </div>
-                      </div>
+                      <>
+                        <span className="text-2xl font-bold text-gold-500">
+                          {formatarPreco(produtoSelecionado.preco_promocional)}
+                        </span>
+                        <span className="text-lg text-gray-500 line-through">
+                          {formatarPreco(produtoSelecionado.preco)}
+                        </span>
+                      </>
                     ) : (
-                      <p className="text-3xl font-bold text-white">
+                      <span className="text-2xl font-bold text-gold-500">
                         {formatarPreco(produtoSelecionado.preco)}
-                      </p>
+                      </span>
                     )}
                   </div>
 
