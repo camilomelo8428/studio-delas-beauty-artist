@@ -1239,7 +1239,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white bg-gradient-custom">
       {/* Header com Navegação */}
       <header className="fixed w-full z-40 bg-gradient-to-b from-black via-black/80 to-transparent">
         <div className="container mx-auto px-4">
@@ -1247,14 +1247,14 @@ function App() {
             {/* Logo e Botão Admin */}
             <div className="flex items-center gap-3 sm:gap-6">
               {/* Logo */}
-              <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-3">
                 <img
                   src={config.logo_url || ""}
                   alt="Logo"
-                  className="w-8 h-8 sm:w-12 sm:h-12 rounded-full border-2 border-red-600/50"
+                  className="w-8 h-8 sm:w-12 sm:h-12 rounded-full"
                 />
-                <span className="text-base sm:text-2xl font-bold bg-gradient-to-r from-red-500 to-red-800 bg-clip-text text-transparent">
-                  {config.nome_empresa}
+                <span className="text-base sm:text-2xl font-bold bg-gradient-to-r from-gold-400 via-gold-500 to-gold-300 bg-clip-text text-transparent">
+                  Studio D'Elas BEAUTY ARTIST
                 </span>
               </div>
 
