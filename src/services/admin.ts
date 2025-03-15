@@ -9,6 +9,18 @@ export interface Cliente {
   updated_at: string
 }
 
+export type CargoFuncionario = 
+  | 'barbeiro'
+  | 'cabeleireiro'
+  | 'manicure'
+  | 'esteticista_facial'
+  | 'esteticista_corporal'
+  | 'maquiador'
+  | 'designer_sobrancelhas'
+  | 'massagista'
+  | 'depilador'
+  | 'admin'
+
 export interface Funcionario {
   id: string
   nome: string
@@ -20,6 +32,9 @@ export interface Funcionario {
   senha?: string
   created_at: string
   updated_at: string
+  cargo: CargoFuncionario
+  comissao: number
+  especialidades?: string[]
 }
 
 export interface Servico {
@@ -77,19 +92,25 @@ export interface AtualizarAgendamento {
 export interface NovoFuncionario {
   nome: string
   email: string
+  senha: string
+  cargo: CargoFuncionario
   telefone: string
   foto_url?: string
+  comissao: number
+  especialidades?: string[]
   status: boolean
-  funcao: 'barbeiro' | 'cabeleireiro' | 'manicure' | 'admin'
 }
 
 export interface AtualizarFuncionario {
   nome?: string
   email?: string
+  senha?: string
+  cargo?: CargoFuncionario
   telefone?: string
   foto_url?: string
+  comissao?: number
+  especialidades?: string[]
   status?: boolean
-  funcao?: 'barbeiro' | 'cabeleireiro' | 'manicure' | 'admin'
 }
 
 export interface NovoServico {
