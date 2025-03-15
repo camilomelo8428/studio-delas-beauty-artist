@@ -1,6 +1,6 @@
 import { useState, ChangeEvent } from 'react'
 import { useFuncionarios, useStorage } from '../../hooks/useAdmin'
-import type { Funcionario } from '../../services/admin'
+import type { Funcionario, CargoFuncionario } from '../../services/admin'
 import { toast } from 'react-hot-toast'
 import { funcionarioService } from '../../services/admin'
 import { supabase } from '../../lib/supabase'
@@ -59,7 +59,9 @@ export default function Funcionarios() {
     telefone: '',
     foto_url: '',
     status: true,
-    funcao: 'barbeiro' as 'barbeiro' | 'cabeleireiro' | 'manicure' | 'admin',
+    cargo: 'barbeiro' as CargoFuncionario,
+    comissao: 30,
+    especialidades: [] as string[],
     senha: ''
   })
   const [isLoading, setIsLoading] = useState(false)
@@ -69,8 +71,14 @@ export default function Funcionarios() {
     { value: 'barbeiro', label: 'Barbeiro' },
     { value: 'cabeleireiro', label: 'Cabeleireiro' },
     { value: 'manicure', label: 'Manicure' },
+    { value: 'esteticista_facial', label: 'Esteticista Facial' },
+    { value: 'esteticista_corporal', label: 'Esteticista Corporal' },
+    { value: 'maquiador', label: 'Maquiador(a)' },
+    { value: 'designer_sobrancelhas', label: 'Designer de Sobrancelhas' },
+    { value: 'massagista', label: 'Massagista' },
+    { value: 'depilador', label: 'Depilador(a)' },
     { value: 'admin', label: 'Administrador' }
-  ]
+  ] as const
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -123,7 +131,9 @@ export default function Funcionarios() {
         telefone: '',
         foto_url: '',
         status: true,
-        funcao: 'barbeiro',
+        cargo: 'barbeiro',
+        comissao: 30,
+        especialidades: [],
         senha: ''
       })
     } catch (err) {
@@ -221,7 +231,9 @@ export default function Funcionarios() {
               telefone: '',
               foto_url: '',
               status: true,
-              funcao: 'barbeiro',
+              cargo: 'barbeiro',
+              comissao: 30,
+              especialidades: [],
               senha: ''
             })
           }}
@@ -265,7 +277,7 @@ export default function Funcionarios() {
                   </td>
                   <td className="px-6 py-4 text-gray-400">{funcionario.telefone}</td>
                   <td className="px-6 py-4 text-gray-400">
-                    {funcoes.find(f => f.value === funcionario.funcao)?.label || funcionario.funcao}
+                    {funcoes.find(f => f.value === funcionario.cargo)?.label || funcionario.cargo}
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-sm ${
@@ -286,7 +298,9 @@ export default function Funcionarios() {
                           telefone: funcionario.telefone,
                           foto_url: funcionario.foto_url || '',
                           status: funcionario.status,
-                          funcao: funcionario.funcao,
+                          cargo: funcionario.cargo,
+                          comissao: funcionario.comissao,
+                          especialidades: funcionario.especialidades,
                           senha: ''
                         })
                         setModalAberto(true)
@@ -373,10 +387,10 @@ export default function Funcionarios() {
               <div>
                 <label className="block text-gray-400 text-sm mb-2">Função</label>
                 <select
-                  value={novoFuncionario.funcao}
+                  value={novoFuncionario.cargo}
                   onChange={e => setNovoFuncionario(prev => ({ 
                     ...prev, 
-                    funcao: e.target.value as 'barbeiro' | 'cabeleireiro' | 'manicure' | 'admin'
+                    cargo: e.target.value as CargoFuncionario
                   }))}
                   className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
                   required
@@ -427,7 +441,9 @@ export default function Funcionarios() {
                       telefone: '',
                       foto_url: '',
                       status: true,
-                      funcao: 'barbeiro',
+                      cargo: 'barbeiro',
+                      comissao: 30,
+                      especialidades: [],
                       senha: ''
                     })
                   }}

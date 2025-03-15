@@ -12,7 +12,8 @@ import type {
   AtualizarHorario,
   Agendamento,
   NovoAgendamento,
-  AtualizarAgendamento
+  AtualizarAgendamento,
+  CargoFuncionario
 } from '../services/admin'
 
 export function useFuncionarios() {
@@ -44,6 +45,9 @@ export function useFuncionarios() {
     email: string
     telefone: string
     foto_url: string
+    cargo: CargoFuncionario
+    comissao: number
+    especialidades: string[]
     status: boolean
   }) => {
     try {
@@ -64,11 +68,14 @@ export function useFuncionarios() {
   }
 
   const atualizarFuncionario = async (id: string, dadosAtualizados: {
-    nome: string
-    email: string
-    telefone: string
-    foto_url: string
-    status: boolean
+    nome?: string
+    email?: string
+    telefone?: string
+    foto_url?: string
+    cargo?: CargoFuncionario
+    comissao?: number
+    especialidades?: string[]
+    status?: boolean
   }) => {
     try {
       const { data, error } = await supabase

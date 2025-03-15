@@ -19,8 +19,21 @@ interface Agendamento {
   }
   funcionario: {
     nome: string
-    funcao: string
+    cargo: 'barbeiro' | 'cabeleireiro' | 'manicure' | 'esteticista_facial' | 'esteticista_corporal' | 'maquiador' | 'designer_sobrancelhas' | 'massagista' | 'depilador' | 'admin'
   }
+}
+
+const CARGO_LABELS: { [key: string]: string } = {
+  barbeiro: 'Barbeiro',
+  cabeleireiro: 'Cabeleireiro',
+  manicure: 'Manicure',
+  esteticista_facial: 'Esteticista Facial',
+  esteticista_corporal: 'Esteticista Corporal',
+  maquiador: 'Maquiador(a)',
+  designer_sobrancelhas: 'Designer de Sobrancelhas',
+  massagista: 'Massagista',
+  depilador: 'Depilador(a)',
+  admin: 'Administrador'
 }
 
 export default function FuncionarioArea() {
@@ -58,7 +71,7 @@ export default function FuncionarioArea() {
           ),
           funcionario:funcionarios!inner (
             nome,
-            funcao
+            cargo
           )
         `)
         .eq('funcionario_id', funcionarioId)

@@ -28,13 +28,12 @@ export interface Funcionario {
   telefone: string
   foto_url: string
   status: boolean
-  funcao: 'barbeiro' | 'cabeleireiro' | 'manicure' | 'admin'
+  cargo: CargoFuncionario
+  comissao: number
+  especialidades: string[]
   senha?: string
   created_at: string
   updated_at: string
-  cargo: CargoFuncionario
-  comissao: number
-  especialidades?: string[]
 }
 
 export interface Servico {

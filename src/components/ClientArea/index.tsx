@@ -25,7 +25,7 @@ interface Agendamento {
   funcionario: {
     id: string
     nome: string
-    funcao: string
+    cargo: 'barbeiro' | 'cabeleireiro' | 'manicure' | 'esteticista_facial' | 'esteticista_corporal' | 'maquiador' | 'designer_sobrancelhas' | 'massagista' | 'depilador' | 'admin'
     foto_url: string | null
   }
 }
@@ -45,7 +45,9 @@ interface Funcionario {
   telefone: string
   foto_url: string | null
   status: boolean
-  funcao: string
+  cargo: 'barbeiro' | 'cabeleireiro' | 'manicure' | 'esteticista_facial' | 'esteticista_corporal' | 'maquiador' | 'designer_sobrancelhas' | 'massagista' | 'depilador' | 'admin'
+  comissao: number
+  especialidades: string[]
 }
 
 interface Horario {
@@ -68,6 +70,19 @@ interface HorarioDisponivel {
 
 interface Props {
   onClose: () => void
+}
+
+const CARGO_LABELS: { [key: string]: string } = {
+  barbeiro: 'Barbeiro',
+  cabeleireiro: 'Cabeleireiro',
+  manicure: 'Manicure',
+  esteticista_facial: 'Esteticista Facial',
+  esteticista_corporal: 'Esteticista Corporal',
+  maquiador: 'Maquiador(a)',
+  designer_sobrancelhas: 'Designer de Sobrancelhas',
+  massagista: 'Massagista',
+  depilador: 'Depilador(a)',
+  admin: 'Administrador'
 }
 
 // Função para formatar o telefone enquanto digita
@@ -405,9 +420,9 @@ function AgendarHorario() {
             required
           >
                 <option value="">Selecione um profissional</option>
-                {profissionais.map(profissional => (
+                {profissionais.map((profissional) => (
                   <option key={profissional.id} value={profissional.id}>
-                    {profissional.nome} - {profissional.funcao}
+                    {profissional.nome} - {CARGO_LABELS[profissional.cargo] || profissional.cargo}
                   </option>
             ))}
           </select>
@@ -1043,7 +1058,7 @@ function Historico() {
                         {detalhesAgendamento.funcionario.nome}
                       </p>
                       <p className="text-gray-400 text-sm">
-                        {detalhesAgendamento.funcionario.funcao}
+                        {CARGO_LABELS[detalhesAgendamento.funcionario.cargo] || detalhesAgendamento.funcionario.cargo}
                       </p>
                     </div>
                   </div>

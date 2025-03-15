@@ -7,7 +7,7 @@ interface NovoFuncionarioProps {
   onCancel: () => void
 }
 
-const CARGOS: { value: CargoFuncionario; label: string }[] = [
+const CARGOS = [
   { value: 'barbeiro', label: 'Barbeiro' },
   { value: 'cabeleireiro', label: 'Cabeleireiro' },
   { value: 'manicure', label: 'Manicure' },
@@ -18,9 +18,9 @@ const CARGOS: { value: CargoFuncionario; label: string }[] = [
   { value: 'massagista', label: 'Massagista' },
   { value: 'depilador', label: 'Depilador(a)' },
   { value: 'admin', label: 'Administrador' }
-]
+] as const
 
-const ESPECIALIDADES: { [key in CargoFuncionario]?: string[] } = {
+const ESPECIALIDADES: Record<CargoFuncionario, string[]> = {
   barbeiro: [
     'Corte Masculino',
     'Barba',
@@ -74,7 +74,14 @@ const ESPECIALIDADES: { [key in CargoFuncionario]?: string[] } = {
     'Depilação a Laser',
     'Depilação Egípcia',
     'Depilação com Linha'
-  ]
+  ],
+  manicure: [
+    'Manicure',
+    'Pedicure',
+    'Unhas em Gel',
+    'Unhas em Fibra'
+  ],
+  admin: []
 }
 
 export default function NovoFuncionario({ onSubmit, onCancel }: NovoFuncionarioProps) {
@@ -218,14 +225,14 @@ export default function NovoFuncionario({ onSubmit, onCancel }: NovoFuncionarioP
           />
         </div>
 
-        {ESPECIALIDADES[cargo] && (
+        {ESPECIALIDADES[cargo] && ESPECIALIDADES[cargo].length > 0 && (
           <div>
             <label className="block text-sm text-gray-400 mb-2">Especialidades</label>
             <div className="grid grid-cols-2 gap-2">
-              {ESPECIALIDADES[cargo]?.map((especialidade) => (
+              {ESPECIALIDADES[cargo].map((especialidade) => (
                 <label
                   key={especialidade}
-                  className="flex items-center space-x-2 cursor-pointer"
+                  className="flex items-center space-x-2 cursor-pointer hover:bg-gold-600/10 p-2 rounded-lg transition-colors"
                 >
                   <input
                     type="checkbox"
@@ -254,13 +261,13 @@ export default function NovoFuncionario({ onSubmit, onCancel }: NovoFuncionarioP
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 border border-gold-600/20 text-white rounded-lg hover:bg-gold-600/10"
+            className="px-4 py-2 border border-gold-600/20 text-white rounded-lg hover:bg-gold-600/10 transition-colors"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            className="px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-700 text-white rounded-lg hover:from-gold-700 hover:to-gold-800"
+            className="px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-700 text-white rounded-lg hover:from-gold-700 hover:to-gold-800 transition-colors"
           >
             Salvar
           </button>
