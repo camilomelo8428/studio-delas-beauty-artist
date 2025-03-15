@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAgendamentos } from '../../hooks/useAdmin'
 import type { Agendamento } from '../../services/admin'
+import jsPDF from 'jspdf'
+import autoTable, { UserOptions } from 'jspdf-autotable'
 import {
   LineChart,
   Line,
@@ -165,6 +167,80 @@ export default function Dashboard() {
     sounds.play('hover')
   }
 
+  const gerarRelatorioPDF = () => {
+    const doc = new jsPDF()
+    const dataAtual = new Date().toLocaleDateString('pt-BR')
+    let yPos = 85
+    
+    // Título do relatório
+    doc.setFontSize(20)
+    doc.text('Relatório Studio D\'Elas Beauty Artist', 15, 15)
+    doc.setFontSize(12)
+    doc.text(`Data: ${dataAtual}`, 15, 25)
+
+    // Métricas principais
+    doc.setFontSize(16)
+    doc.text('Métricas do Dia', 15, 35)
+    doc.setFontSize(12)
+    doc.text(`Agendamentos Hoje: ${agendamentosHoje.length}`, 15, 45)
+    doc.text(`Faturamento Hoje: ${formatarMoeda(faturamentoHoje)}`, 15, 52)
+    doc.text(`Ticket Médio: ${formatarMoeda(ticketMedioHoje)}`, 15, 59)
+    doc.text(`Taxa de Conclusão: ${estatisticas.total > 0 ? Math.round((estatisticas.concluidos / estatisticas.total) * 100) : 0}%`, 15, 66)
+
+    // Status dos Agendamentos
+    doc.setFontSize(16)
+    doc.text('Status dos Agendamentos', 15, 80)
+    
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Status', 'Quantidade']],
+      body: [
+        ['Pendentes', estatisticas.pendentes],
+        ['Confirmados', estatisticas.confirmados],
+        ['Concluídos', estatisticas.concluidos],
+        ['Cancelados', estatisticas.cancelados],
+        ['Total', estatisticas.total]
+      ],
+    })
+
+    // Faturamento dos últimos 7 dias
+    yPos = 160
+    doc.setFontSize(16)
+    doc.text('Faturamento dos Últimos 7 Dias', 15, yPos)
+    
+    autoTable(doc, {
+      startY: yPos + 5,
+      head: [['Data', 'Valor']],
+      body: dadosFaturamento.map(item => [
+        item.data,
+        formatarMoeda(item.valor)
+      ]),
+    })
+
+    // Próximos Agendamentos
+    yPos = 235
+    doc.setFontSize(16)
+    doc.text('Próximos Agendamentos', 15, yPos)
+    
+    const proximosAgendamentos = agendamentosFiltrados.map(agendamento => [
+      new Date(agendamento.data).toLocaleDateString('pt-BR'),
+      agendamento.horario,
+      agendamento.cliente.nome,
+      agendamento.servico.nome,
+      formatarMoeda(agendamento.servico.preco),
+      agendamento.status.charAt(0).toUpperCase() + agendamento.status.slice(1)
+    ])
+
+    autoTable(doc, {
+      startY: yPos + 5,
+      head: [['Data', 'Horário', 'Cliente', 'Serviço', 'Valor', 'Status']],
+      body: proximosAgendamentos,
+    })
+
+    // Salvar o PDF
+    doc.save(`relatorio-studio-delas-${dataAtual.replace(/\//g, '-')}.pdf`)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -199,7 +275,19 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-red-500">Dashboard</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gold-500">Dashboard</h2>
+        <button
+          onClick={gerarRelatorioPDF}
+          className="px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-700 text-white rounded-lg hover:from-gold-700 hover:to-gold-800 transition-all flex items-center gap-2"
+          onMouseEnter={handleCardHover}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586L7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clipRule="evenodd" />
+          </svg>
+          Gerar Relatório PDF
+        </button>
+      </div>
 
       {/* Cards de Métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
