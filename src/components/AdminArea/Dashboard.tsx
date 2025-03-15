@@ -30,7 +30,12 @@ export default function Dashboard() {
     carregarAgendamentosPorStatus
   } = useAgendamentos()
 
-  const [dataAtual] = useState(new Date().toISOString().split('T')[0])
+  const [dataInicial, setDataInicial] = useState(
+    new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]
+  )
+  const [dataFinal, setDataFinal] = useState(
+    new Date().toISOString().split('T')[0]
+  )
   const [estatisticas, setEstatisticas] = useState({
     pendentes: 0,
     confirmados: 0,
@@ -45,8 +50,8 @@ export default function Dashboard() {
   const [dadosAgendamentosPorHora, setDadosAgendamentosPorHora] = useState<any[]>([])
 
   useEffect(() => {
-    carregarAgendamentosPorData(dataAtual)
-  }, [dataAtual])
+    carregarAgendamentosPorData(dataInicial, dataFinal)
+  }, [dataInicial, dataFinal])
 
   useEffect(() => {
     if (agendamentos && Array.isArray(agendamentos)) {
@@ -121,7 +126,7 @@ export default function Dashboard() {
     // Registrar callback para atualizar dados quando receber novo agendamento
     const unsubscribeCallback = notificationService.onNewAppointment(async () => {
       const hoje = new Date().toISOString().split('T')[0]
-      await carregarAgendamentosPorData(hoje)
+      await carregarAgendamentosPorData(dataInicial, dataFinal)
     })
 
     return () => {
@@ -167,25 +172,70 @@ export default function Dashboard() {
     sounds.play('hover')
   }
 
+  const filtrarAgendamentosPorPeriodo = (inicio: string, fim: string) => {
+    if (!Array.isArray(agendamentos)) return []
+    return agendamentos.filter(agendamento => {
+      if (!agendamento || !agendamento.data) return false
+      return agendamento.data >= inicio && agendamento.data <= fim
+    })
+  }
+
+  const calcularEstatisticasPeriodo = (agendamentosFiltrados: Agendamento[]) => {
+    const stats = agendamentosFiltrados.reduce((acc, agendamento) => {
+      if (agendamento && agendamento.status) {
+        acc[`${agendamento.status}s`]++
+        acc.total++
+        if (agendamento.status === 'concluido' && agendamento.servico?.preco) {
+          acc.faturamento += Number(agendamento.servico.preco)
+          acc.clientesAtendidos++
+        }
+      }
+      return acc
+    }, {
+      pendentes: 0,
+      confirmados: 0,
+      concluidos: 0,
+      cancelados: 0,
+      total: 0,
+      faturamento: 0,
+      clientesAtendidos: 0
+    })
+
+    return {
+      ...stats,
+      ticketMedio: stats.clientesAtendidos > 0 ? stats.faturamento / stats.clientesAtendidos : 0
+    }
+  }
+
+  const handlePeriodoChange = async () => {
+    try {
+      await carregarAgendamentosPorData(dataInicial, dataFinal)
+      sounds.play('click')
+    } catch (error) {
+      console.error('Erro ao carregar dados do período:', error)
+    }
+  }
+
   const gerarRelatorioPDF = () => {
     const doc = new jsPDF()
-    const dataAtual = new Date().toLocaleDateString('pt-BR')
+    const agendamentosPeriodo = filtrarAgendamentosPorPeriodo(dataInicial, dataFinal)
+    const estatisticasPeriodo = calcularEstatisticasPeriodo(agendamentosPeriodo)
     let yPos = 85
     
     // Título do relatório
     doc.setFontSize(20)
     doc.text('Relatório Studio D\'Elas Beauty Artist', 15, 15)
     doc.setFontSize(12)
-    doc.text(`Data: ${dataAtual}`, 15, 25)
+    doc.text(`Período: ${new Date(dataInicial).toLocaleDateString('pt-BR')} a ${new Date(dataFinal).toLocaleDateString('pt-BR')}`, 15, 25)
 
-    // Métricas principais
+    // Métricas do período
     doc.setFontSize(16)
-    doc.text('Métricas do Dia', 15, 35)
+    doc.text('Métricas do Período', 15, 35)
     doc.setFontSize(12)
-    doc.text(`Agendamentos Hoje: ${agendamentosHoje.length}`, 15, 45)
-    doc.text(`Faturamento Hoje: ${formatarMoeda(faturamentoHoje)}`, 15, 52)
-    doc.text(`Ticket Médio: ${formatarMoeda(ticketMedioHoje)}`, 15, 59)
-    doc.text(`Taxa de Conclusão: ${estatisticas.total > 0 ? Math.round((estatisticas.concluidos / estatisticas.total) * 100) : 0}%`, 15, 66)
+    doc.text(`Total de Agendamentos: ${estatisticasPeriodo.total}`, 15, 45)
+    doc.text(`Faturamento Total: ${formatarMoeda(estatisticasPeriodo.faturamento)}`, 15, 52)
+    doc.text(`Ticket Médio: ${formatarMoeda(estatisticasPeriodo.ticketMedio)}`, 15, 59)
+    doc.text(`Taxa de Conclusão: ${estatisticasPeriodo.total > 0 ? Math.round((estatisticasPeriodo.concluidos / estatisticasPeriodo.total) * 100) : 0}%`, 15, 66)
 
     // Status dos Agendamentos
     doc.setFontSize(16)
@@ -195,11 +245,11 @@ export default function Dashboard() {
       startY: yPos,
       head: [['Status', 'Quantidade']],
       body: [
-        ['Pendentes', estatisticas.pendentes],
-        ['Confirmados', estatisticas.confirmados],
-        ['Concluídos', estatisticas.concluidos],
-        ['Cancelados', estatisticas.cancelados],
-        ['Total', estatisticas.total]
+        ['Pendentes', estatisticasPeriodo.pendentes],
+        ['Confirmados', estatisticasPeriodo.confirmados],
+        ['Concluídos', estatisticasPeriodo.concluidos],
+        ['Cancelados', estatisticasPeriodo.cancelados],
+        ['Total', estatisticasPeriodo.total]
       ],
     })
 
@@ -222,7 +272,7 @@ export default function Dashboard() {
     doc.setFontSize(16)
     doc.text('Próximos Agendamentos', 15, yPos)
     
-    const proximosAgendamentos = agendamentosFiltrados.map(agendamento => [
+    const proximosAgendamentos = agendamentosPeriodo.map(agendamento => [
       new Date(agendamento.data).toLocaleDateString('pt-BR'),
       agendamento.horario,
       agendamento.cliente.nome,
@@ -238,7 +288,7 @@ export default function Dashboard() {
     })
 
     // Salvar o PDF
-    doc.save(`relatorio-studio-delas-${dataAtual.replace(/\//g, '-')}.pdf`)
+    doc.save(`relatorio-studio-delas-${new Date(dataInicial).toLocaleDateString('pt-BR').replace(/\//g, '-')}-${new Date(dataFinal).toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`)
   }
 
   if (loading) {
@@ -275,18 +325,51 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-gold-500">Dashboard</h2>
-        <button
-          onClick={gerarRelatorioPDF}
-          className="px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-700 text-white rounded-lg hover:from-gold-700 hover:to-gold-800 transition-all flex items-center gap-2"
-          onMouseEnter={handleCardHover}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586L7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clipRule="evenodd" />
-          </svg>
-          Gerar Relatório PDF
-        </button>
+        
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          {/* Seletor de Período */}
+          <div className="flex items-center gap-2">
+            <div className="flex flex-col">
+              <label className="text-sm text-gray-400 mb-1">Data Inicial</label>
+              <input
+                type="date"
+                value={dataInicial}
+                onChange={(e) => setDataInicial(e.target.value)}
+                className="bg-[#1a1a1a] border border-gold-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-gold-600/40"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm text-gray-400 mb-1">Data Final</label>
+              <input
+                type="date"
+                value={dataFinal}
+                onChange={(e) => setDataFinal(e.target.value)}
+                className="bg-[#1a1a1a] border border-gold-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-gold-600/40"
+              />
+            </div>
+            <button
+              onClick={handlePeriodoChange}
+              className="mt-6 px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-700 text-white rounded-lg hover:from-gold-700 hover:to-gold-800 transition-all"
+              onMouseEnter={handleCardHover}
+            >
+              Filtrar
+            </button>
+          </div>
+
+          {/* Botão Gerar PDF */}
+          <button
+            onClick={gerarRelatorioPDF}
+            className="px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-700 text-white rounded-lg hover:from-gold-700 hover:to-gold-800 transition-all flex items-center gap-2"
+            onMouseEnter={handleCardHover}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586L7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clipRule="evenodd" />
+            </svg>
+            Gerar Relatório PDF
+          </button>
+        </div>
       </div>
 
       {/* Cards de Métricas */}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import type {
   Funcionario,
@@ -350,6 +350,63 @@ export function useAgendamentos() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const carregarAgendamentosPorData = useCallback(async (dataInicial: string, dataFinal: string) => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const { data, error: supabaseError } = await supabase
+        .from('agendamentos')
+        .select(`
+          *,
+          cliente:clientes(*),
+          servico:servicos(*),
+          funcionario:funcionarios(*)
+        `)
+        .gte('data', dataInicial)
+        .lte('data', dataFinal)
+        .order('data', { ascending: true })
+        .order('horario', { ascending: true })
+
+      if (supabaseError) throw supabaseError
+
+      setAgendamentos(data || [])
+    } catch (error) {
+      console.error('Erro ao carregar agendamentos:', error)
+      setError('Não foi possível carregar os agendamentos.')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const carregarAgendamentosPorStatus = useCallback(async (status: string) => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const { data: agendamentos, error } = await supabase
+        .from('agendamentos')
+        .select(`
+          *,
+          cliente:clientes(*),
+          funcionario:funcionarios(*),
+          servico:servicos(*)
+        `)
+        .eq('status', status)
+        .order('data', { ascending: true })
+        .order('horario', { ascending: true })
+
+      if (error) throw error
+
+      setAgendamentos(agendamentos)
+    } catch (err) {
+      console.error('Erro ao carregar agendamentos:', err)
+      setError('Erro ao carregar agendamentos')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     carregarAgendamentos()
   }, [])
@@ -373,61 +430,6 @@ export function useAgendamentos() {
       if (error) throw error
 
       setAgendamentos(data)
-    } catch (err) {
-      console.error('Erro ao carregar agendamentos:', err)
-      setError('Erro ao carregar agendamentos')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function carregarAgendamentosPorData(data: string) {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const { data: agendamentos, error } = await supabase
-        .from('agendamentos')
-        .select(`
-          *,
-          cliente:clientes(*),
-          funcionario:funcionarios(*),
-          servico:servicos(*)
-        `)
-        .eq('data', data)
-        .order('horario', { ascending: true })
-
-      if (error) throw error
-
-      setAgendamentos(agendamentos)
-    } catch (err) {
-      console.error('Erro ao carregar agendamentos:', err)
-      setError('Erro ao carregar agendamentos')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function carregarAgendamentosPorStatus(status: 'pendente' | 'confirmado' | 'concluido' | 'cancelado') {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const { data: agendamentos, error } = await supabase
-        .from('agendamentos')
-        .select(`
-          *,
-          cliente:clientes(*),
-          funcionario:funcionarios(*),
-          servico:servicos(*)
-        `)
-        .eq('status', status)
-        .order('data', { ascending: true })
-        .order('horario', { ascending: true })
-
-      if (error) throw error
-
-      setAgendamentos(agendamentos)
     } catch (err) {
       console.error('Erro ao carregar agendamentos:', err)
       setError('Erro ao carregar agendamentos')
