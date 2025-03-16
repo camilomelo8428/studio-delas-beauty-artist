@@ -1,8 +1,22 @@
+-- Cria o tipo enum para status se não existir
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'status_agendamento') THEN
+    CREATE TYPE status_agendamento AS ENUM (
+      'pendente',
+      'confirmado',
+      'concluido',
+      'cancelado'
+    );
+  END IF;
+END $$;
+
 -- Ajusta a estrutura da tabela de agendamentos para separar data e horário
 ALTER TABLE public.agendamentos
   DROP COLUMN IF EXISTS data_hora,
   ADD COLUMN IF NOT EXISTS data DATE,
-  ADD COLUMN IF NOT EXISTS horario TIME;
+  ADD COLUMN IF NOT EXISTS horario TIME,
+  ALTER COLUMN status TYPE status_agendamento USING status::status_agendamento;
 
 -- Adiciona índices para melhorar a performance
 CREATE INDEX IF NOT EXISTS idx_agendamentos_data ON public.agendamentos(data);
@@ -30,6 +44,19 @@ CREATE POLICY "Permitir update para próprio usuário ou admin" ON public.agenda
 CREATE OR REPLACE FUNCTION public.validar_horario_agendamento()
 RETURNS TRIGGER AS $$
 BEGIN
+  -- Se a data ou horário forem nulos, não validar
+  IF NEW.data IS NULL OR NEW.horario IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  -- Se for apenas uma atualização de status, não validar horário
+  IF TG_OP = 'UPDATE' AND 
+     OLD.data = NEW.data AND 
+     OLD.horario = NEW.horario AND 
+     OLD.funcionario_id = NEW.funcionario_id THEN
+    RETURN NEW;
+  END IF;
+
   -- Verifica se existe um horário de funcionamento para o dia
   IF NOT EXISTS (
     SELECT 1 FROM public.horarios h

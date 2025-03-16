@@ -15,6 +15,7 @@ import type {
   AtualizarAgendamento,
   CargoFuncionario
 } from '../services/admin'
+import { format, toZonedTime } from 'date-fns-tz'
 
 export function useFuncionarios() {
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([])
@@ -362,6 +363,13 @@ export function useAgendamentos() {
       setLoading(true)
       setError(null)
 
+      // Garantir que as datas estejam definidas
+      const dataAtual = format(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd')
+      const dataInicialFormatada = dataInicial || dataAtual
+      const dataFinalFormatada = dataFinal || dataAtual
+
+      console.log('Datas da consulta:', { dataInicialFormatada, dataFinalFormatada })
+
       const { data, error: supabaseError } = await supabase
         .from('agendamentos')
         .select(`
@@ -370,12 +378,15 @@ export function useAgendamentos() {
           servico:servicos(*),
           funcionario:funcionarios(*)
         `)
-        .gte('data', dataInicial)
-        .lte('data', dataFinal)
+        .gte('data', dataInicialFormatada)
+        .lte('data', dataFinalFormatada)
         .order('data', { ascending: true })
         .order('horario', { ascending: true })
 
-      if (supabaseError) throw supabaseError
+      if (supabaseError) {
+        console.error('Erro ao buscar agendamentos:', supabaseError)
+        throw supabaseError
+      }
 
       setAgendamentos(data || [])
     } catch (error) {
@@ -475,9 +486,28 @@ export function useAgendamentos() {
     try {
       setError(null)
 
+      // Primeiro buscar o agendamento atual para manter os dados que não serão atualizados
+      const { data: agendamentoAtual, error: erroConsulta } = await supabase
+        .from('agendamentos')
+        .select('data, horario')
+        .eq('id', id)
+        .single();
+
+      if (erroConsulta || !agendamentoAtual) {
+        console.error('Erro ao buscar agendamento:', erroConsulta);
+        throw new Error('Agendamento não encontrado');
+      }
+
+      // Mesclar os dados atuais com as atualizações
+      const dadosAtualizados = {
+        ...agendamento,
+        data: agendamentoAtual.data,
+        horario: agendamentoAtual.horario
+      };
+
       const { data, error } = await supabase
         .from('agendamentos')
-        .update(agendamento)
+        .update(dadosAtualizados)
         .eq('id', id)
         .select(`
           *,

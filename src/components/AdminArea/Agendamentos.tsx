@@ -1,28 +1,87 @@
 import { useState, useEffect } from 'react'
-import { useAgendamentos } from '../../hooks/useAdmin'
-import type { Agendamento } from '../../services/admin'
+import type { Agendamento, Funcionario } from '../../services/admin'
 import ConfirmationModal from '../ConfirmationModal'
 import { supabase } from '../../lib/supabase'
 import { sounds } from '../../services/sounds'
 import { notificationService } from '../../services/notifications'
+import { format, toZonedTime } from 'date-fns-tz'
+import { parseISO } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+
+// Função utilitária para formatar datas
+const formatarData = (data: string) => {
+  try {
+    return format(toZonedTime(parseISO(data), 'America/Sao_Paulo'), 'dd/MM/yyyy', { locale: ptBR })
+  } catch (error) {
+    console.error('Erro ao formatar data:', error)
+    return data
+  }
+}
 
 export default function Agendamentos() {
-  const { 
-    agendamentos, 
-    loading, 
-    error,
-    atualizarAgendamento,
-    excluirAgendamento,
-    carregarAgendamentosPorData,
-    carregarAgendamentosPorStatus
-  } = useAgendamentos()
-
+  const [agendamentos, setAgendamentos] = useState<Agendamento[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [modalAberto, setModalAberto] = useState(false)
   const [agendamentoEmEdicao, setAgendamentoEmEdicao] = useState<Agendamento | null>(null)
-  const [filtroData, setFiltroData] = useState(new Date().toISOString().split('T')[0])
-  const [filtroStatus, setFiltroStatus] = useState<'pendente' | 'confirmado' | 'concluido' | 'cancelado' | ''>('')
+  const [dataInicial, setDataInicial] = useState(format(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd'))
+  const [dataFinal, setDataFinal] = useState(format(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd'))
+  const [filtroStatus, setFiltroStatus] = useState('todos')
   const [visualizacao, setVisualizacao] = useState<'lista' | 'cards'>('cards')
   const [agendamentoParaExcluir, setAgendamentoParaExcluir] = useState<Agendamento | null>(null)
+
+  const carregarAgendamentos = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Validar datas
+      if (!dataInicial || !dataFinal) {
+        throw new Error('Selecione um período válido')
+      }
+
+      // Formatar datas para o formato YYYY-MM-DD
+      const dataInicialFormatada = new Date(dataInicial).toISOString().split('T')[0]
+      const dataFinalFormatada = new Date(dataFinal).toISOString().split('T')[0]
+
+      console.log('Buscando agendamentos:', { dataInicialFormatada, dataFinalFormatada, filtroStatus })
+
+      const { data: agendamentosData, error } = await supabase
+        .from('agendamentos')
+        .select(`
+          *,
+          cliente:clientes(nome, telefone),
+          funcionario:funcionarios(nome, cargo),
+          servico:servicos(nome, preco)
+        `)
+        .gte('data', dataInicialFormatada)
+        .lte('data', dataFinalFormatada)
+        .order('data', { ascending: true })
+        .order('horario', { ascending: true })
+
+      if (error) throw error
+
+      // Filtrar por status se necessário
+      let agendamentosFiltrados = agendamentosData || []
+      if (filtroStatus !== 'todos') {
+        agendamentosFiltrados = agendamentosFiltrados.filter(
+          agendamento => agendamento.status === filtroStatus
+        )
+      }
+
+      setAgendamentos(agendamentosFiltrados)
+    } catch (err) {
+      console.error('Erro ao carregar agendamentos:', err)
+      setError('Erro ao carregar agendamentos')
+      sounds.play('erro')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    carregarAgendamentos()
+  }, [])
 
   useEffect(() => {
     // Inicializar o serviço de notificações em tempo real
@@ -30,18 +89,14 @@ export default function Agendamentos() {
 
     // Registrar callback para atualizar dados quando receber novo agendamento
     const unsubscribeCallback = notificationService.onNewAppointment(async () => {
-      if (filtroData) {
-        await carregarAgendamentosPorData(filtroData)
-      } else if (filtroStatus) {
-        await carregarAgendamentosPorStatus(filtroStatus)
-      }
+      await carregarAgendamentos()
     })
 
     return () => {
       unsubscribe()
       unsubscribeCallback()
     }
-  }, [filtroData, filtroStatus, carregarAgendamentosPorData, carregarAgendamentosPorStatus])
+  }, [dataInicial, dataFinal, filtroStatus, carregarAgendamentos])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -56,32 +111,16 @@ export default function Agendamentos() {
       setAgendamentoEmEdicao(null)
       
       // Recarrega os agendamentos com os filtros atuais
-      if (filtroData) {
-        await carregarAgendamentosPorData(filtroData)
-      } else if (filtroStatus) {
-        await carregarAgendamentosPorStatus(filtroStatus)
-      }
+      await carregarAgendamentos()
     } catch (err) {
       console.error('Erro ao salvar agendamento:', err)
       sounds.play('erro')
     }
   }
 
-  const handleFiltroDataChange = async (data: string) => {
-    setFiltroData(data)
-    setFiltroStatus('')
-    await carregarAgendamentosPorData(data)
-    sounds.play('filter-change')
-  }
-
-  const handleFiltroStatusChange = async (status: typeof filtroStatus) => {
-    setFiltroStatus(status)
-    setFiltroData('')
-    if (status) {
-      await carregarAgendamentosPorStatus(status)
-      sounds.play('filter-change')
-    }
-  }
+  const agendamentosFiltrados = agendamentos.filter(agendamento => 
+    filtroStatus === 'todos' || agendamento.status === filtroStatus
+  )
 
   const handleVisualizacaoChange = (tipo: 'cards' | 'lista') => {
     setVisualizacao(tipo)
@@ -114,13 +153,109 @@ export default function Agendamentos() {
   }
 
   const getStatusColor = (status: string) => {
-    const colors = {
-      'pendente': 'bg-yellow-500/20 text-yellow-400',
-      'confirmado': 'bg-blue-500/20 text-blue-400',
-      'concluido': 'bg-green-500/20 text-green-400',
-      'cancelado': 'bg-red-500/20 text-red-400'
+    switch (status) {
+      case 'pendente':
+        return 'bg-yellow-500/20 text-yellow-400'
+      case 'confirmado':
+        return 'bg-blue-500/20 text-blue-400'
+      case 'concluido':
+        return 'bg-green-500/20 text-green-400'
+      case 'cancelado':
+        return 'bg-red-500/20 text-red-400'
+      default:
+        return 'bg-gray-500/20 text-gray-400'
     }
-    return colors[status as keyof typeof colors] || ''
+  }
+
+  const CARGO_LABELS: { [key: string]: string } = {
+    barbeiro: 'Barbeiro',
+    cabeleireiro: 'Cabeleireiro',
+    manicure: 'Manicure',
+    esteticista_facial: 'Esteticista Facial',
+    esteticista_corporal: 'Esteticista Corporal',
+    maquiador: 'Maquiador(a)',
+    designer_sobrancelhas: 'Designer de Sobrancelhas',
+    massagista: 'Massagista',
+    depilador: 'Depilador(a)',
+    admin: 'Administrador'
+  }
+
+  const handleFiltrar = async () => {
+    try {
+      await carregarAgendamentos()
+      sounds.play('filter-change')
+    } catch (error) {
+      console.error('Erro ao filtrar agendamentos:', error)
+      sounds.play('erro')
+    }
+  }
+
+  const atualizarAgendamento = async (id: string, agendamento: Partial<Agendamento>) => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Buscar o agendamento atual para manter os dados que não serão alterados
+      const { data: agendamentoAtual, error: erroConsulta } = await supabase
+        .from('agendamentos')
+        .select('data, horario')
+        .eq('id', id)
+        .single()
+
+      if (erroConsulta) throw erroConsulta
+
+      if (!agendamentoAtual) {
+        throw new Error('Agendamento não encontrado')
+      }
+
+      // Manter a data e horário originais
+      const dadosAtualizados = {
+        ...agendamento,
+        data: agendamentoAtual.data,
+        horario: agendamentoAtual.horario
+      }
+
+      const { error } = await supabase
+        .from('agendamentos')
+        .update(dadosAtualizados)
+        .eq('id', id)
+
+      if (error) throw error
+
+      await carregarAgendamentos()
+      sounds.play('status-change')
+    } catch (err) {
+      console.error('Erro ao atualizar agendamento:', err)
+      setError('Erro ao atualizar agendamento')
+      sounds.play('erro')
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const excluirAgendamento = async (id: string) => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const { error } = await supabase
+        .from('agendamentos')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
+      await carregarAgendamentos()
+      sounds.play('status-change')
+    } catch (err) {
+      console.error('Erro ao excluir agendamento:', err)
+      setError('Erro ao excluir agendamento')
+      sounds.play('erro')
+      throw err
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (loading) {
@@ -144,7 +279,7 @@ export default function Agendamentos() {
       {/* Cabeçalho com Filtros */}
       <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h2 className="text-2xl font-bold text-red-500">Agendamentos</h2>
+          <h2 className="text-2xl font-bold text-red-500">Agendamentos</h2>
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleVisualizacaoChange('cards')}
@@ -173,29 +308,49 @@ export default function Agendamentos() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4">
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-gray-400 text-sm mb-2">Data</label>
-          <input
-            type="date"
-            value={filtroData}
-            onChange={e => handleFiltroDataChange(e.target.value)}
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-gray-400 text-sm mb-2">Data Inicial</label>
+            <input
+              type="date"
+              value={dataInicial}
+              onChange={(e) => setDataInicial(e.target.value)}
               className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg px-4 py-2 text-white focus:border-red-600 focus:outline-none"
-          />
+            />
           </div>
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-gray-400 text-sm mb-2">Status</label>
-          <select
-            value={filtroStatus}
-            onChange={e => handleFiltroStatusChange(e.target.value as typeof filtroStatus)}
+          <div>
+            <label className="block text-gray-400 text-sm mb-2">Data Final</label>
+            <input
+              type="date"
+              value={dataFinal}
+              onChange={(e) => setDataFinal(e.target.value)}
               className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg px-4 py-2 text-white focus:border-red-600 focus:outline-none"
-          >
-            <option value="">Todos os status</option>
-            <option value="pendente">Pendente</option>
-            <option value="confirmado">Confirmado</option>
-            <option value="concluido">Concluído</option>
-            <option value="cancelado">Cancelado</option>
-          </select>
+            />
+          </div>
+          <div>
+            <label className="block text-gray-400 text-sm mb-2">Status</label>
+            <select
+              value={filtroStatus}
+              onChange={(e) => setFiltroStatus(e.target.value)}
+              className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg px-4 py-2 text-white focus:border-red-600 focus:outline-none"
+            >
+              <option value="todos">Todos os status</option>
+              <option value="pendente">Pendente</option>
+              <option value="confirmado">Confirmado</option>
+              <option value="concluido">Concluído</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </div>
+          <div className="flex items-end">
+            <button
+              onClick={handleFiltrar}
+              className="w-full bg-gradient-to-r from-red-600 to-red-800 text-white h-[42px] rounded-lg hover:from-red-700 hover:to-red-900 transition-all flex items-center justify-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
+              </svg>
+              Filtrar
+            </button>
           </div>
         </div>
       </div>
@@ -203,7 +358,7 @@ export default function Agendamentos() {
       {/* Visualização em Cards */}
       {visualizacao === 'cards' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {agendamentos.map(agendamento => (
+              {agendamentosFiltrados.map(agendamento => (
             <div
               key={agendamento.id}
               className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 overflow-hidden hover:border-red-600/40 transition-all duration-300"
@@ -217,9 +372,7 @@ export default function Agendamentos() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-400">
-                        {new Date(agendamento.data + 'T00:00:00').toLocaleDateString('pt-BR', {
-                          timeZone: 'America/Sao_Paulo'
-                        })}
+                        {formatarData(agendamento.data)}
                       </p>
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(agendamento.status)}`}>
                         <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
@@ -279,7 +432,7 @@ export default function Agendamentos() {
                       {agendamento.funcionario.nome}
                     </div>
                     <div className="text-xs text-gray-400 truncate">
-                      {agendamento.funcionario.funcao}
+                      {CARGO_LABELS[agendamento.funcionario.cargo]}
                     </div>
                   </div>
                 </div>
@@ -323,7 +476,7 @@ export default function Agendamentos() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-red-600/10">
-                {agendamentos.map(agendamento => (
+                {agendamentosFiltrados.map(agendamento => (
                   <tr key={agendamento.id} className="hover:bg-red-600/5 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -350,7 +503,7 @@ export default function Agendamentos() {
                             {agendamento.funcionario.nome}
                           </div>
                           <div className="text-xs text-gray-400 truncate">
-                            {agendamento.funcionario.funcao}
+                            {CARGO_LABELS[agendamento.funcionario.cargo]}
                           </div>
                         </div>
                       </div>
@@ -379,9 +532,7 @@ export default function Agendamentos() {
                           {agendamento.horario}
                         </div>
                         <div className="text-xs text-gray-400">
-                          {new Date(agendamento.data + 'T00:00:00').toLocaleDateString('pt-BR', {
-                            timeZone: 'America/Sao_Paulo'
-                          })}
+                          {formatarData(agendamento.data)}
                         </div>
                       </div>
                     </td>
@@ -480,9 +631,7 @@ export default function Agendamentos() {
         onClose={() => setAgendamentoParaExcluir(null)}
         onConfirm={handleConfirmarExclusao}
         title="Confirmar Exclusão"
-        message={`Tem certeza que deseja excluir o agendamento de ${agendamentoParaExcluir?.cliente?.nome || 'cliente'} para ${new Date(agendamentoParaExcluir?.data + 'T00:00:00' || '').toLocaleDateString('pt-BR', {
-          timeZone: 'America/Sao_Paulo'
-        })} às ${agendamentoParaExcluir?.horario}?`}
+        message={`Tem certeza que deseja excluir o agendamento de ${agendamentoParaExcluir?.cliente?.nome || 'cliente'} para ${agendamentoParaExcluir ? formatarData(agendamentoParaExcluir.data) : ''} às ${agendamentoParaExcluir?.horario}?`}
         confirmText="Sim, Excluir"
         cancelText="Não, Manter"
         type="danger"

@@ -82,27 +82,36 @@ export default function Dashboard() {
       setLoading(true)
       setError(null)
 
-      // Buscar agendamentos do período selecionado
-      const { data: agendamentosData, error: agendamentosError } = await supabase
+      // Garantir que as datas estejam definidas
+      const dataAtual = format(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd')
+      const dataInicialFormatada = dataInicial || dataAtual
+      const dataFinalFormatada = dataFinal || dataAtual
+
+      console.log('Datas da consulta:', { dataInicialFormatada, dataFinalFormatada })
+
+      // Buscar agendamentos
+      const { data: agendamentos, error: erroAgendamentos } = await supabase
         .from('agendamentos')
         .select(`
           id,
           data,
           horario,
           status,
-          observacao,
-          servico:servicos (id, nome, preco, duracao_minutos),
-          funcionario:funcionarios (id, nome, cargo),
-          cliente:clientes (id, nome, telefone),
-          created_at,
-          updated_at
+          cliente:clientes(nome, telefone),
+          funcionario:funcionarios(nome),
+          servico:servicos(nome, preco)
         `)
-        .gte('data', dataInicial)
-        .lte('data', dataFinal)
+        .gte('data', dataInicialFormatada)
+        .lte('data', dataFinalFormatada)
+        .order('data', { ascending: true })
+        .order('horario', { ascending: true })
 
-      if (agendamentosError) throw agendamentosError
+      if (erroAgendamentos) {
+        console.error('Erro ao buscar agendamentos:', erroAgendamentos)
+        throw new Error('Erro ao buscar agendamentos')
+      }
 
-      const agendamentosCarregados = agendamentosData as unknown as Agendamento[]
+      const agendamentosCarregados = agendamentos as unknown as Agendamento[]
       setAgendamentos(agendamentosCarregados)
 
       // Calcular estatísticas
@@ -801,8 +810,8 @@ export default function Dashboard() {
                   formatter={(value: number) => [formatarMoeda(value)]}
                 />
                 <Legend wrapperStyle={{ color: '#666' }} />
-                <Line
-                  type="monotone"
+                <Line 
+                  type="monotone" 
                   dataKey="lucroTotal"
                   name="Lucro Total"
                   stroke="#FFC000"
