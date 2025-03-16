@@ -60,7 +60,6 @@ export default function Funcionarios() {
     foto_url: '',
     status: true,
     cargo: 'barbeiro' as CargoFuncionario,
-    comissao: 30,
     especialidades: [] as string[],
     senha: ''
   })
@@ -132,7 +131,6 @@ export default function Funcionarios() {
         foto_url: '',
         status: true,
         cargo: 'barbeiro',
-        comissao: 30,
         especialidades: [],
         senha: ''
       })
@@ -232,7 +230,6 @@ export default function Funcionarios() {
               foto_url: '',
               status: true,
               cargo: 'barbeiro',
-              comissao: 30,
               especialidades: [],
               senha: ''
             })
@@ -299,7 +296,6 @@ export default function Funcionarios() {
                           foto_url: funcionario.foto_url || '',
                           status: funcionario.status,
                           cargo: funcionario.cargo,
-                          comissao: funcionario.comissao,
                           especialidades: funcionario.especialidades,
                           senha: ''
                         })
@@ -442,7 +438,6 @@ export default function Funcionarios() {
                       foto_url: '',
                       status: true,
                       cargo: 'barbeiro',
-                      comissao: 30,
                       especialidades: [],
                       senha: ''
                     })

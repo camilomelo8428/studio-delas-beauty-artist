@@ -61,7 +61,6 @@ export default function ListaFuncionarios({ funcionarios, onEdit, onDelete }: Li
                   <span className="inline-block px-2 py-1 text-xs rounded-full bg-gold-600/10 text-gold-500">
                     {CARGO_LABELS[funcionario.cargo]}
                   </span>
-                  <span className="ml-2 text-sm text-gold-400">{funcionario.comissao}% comissão</span>
                 </div>
                 {funcionario.especialidades && funcionario.especialidades.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">

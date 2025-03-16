@@ -90,8 +90,7 @@ export default function NovoFuncionario({ onSubmit, onCancel }: NovoFuncionarioP
   const [senha, setSenha] = useState('')
   const [telefone, setTelefone] = useState('')
   const [cargo, setCargo] = useState<CargoFuncionario>('barbeiro')
-  const [comissao, setComissao] = useState(30)
-  const [especialidadesSelecionadas, setEspecialidadesSelecionadas] = useState<string[]>([])
+  const [especialidades, setEspecialidades] = useState<string[]>([])
   const [foto, setFoto] = useState<File | null>(null)
   const [erro, setErro] = useState('')
   const { uploadImagem } = useStorage()
@@ -112,8 +111,7 @@ export default function NovoFuncionario({ onSubmit, onCancel }: NovoFuncionarioP
         senha,
         telefone,
         cargo,
-        comissao,
-        especialidades: especialidadesSelecionadas,
+        especialidades,
         foto_url,
         status: true
       })
@@ -132,15 +130,7 @@ export default function NovoFuncionario({ onSubmit, onCancel }: NovoFuncionarioP
   const handleCargoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const novoCargo = e.target.value as CargoFuncionario
     setCargo(novoCargo)
-    setEspecialidadesSelecionadas([]) // Limpa as especialidades ao mudar o cargo
-  }
-
-  const toggleEspecialidade = (especialidade: string) => {
-    setEspecialidadesSelecionadas(prev => 
-      prev.includes(especialidade)
-        ? prev.filter(e => e !== especialidade)
-        : [...prev, especialidade]
-    )
+    setEspecialidades([]) // Limpa as especialidades ao mudar o cargo
   }
 
   return (
@@ -212,35 +202,25 @@ export default function NovoFuncionario({ onSubmit, onCancel }: NovoFuncionarioP
           </select>
         </div>
 
-        <div>
-          <label className="block text-sm text-gray-400 mb-1">Comissão (%)</label>
-          <input
-            type="number"
-            value={comissao}
-            onChange={(e) => setComissao(Number(e.target.value))}
-            min="0"
-            max="100"
-            className="w-full bg-[#1a1a1a] border border-gold-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-gold-600/40"
-            required
-          />
-        </div>
-
-        {ESPECIALIDADES[cargo] && ESPECIALIDADES[cargo].length > 0 && (
+        {cargo !== 'admin' && (
           <div>
-            <label className="block text-sm text-gray-400 mb-2">Especialidades</label>
-            <div className="grid grid-cols-2 gap-2">
-              {ESPECIALIDADES[cargo].map((especialidade) => (
-                <label
-                  key={especialidade}
-                  className="flex items-center space-x-2 cursor-pointer hover:bg-gold-600/10 p-2 rounded-lg transition-colors"
-                >
+            <label className="block text-sm text-gray-400 mb-1">Especialidades</label>
+            <div className="space-y-2">
+              {ESPECIALIDADES[cargo].map((esp) => (
+                <label key={esp} className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    checked={especialidadesSelecionadas.includes(especialidade)}
-                    onChange={() => toggleEspecialidade(especialidade)}
-                    className="rounded border-gold-600/20 text-gold-600 focus:ring-gold-500"
+                    checked={especialidades.includes(esp)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setEspecialidades([...especialidades, esp])
+                      } else {
+                        setEspecialidades(especialidades.filter(e => e !== esp))
+                      }
+                    }}
+                    className="form-checkbox bg-[#1a1a1a] border border-gold-600/20 text-gold-600 rounded focus:ring-0 focus:ring-offset-0"
                   />
-                  <span className="text-sm text-gray-300">{especialidade}</span>
+                  <span className="text-white">{esp}</span>
                 </label>
               ))}
             </div>

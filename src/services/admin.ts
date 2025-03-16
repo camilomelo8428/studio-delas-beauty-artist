@@ -26,14 +26,12 @@ export interface Funcionario {
   nome: string
   email: string
   telefone: string
-  foto_url: string
+  foto_url: string | null
   status: boolean
   cargo: CargoFuncionario
-  comissao: number
   especialidades: string[]
-  senha?: string
-  created_at: string
-  updated_at: string
+  created_at?: string
+  updated_at?: string
 }
 
 export interface Servico {
@@ -91,12 +89,10 @@ export interface AtualizarAgendamento {
 export interface NovoFuncionario {
   nome: string
   email: string
-  senha: string
-  cargo: CargoFuncionario
   telefone: string
-  foto_url?: string
-  comissao: number
-  especialidades?: string[]
+  foto_url: string
+  cargo: CargoFuncionario
+  especialidades: string[]
   status: boolean
 }
 

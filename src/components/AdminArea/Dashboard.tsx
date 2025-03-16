@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAgendamentos } from '../../hooks/useAdmin'
 import type { Agendamento } from '../../services/admin'
-import jsPDF from 'jspdf'
-import autoTable, { UserOptions } from 'jspdf-autotable'
+import { jsPDF } from 'jspdf'
+import autoTable from 'jspdf-autotable'
 import {
   LineChart,
   Line,
@@ -15,125 +15,200 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  Legend
 } from 'recharts'
 import { supabase } from '../../lib/supabase'
 import { sounds } from '../../services/sounds'
 import { notificationService } from '../../services/notifications'
+import { format, subDays, startOfMonth, endOfMonth, parseISO } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { toZonedTime } from 'date-fns-tz'
+
+const hoje = format(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd')
+
+interface DadosLucro {
+  data: string
+  lucroTotal: number
+  totalServicos: number
+}
+
+interface Estatisticas {
+  pendentes: number
+  confirmados: number
+  concluidos: number
+  cancelados: number
+  total: number
+}
+
+interface Resumo {
+  lucroTotal: number
+  totalServicos: number
+  mediaTicket: number
+}
 
 export default function Dashboard() {
-  const { 
-    agendamentos, 
-    loading, 
-    error,
-    carregarAgendamentosPorData,
-    carregarAgendamentosPorStatus
-  } = useAgendamentos()
-
-  const [dataInicial, setDataInicial] = useState(
-    new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]
-  )
-  const [dataFinal, setDataFinal] = useState(
-    new Date().toISOString().split('T')[0]
-  )
-  const [estatisticas, setEstatisticas] = useState({
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [dataInicial, setDataInicial] = useState(format(new Date(), 'yyyy-MM-dd'))
+  const [dataFinal, setDataFinal] = useState(format(new Date(), 'yyyy-MM-dd'))
+  const [agendamentos, setAgendamentos] = useState<Agendamento[]>([])
+  const [dadosLucro, setDadosLucro] = useState<DadosLucro[]>([])
+  const [estatisticas, setEstatisticas] = useState<Estatisticas>({
     pendentes: 0,
     confirmados: 0,
     concluidos: 0,
     cancelados: 0,
     total: 0
   })
+  const [resumo, setResumo] = useState<Resumo>({
+    lucroTotal: 0,
+    totalServicos: 0,
+    mediaTicket: 0
+  })
 
   // Dados para os gráficos
   const [dadosFaturamento, setDadosFaturamento] = useState<any[]>([])
   const [dadosAgendamentosPorStatus, setDadosAgendamentosPorStatus] = useState<any[]>([])
   const [dadosAgendamentosPorHora, setDadosAgendamentosPorHora] = useState<any[]>([])
+  const [periodoSelecionado, setPeriodoSelecionado] = useState<'hoje' | '7dias' | 'mes'>('hoje')
 
   useEffect(() => {
-    carregarAgendamentosPorData(dataInicial, dataFinal)
+    carregarDados()
   }, [dataInicial, dataFinal])
 
-  useEffect(() => {
-    if (agendamentos && Array.isArray(agendamentos)) {
-      // Estatísticas gerais
-      const stats = agendamentos.reduce((acc, agendamento) => {
-        if (agendamento && agendamento.status) {
-          acc[`${agendamento.status}s`]++
-          acc.total++
-        }
-        return acc
-      }, {
-        pendentes: 0,
-        confirmados: 0,
-        concluidos: 0,
-        cancelados: 0,
-        total: 0
-      })
+  const carregarDados = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Buscar agendamentos do período selecionado
+      const { data: agendamentosData, error: agendamentosError } = await supabase
+        .from('agendamentos')
+        .select(`
+          id,
+          data,
+          horario,
+          status,
+          observacao,
+          servico:servicos (id, nome, preco, duracao_minutos),
+          funcionario:funcionarios (id, nome, cargo),
+          cliente:clientes (id, nome, telefone),
+          created_at,
+          updated_at
+        `)
+        .gte('data', dataInicial)
+        .lte('data', dataFinal)
+
+      if (agendamentosError) throw agendamentosError
+
+      const agendamentosCarregados = agendamentosData as unknown as Agendamento[]
+      setAgendamentos(agendamentosCarregados)
+
+      // Calcular estatísticas
+      const stats = {
+        pendentes: agendamentosCarregados.filter(a => a.status === 'pendente').length,
+        confirmados: agendamentosCarregados.filter(a => a.status === 'confirmado').length,
+        concluidos: agendamentosCarregados.filter(a => a.status === 'concluido').length,
+        cancelados: agendamentosCarregados.filter(a => a.status === 'cancelado').length,
+        total: agendamentosCarregados.length
+      }
       setEstatisticas(stats)
 
-      // Dados para o gráfico de pizza
+      // Preparar dados para o gráfico de status
       const dadosStatus = [
         { name: 'Pendentes', value: stats.pendentes, color: '#EAB308' },
         { name: 'Confirmados', value: stats.confirmados, color: '#3B82F6' },
-        { name: 'Concluídos', value: stats.concluidos, color: '#22C55E' },
+        { name: 'Concluídos', value: stats.concluidos, color: '#10B981' },
         { name: 'Cancelados', value: stats.cancelados, color: '#EF4444' }
       ]
       setDadosAgendamentosPorStatus(dadosStatus)
 
-      // Dados para o gráfico de faturamento dos últimos 7 dias
-      const ultimosSeteDias = [...Array(7)].map((_, i) => {
-        const data = new Date()
-        data.setDate(data.getDate() - i)
-        return data.toISOString().split('T')[0]
-      }).reverse()
+      // Preparar dados para o gráfico de faturamento
+      const dadosFaturamentoPorDia = new Map<string, number>()
+      agendamentosCarregados
+        .filter(a => a.status === 'concluido')
+        .forEach(agendamento => {
+          const data = format(toZonedTime(parseISO(agendamento.data), 'America/Sao_Paulo'), 'dd/MM', { locale: ptBR })
+          const valorAtual = dadosFaturamentoPorDia.get(data) || 0
+          dadosFaturamentoPorDia.set(data, valorAtual + agendamento.servico.preco)
+        })
 
-      const dadosFat = ultimosSeteDias.map(data => {
-        const agendamentosDoDia = agendamentos.filter(a => 
-          a.data === data && 
-          a.status === 'concluido'
-        )
-        const faturamento = agendamentosDoDia.reduce((total, a) => 
-          total + Number(a.servico.preco), 0
-        )
-        return {
-          data: new Date(data).toLocaleDateString('pt-BR', { weekday: 'short' }),
-          valor: faturamento
+      const dadosFaturamentoProcessados = Array.from(dadosFaturamentoPorDia.entries())
+        .map(([data, valor]) => ({ data, valor }))
+        .sort((a, b) => a.data.localeCompare(b.data))
+
+      setDadosFaturamento(dadosFaturamentoProcessados)
+
+      // Preparar dados para o gráfico de agendamentos por hora
+      const dadosPorHora = new Map<string, number>()
+      agendamentosCarregados.forEach(agendamento => {
+        const hora = agendamento.horario.split(':')[0] + 'h'
+        const quantidadeAtual = dadosPorHora.get(hora) || 0
+        dadosPorHora.set(hora, quantidadeAtual + 1)
+      })
+
+      const dadosHoraProcessados = Array.from(dadosPorHora.entries())
+        .map(([hora, quantidade]) => ({ hora, quantidade }))
+        .sort((a, b) => a.hora.localeCompare(b.hora))
+
+      setDadosAgendamentosPorHora(dadosHoraProcessados)
+
+      // Calcular dados de lucro por dia
+      const dadosPorDia = new Map<string, DadosLucro>()
+      
+      agendamentosCarregados.forEach(agendamento => {
+        const data = agendamento.data
+        if (!dadosPorDia.has(data)) {
+          dadosPorDia.set(data, {
+            data,
+            lucroTotal: 0,
+            totalServicos: 0
+          })
+        }
+
+        const dadosDia = dadosPorDia.get(data)!
+        if (agendamento.status === 'concluido') {
+          const valorServico = agendamento.servico.preco
+          
+          dadosDia.lucroTotal += valorServico
+          dadosDia.totalServicos += 1
         }
       })
-      setDadosFaturamento(dadosFat)
 
-      // Dados para o gráfico de agendamentos por hora
-      const horasDisponiveis = [...Array(12)].map((_, i) => {
-        const hora = 8 + i // Considerando horário comercial das 8h às 20h
-        return `${hora.toString().padStart(2, '0')}:00`
+      const dadosOrdenados = Array.from(dadosPorDia.values())
+        .sort((a, b) => a.data.localeCompare(b.data))
+        .map(dado => ({
+          ...dado,
+          data: format(toZonedTime(parseISO(dado.data), 'America/Sao_Paulo'), 'dd/MM', { locale: ptBR })
+        }))
+
+      setDadosLucro(dadosOrdenados)
+
+      // Calcular resumo geral
+      const resumoCalculado = dadosOrdenados.reduce((acc, dado) => ({
+        lucroTotal: acc.lucroTotal + dado.lucroTotal,
+        totalServicos: acc.totalServicos + dado.totalServicos,
+        mediaTicket: 0 // Será calculado abaixo
+      }), {
+        lucroTotal: 0,
+        totalServicos: 0,
+        mediaTicket: 0
       })
 
-      const dadosHora = horasDisponiveis.map(hora => {
-        const quantidade = agendamentos.filter(a => 
-          a.horario.startsWith(hora) && 
-          ['pendente', 'confirmado', 'concluido'].includes(a.status)
-        ).length
-        return { hora, quantidade }
-      })
-      setDadosAgendamentosPorHora(dadosHora)
+      resumoCalculado.mediaTicket = resumoCalculado.totalServicos > 0 
+        ? resumoCalculado.lucroTotal / resumoCalculado.totalServicos 
+        : 0
+
+      setResumo(resumoCalculado)
+
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error)
+      setError('Erro ao carregar dados. Por favor, tente novamente.')
+    } finally {
+      setLoading(false)
     }
-  }, [agendamentos])
-
-  useEffect(() => {
-    // Inicializar o serviço de notificações em tempo real
-    const unsubscribe = notificationService.initializeRealtime()
-
-    // Registrar callback para atualizar dados quando receber novo agendamento
-    const unsubscribeCallback = notificationService.onNewAppointment(async () => {
-      const hoje = new Date().toISOString().split('T')[0]
-      await carregarAgendamentosPorData(dataInicial, dataFinal)
-    })
-
-    return () => {
-      unsubscribe()
-      unsubscribeCallback()
-    }
-  }, [carregarAgendamentosPorData])
+  }
 
   // Função para formatar o valor em reais
   const formatarMoeda = (valor: number) => {
@@ -144,7 +219,6 @@ export default function Dashboard() {
   }
 
   // Cálculos para o dashboard
-  const hoje = new Date().toISOString().split('T')[0]
   const agendamentosHoje = Array.isArray(agendamentos) 
     ? agendamentos.filter(a => a && a.data === hoje)
     : []
@@ -207,94 +281,313 @@ export default function Dashboard() {
     }
   }
 
-  const handlePeriodoChange = async () => {
-    try {
-      await carregarAgendamentosPorData(dataInicial, dataFinal)
-      sounds.play('click')
-    } catch (error) {
-      console.error('Erro ao carregar dados do período:', error)
-    }
+  const handlePeriodoChange = () => {
+    carregarDados()
   }
 
   const gerarRelatorioPDF = () => {
-    const doc = new jsPDF()
-    const agendamentosPeriodo = filtrarAgendamentosPorPeriodo(dataInicial, dataFinal)
-    const estatisticasPeriodo = calcularEstatisticasPeriodo(agendamentosPeriodo)
-    let yPos = 85
-    
-    // Título do relatório
-    doc.setFontSize(20)
-    doc.text('Relatório Studio D\'Elas Beauty Artist', 15, 15)
-    doc.setFontSize(12)
-    doc.text(`Período: ${new Date(dataInicial).toLocaleDateString('pt-BR')} a ${new Date(dataFinal).toLocaleDateString('pt-BR')}`, 15, 25)
+    try {
+      // Configuração inicial do documento
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      })
 
-    // Métricas do período
-    doc.setFontSize(16)
-    doc.text('Métricas do Período', 15, 35)
-    doc.setFontSize(12)
-    doc.text(`Total de Agendamentos: ${estatisticasPeriodo.total}`, 15, 45)
-    doc.text(`Faturamento Total: ${formatarMoeda(estatisticasPeriodo.faturamento)}`, 15, 52)
-    doc.text(`Ticket Médio: ${formatarMoeda(estatisticasPeriodo.ticketMedio)}`, 15, 59)
-    doc.text(`Taxa de Conclusão: ${estatisticasPeriodo.total > 0 ? Math.round((estatisticasPeriodo.concluidos / estatisticasPeriodo.total) * 100) : 0}%`, 15, 66)
+      // Adicionar logo e cabeçalho
+      doc.setFillColor(255, 192, 0)
+      doc.rect(0, 0, doc.internal.pageSize.width, 40, 'F')
+      
+      doc.setTextColor(0, 0, 0)
+      doc.setFontSize(24)
+      doc.setFont('helvetica', 'bold')
+      doc.text('Studio Delas Beauty Artist', 105, 20, { align: 'center' })
+      
+      doc.setFontSize(16)
+      doc.text('Relatório Financeiro', 105, 30, { align: 'center' })
 
-    // Status dos Agendamentos
-    doc.setFontSize(16)
-    doc.text('Status dos Agendamentos', 15, 80)
-    
-    autoTable(doc, {
-      startY: yPos,
-      head: [['Status', 'Quantidade']],
-      body: [
-        ['Pendentes', estatisticasPeriodo.pendentes],
-        ['Confirmados', estatisticasPeriodo.confirmados],
-        ['Concluídos', estatisticasPeriodo.concluidos],
-        ['Cancelados', estatisticasPeriodo.cancelados],
-        ['Total', estatisticasPeriodo.total]
-      ],
-    })
+      let posicaoY = 50
 
-    // Faturamento dos últimos 7 dias
-    yPos = 160
-    doc.setFontSize(16)
-    doc.text('Faturamento dos Últimos 7 Dias', 15, yPos)
-    
-    autoTable(doc, {
-      startY: yPos + 5,
-      head: [['Data', 'Valor']],
-      body: dadosFaturamento.map(item => [
-        item.data,
-        formatarMoeda(item.valor)
-      ]),
-    })
+      // Período do relatório
+      doc.setFontSize(12)
+      doc.setFont('helvetica', 'normal')
+      doc.text(
+        `Período: ${format(toZonedTime(parseISO(dataInicial), 'America/Sao_Paulo'), 'dd/MM/yyyy')} a ${format(toZonedTime(parseISO(dataFinal), 'America/Sao_Paulo'), 'dd/MM/yyyy')}`,
+        105,
+        posicaoY,
+        { align: 'center' }
+      )
+      posicaoY += 15
 
-    // Próximos Agendamentos
-    yPos = 235
-    doc.setFontSize(16)
-    doc.text('Próximos Agendamentos', 15, yPos)
-    
-    const proximosAgendamentos = agendamentosPeriodo.map(agendamento => [
-      new Date(agendamento.data).toLocaleDateString('pt-BR'),
-      agendamento.horario,
-      agendamento.cliente.nome,
-      agendamento.servico.nome,
-      formatarMoeda(agendamento.servico.preco),
-      agendamento.status.charAt(0).toUpperCase() + agendamento.status.slice(1)
-    ])
+      // Resumo Financeiro
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(255, 192, 0)
+      doc.text('Resumo Financeiro', 20, posicaoY)
+      posicaoY += 10
 
-    autoTable(doc, {
-      startY: yPos + 5,
-      head: [['Data', 'Horário', 'Cliente', 'Serviço', 'Valor', 'Status']],
-      body: proximosAgendamentos,
-    })
+      const dadosResumo = [
+        ['Lucro Total', formatarMoeda(resumo.lucroTotal)],
+        ['Total de Serviços', resumo.totalServicos.toString()],
+        ['Ticket Médio', formatarMoeda(resumo.mediaTicket)],
+        ['Média Diária', formatarMoeda(resumo.lucroTotal / (dadosLucro.length || 1))]
+      ]
 
-    // Salvar o PDF
-    doc.save(`relatorio-studio-delas-${new Date(dataInicial).toLocaleDateString('pt-BR').replace(/\//g, '-')}-${new Date(dataFinal).toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`)
+      autoTable(doc, {
+        startY: posicaoY,
+        head: [['Métrica', 'Valor']],
+        body: dadosResumo,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [255, 192, 0],
+          textColor: [0, 0, 0],
+          fontStyle: 'bold',
+          fontSize: 12
+        },
+        styles: {
+          fontSize: 10,
+          textColor: [0, 0, 0],
+          cellPadding: 5
+        },
+        alternateRowStyles: {
+          fillColor: [255, 248, 225]
+        }
+      })
+
+      posicaoY = (doc as any).lastAutoTable.finalY + 20
+
+      // Estatísticas de Agendamentos
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(255, 192, 0)
+      doc.text('Estatísticas de Agendamentos', 20, posicaoY)
+      posicaoY += 10
+
+      const dadosEstatisticas = [
+        ['Pendentes', estatisticas.pendentes.toString(), `${((estatisticas.pendentes / estatisticas.total) * 100).toFixed(1)}%`],
+        ['Confirmados', estatisticas.confirmados.toString(), `${((estatisticas.confirmados / estatisticas.total) * 100).toFixed(1)}%`],
+        ['Concluídos', estatisticas.concluidos.toString(), `${((estatisticas.concluidos / estatisticas.total) * 100).toFixed(1)}%`],
+        ['Cancelados', estatisticas.cancelados.toString(), `${((estatisticas.cancelados / estatisticas.total) * 100).toFixed(1)}%`],
+        ['Total', estatisticas.total.toString(), '100%']
+      ]
+
+      autoTable(doc, {
+        startY: posicaoY,
+        head: [['Status', 'Quantidade', 'Taxa']],
+        body: dadosEstatisticas,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [255, 192, 0],
+          textColor: [0, 0, 0],
+          fontStyle: 'bold',
+          fontSize: 12
+        },
+        styles: {
+          fontSize: 10,
+          textColor: [0, 0, 0],
+          cellPadding: 5
+        },
+        alternateRowStyles: {
+          fillColor: [255, 248, 225]
+        }
+      })
+
+      posicaoY = (doc as any).lastAutoTable.finalY + 20
+
+      // Detalhamento por Dia
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(255, 192, 0)
+      doc.text('Detalhamento por Dia', 20, posicaoY)
+      posicaoY += 10
+
+      const dadosDetalhados = dadosLucro.map(dado => [
+        dado.data,
+        formatarMoeda(dado.lucroTotal),
+        dado.totalServicos.toString(),
+        formatarMoeda(dado.lucroTotal / dado.totalServicos || 0)
+      ])
+
+      autoTable(doc, {
+        startY: posicaoY,
+        head: [['Data', 'Lucro Total', 'Serviços', 'Ticket Médio']],
+        body: dadosDetalhados,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [255, 192, 0],
+          textColor: [0, 0, 0],
+          fontStyle: 'bold',
+          fontSize: 12
+        },
+        styles: {
+          fontSize: 9,
+          textColor: [0, 0, 0],
+          cellPadding: 5
+        },
+        alternateRowStyles: {
+          fillColor: [255, 248, 225]
+        }
+      })
+
+      posicaoY = (doc as any).lastAutoTable.finalY + 20
+
+      // Nova seção: Detalhamento dos Serviços Concluídos
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(255, 192, 0)
+      doc.text('Detalhamento dos Serviços Concluídos', 20, posicaoY)
+      posicaoY += 10
+
+      // Agrupar serviços por tipo
+      const servicosPorTipo = agendamentos
+        .filter(a => a.status === 'concluido')
+        .reduce((acc, agendamento) => {
+          const servicoNome = agendamento.servico.nome
+          if (!acc[servicoNome]) {
+            acc[servicoNome] = {
+              quantidade: 0,
+              valorTotal: 0,
+              duracaoTotal: 0
+            }
+          }
+          acc[servicoNome].quantidade++
+          acc[servicoNome].valorTotal += agendamento.servico.preco
+          acc[servicoNome].duracaoTotal += agendamento.servico.duracao_minutos
+          return acc
+        }, {} as Record<string, { quantidade: number; valorTotal: number; duracaoTotal: number }>)
+
+      const dadosServicos = Object.entries(servicosPorTipo).map(([servico, dados]) => [
+        servico,
+        dados.quantidade.toString(),
+        formatarMoeda(dados.valorTotal),
+        formatarMoeda(dados.valorTotal / dados.quantidade),
+        `${Math.floor(dados.duracaoTotal / 60)}h${dados.duracaoTotal % 60}min`,
+        `${((dados.quantidade / resumo.totalServicos) * 100).toFixed(1)}%`
+      ])
+
+      autoTable(doc, {
+        startY: posicaoY,
+        head: [['Serviço', 'Quantidade', 'Valor Total', 'Ticket Médio', 'Tempo Total', 'Taxa']],
+        body: dadosServicos,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [255, 192, 0],
+          textColor: [0, 0, 0],
+          fontStyle: 'bold',
+          fontSize: 12
+        },
+        styles: {
+          fontSize: 9,
+          textColor: [0, 0, 0],
+          cellPadding: 5
+        },
+        alternateRowStyles: {
+          fillColor: [255, 248, 225]
+        }
+      })
+
+      posicaoY = (doc as any).lastAutoTable.finalY + 20
+
+      // Nova seção: Detalhamento por Profissional
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(255, 192, 0)
+      doc.text('Detalhamento por Profissional', 20, posicaoY)
+      posicaoY += 10
+
+      // Agrupar serviços por profissional
+      const servicosPorProfissional = agendamentos
+        .filter(a => a.status === 'concluido')
+        .reduce((acc, agendamento) => {
+          const profissionalNome = agendamento.funcionario.nome
+          if (!acc[profissionalNome]) {
+            acc[profissionalNome] = {
+              cargo: agendamento.funcionario.cargo,
+              quantidade: 0,
+              valorTotal: 0,
+              duracaoTotal: 0,
+              servicosRealizados: new Set<string>()
+            }
+          }
+          acc[profissionalNome].quantidade++
+          acc[profissionalNome].valorTotal += agendamento.servico.preco
+          acc[profissionalNome].duracaoTotal += agendamento.servico.duracao_minutos
+          acc[profissionalNome].servicosRealizados.add(agendamento.servico.nome)
+          return acc
+        }, {} as Record<string, { 
+          cargo: string; 
+          quantidade: number; 
+          valorTotal: number; 
+          duracaoTotal: number;
+          servicosRealizados: Set<string>;
+        }>)
+
+      const dadosProfissionais = Object.entries(servicosPorProfissional).map(([profissional, dados]) => [
+        profissional,
+        dados.cargo,
+        dados.quantidade.toString(),
+        formatarMoeda(dados.valorTotal),
+        formatarMoeda(dados.valorTotal / dados.quantidade),
+        `${Math.floor(dados.duracaoTotal / 60)}h${dados.duracaoTotal % 60}min`,
+        Array.from(dados.servicosRealizados).join(', ')
+      ])
+
+      autoTable(doc, {
+        startY: posicaoY,
+        head: [['Profissional', 'Cargo', 'Atendimentos', 'Valor Total', 'Ticket Médio', 'Tempo Total', 'Serviços Realizados']],
+        body: dadosProfissionais,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [255, 192, 0],
+          textColor: [0, 0, 0],
+          fontStyle: 'bold',
+          fontSize: 12
+        },
+        styles: {
+          fontSize: 8,
+          textColor: [0, 0, 0],
+          cellPadding: 5
+        },
+        alternateRowStyles: {
+          fillColor: [255, 248, 225]
+        }
+      })
+
+      // Rodapé
+      const dataGeracao = format(toZonedTime(new Date(), 'America/Sao_Paulo'), 'dd/MM/yyyy HH:mm')
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'italic')
+      doc.setTextColor(128, 128, 128)
+      doc.text(
+        `Relatório gerado em ${dataGeracao}`,
+        doc.internal.pageSize.width / 2,
+        doc.internal.pageSize.height - 10,
+        { align: 'center' }
+      )
+
+      // Salvar o PDF
+      const nomeArquivo = `relatorio-financeiro-${format(toZonedTime(parseISO(dataInicial), 'America/Sao_Paulo'), 'dd-MM-yyyy')}-a-${format(toZonedTime(parseISO(dataFinal), 'America/Sao_Paulo'), 'dd-MM-yyyy')}.pdf`
+      doc.save(nomeArquivo)
+
+      // Tocar som de sucesso
+      sounds.play('sucesso')
+      
+      // Notificar sucesso
+      notificationService.success('Relatório gerado com sucesso!')
+    } catch (error) {
+      console.error('Erro ao gerar relatório:', error)
+      sounds.play('erro')
+      notificationService.error('Erro ao gerar relatório. Por favor, tente novamente.')
+    }
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+      <div className="min-h-[400px] flex items-center justify-center">
+        <div className="relative w-16 h-16">
+          <div className="absolute inset-0 rounded-full border-4 border-gold-600/20"></div>
+          <div className="absolute inset-0 rounded-full border-4 border-gold-600 border-t-transparent animate-spin"></div>
+        </div>
       </div>
     )
   }
@@ -325,14 +618,14 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Cabeçalho e Filtros */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-gold-500">Dashboard</h2>
         
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          {/* Seletor de Período */}
+        <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="flex flex-col">
-              <label className="text-sm text-gray-400 mb-1">Data Inicial</label>
+              <label className="text-sm text-gray-400">Data Inicial</label>
               <input
                 type="date"
                 value={dataInicial}
@@ -341,7 +634,7 @@ export default function Dashboard() {
               />
             </div>
             <div className="flex flex-col">
-              <label className="text-sm text-gray-400 mb-1">Data Final</label>
+              <label className="text-sm text-gray-400">Data Final</label>
               <input
                 type="date"
                 value={dataFinal}
@@ -351,128 +644,214 @@ export default function Dashboard() {
             </div>
             <button
               onClick={handlePeriodoChange}
-              className="mt-6 px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-700 text-white rounded-lg hover:from-gold-700 hover:to-gold-800 transition-all"
-              onMouseEnter={handleCardHover}
+              className="mt-6 px-4 py-2 bg-gold-600 text-white rounded-lg hover:bg-gold-700 transition-colors"
             >
               Filtrar
             </button>
           </div>
-
-          {/* Botão Gerar PDF */}
+          
           <button
             onClick={gerarRelatorioPDF}
-            className="px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-700 text-white rounded-lg hover:from-gold-700 hover:to-gold-800 transition-all flex items-center gap-2"
-            onMouseEnter={handleCardHover}
+            className="px-4 py-2 bg-gold-600/20 text-gold-500 rounded-lg hover:bg-gold-600/30 transition-colors flex items-center gap-2"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586L7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clipRule="evenodd" />
-            </svg>
+            <span>📊</span>
             Gerar Relatório PDF
           </button>
-        </div>
-      </div>
-
-      {/* Cards de Métricas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div 
-          className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-gold-600/20 p-6"
-          onMouseEnter={handleCardHover}
-        >
-          <h3 className="text-gray-400 text-sm mb-2">Agendamentos Hoje</h3>
-          <p className="text-3xl font-bold text-white">{agendamentosHoje.length}</p>
-          <div className="mt-4 space-y-1">
-            <p className="text-sm">
-              <span className="text-yellow-400">•</span>
-              <span className="text-gray-400 ml-2">Pendentes: {estatisticas.pendentes}</span>
-            </p>
-            <p className="text-sm">
-              <span className="text-blue-400">•</span>
-              <span className="text-gray-400 ml-2">Confirmados: {estatisticas.confirmados}</span>
-            </p>
-            <p className="text-sm">
-              <span className="text-green-400">•</span>
-              <span className="text-gray-400 ml-2">Concluídos: {estatisticas.concluidos}</span>
-            </p>
-            <p className="text-sm">
-              <span className="text-red-400">•</span>
-              <span className="text-gray-400 ml-2">Cancelados: {estatisticas.cancelados}</span>
-            </p>
           </div>
         </div>
 
-        <div 
-          className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-gold-600/20 p-6"
-          onMouseEnter={handleCardHover}
-        >
-          <h3 className="text-gray-400 text-sm mb-2">Faturamento Hoje</h3>
-          <p className="text-3xl font-bold text-white">{formatarMoeda(faturamentoHoje)}</p>
-          <p className="mt-4 text-sm text-gray-400">
-            {clientesAtendidosHoje} clientes atendidos
-          </p>
+      {/* Estatísticas do Dia */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gold-600/20">
+          <h3 className="text-lg font-semibold text-gold-500 mb-4">Agendamentos Hoje</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Pendentes:</span>
+              <span className="text-yellow-500 font-semibold">{estatisticas.pendentes}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Confirmados:</span>
+              <span className="text-blue-500 font-semibold">{estatisticas.confirmados}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Concluídos:</span>
+              <span className="text-green-500 font-semibold">{estatisticas.concluidos}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Cancelados:</span>
+              <span className="text-red-500 font-semibold">{estatisticas.cancelados}</span>
+            </div>
+            <div className="pt-2 border-t border-gold-600/10">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Total:</span>
+                <span className="text-gold-500 font-semibold">{estatisticas.total}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div 
-          className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-gold-600/20 p-6"
-          onMouseEnter={handleCardHover}
-        >
-          <h3 className="text-gray-400 text-sm mb-2">Ticket Médio</h3>
-          <p className="text-3xl font-bold text-white">{formatarMoeda(ticketMedioHoje)}</p>
-          <p className="mt-4 text-sm text-gray-400">
-            Média por cliente hoje
-          </p>
+        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gold-600/20">
+          <h3 className="text-lg font-semibold text-gold-500 mb-4">Faturamento Hoje</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Valor Total:</span>
+              <span className="text-gold-500 font-semibold">{formatarMoeda(faturamentoHoje)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Clientes Atendidos:</span>
+              <span className="text-blue-500 font-semibold">{clientesAtendidosHoje}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Ticket Médio:</span>
+              <span className="text-emerald-500 font-semibold">{formatarMoeda(ticketMedioHoje)}</span>
+            </div>
+          </div>
         </div>
 
-        <div 
-          className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-gold-600/20 p-6"
-          onMouseEnter={handleCardHover}
-        >
-          <h3 className="text-gray-400 text-sm mb-2">Taxa de Conclusão</h3>
-          <p className="text-3xl font-bold text-white">
+        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gold-600/20">
+          <h3 className="text-lg font-semibold text-gold-500 mb-4">Taxa de Conclusão</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Agendados:</span>
+              <span className="text-blue-500 font-semibold">{estatisticas.total}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Concluídos:</span>
+              <span className="text-green-500 font-semibold">{estatisticas.concluidos}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Taxa:</span>
+              <span className="text-gold-500 font-semibold">
             {estatisticas.total > 0 
-              ? `${Math.round((estatisticas.concluidos / estatisticas.total) * 100)}%`
+                  ? `${((estatisticas.concluidos / estatisticas.total) * 100).toFixed(1)}%`
               : '0%'
             }
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gold-600/20">
+          <h3 className="text-lg font-semibold text-gold-500 mb-4">Resumo do Período</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Lucro Total:</span>
+              <span className="text-gold-500 font-semibold">{formatarMoeda(resumo.lucroTotal)}</span>
+            </div>
+            <div className="pt-2 border-t border-gold-600/10">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Média Diária:</span>
+                <span className="text-emerald-500 font-semibold">
+                  {formatarMoeda(resumo.lucroTotal / (dadosLucro.length || 1))}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Cards de Resumo */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-[#1a1a1a] p-4 rounded-xl border border-gold-600/20">
+          <h3 className="text-sm text-gray-400 mb-2">Lucro Total</h3>
+          <p className="text-2xl font-bold text-gold-500">{formatarMoeda(resumo.lucroTotal)}</p>
+          <p className="text-sm text-gray-400 mt-1">No período selecionado</p>
+        </div>
+        <div className="bg-[#1a1a1a] p-4 rounded-xl border border-gold-600/20">
+          <h3 className="text-sm text-gray-400 mb-2">Total de Serviços</h3>
+          <p className="text-2xl font-bold text-purple-500">{resumo.totalServicos}</p>
+          <p className="text-sm text-gray-400 mt-1">Serviços realizados</p>
+        </div>
+        <div className="bg-[#1a1a1a] p-4 rounded-xl border border-gold-600/20">
+          <h3 className="text-sm text-gray-400 mb-2">Ticket Médio</h3>
+          <p className="text-2xl font-bold text-rose-500">{formatarMoeda(resumo.mediaTicket)}</p>
+          <p className="text-sm text-gray-400 mt-1">Por atendimento</p>
+        </div>
+        <div className="bg-[#1a1a1a] p-4 rounded-xl border border-gold-600/20">
+          <h3 className="text-sm text-gray-400 mb-2">Média Diária</h3>
+          <p className="text-2xl font-bold text-emerald-500">
+            {formatarMoeda(resumo.lucroTotal / (dadosLucro.length || 1))}
           </p>
-          <p className="mt-4 text-sm text-gray-400">
-            Agendamentos concluídos
-          </p>
+          <p className="text-sm text-gray-400 mt-1">Faturamento médio</p>
         </div>
       </div>
 
       {/* Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Gráfico de Faturamento */}
-        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-gold-600/20 p-6">
-          <h3 className="text-white text-lg font-semibold mb-4">Faturamento dos Últimos 7 Dias</h3>
+        {/* Gráfico de Linha - Evolução do Lucro */}
+        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gold-600/20">
+          <h3 className="text-lg font-semibold text-gold-500 mb-4">Evolução do Lucro</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={dadosFaturamento}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="data" stroke="#666" />
-                <YAxis stroke="#666" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1a1a1a',
-                    border: '1px solid rgba(255, 192, 0, 0.2)',
-                    borderRadius: '0.5rem'
-                  }}
-                  formatter={(value: number) => [formatarMoeda(value), 'Faturamento']}
+              <LineChart data={dadosLucro} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
+                <XAxis 
+                  dataKey="data" 
+                  stroke="#666"
+                  tick={{ fill: '#666' }}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="valor" 
-                  stroke="#FFC000" 
+                <YAxis 
+                  stroke="#666"
+                  tick={{ fill: '#666' }}
+                  tickFormatter={(value) => formatarMoeda(value)}
+                />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(255, 192, 0, 0.2)' }}
+                  labelStyle={{ color: '#999' }}
+                  formatter={(value: number) => [formatarMoeda(value)]}
+                />
+                <Legend wrapperStyle={{ color: '#666' }} />
+                <Line
+                  type="monotone"
+                  dataKey="lucroTotal"
+                  name="Lucro Total"
+                  stroke="#FFC000"
                   strokeWidth={2}
                   dot={{ fill: '#FFC000' }}
+                  activeDot={{ r: 8 }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
+        {/* Gráfico de Barras - Comparativo */}
+        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gold-600/20">
+          <h3 className="text-lg font-semibold text-gold-500 mb-4">Comparativo</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={dadosLucro} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
+                <XAxis 
+                  dataKey="data" 
+                  stroke="#666"
+                  tick={{ fill: '#666' }}
+                />
+                <YAxis 
+                  stroke="#666"
+                  tick={{ fill: '#666' }}
+                  tickFormatter={(value) => formatarMoeda(value)}
+                />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid rgba(255, 192, 0, 0.2)' }}
+                  labelStyle={{ color: '#999' }}
+                  formatter={(value: number) => [formatarMoeda(value)]}
+                />
+                <Legend wrapperStyle={{ color: '#666' }} />
+                <Bar 
+                  dataKey="lucroTotal" 
+                  name="Lucro Total" 
+                  fill="#FFC000" 
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
         {/* Gráfico de Status */}
-        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-gold-600/20 p-6">
-          <h3 className="text-white text-lg font-semibold mb-4">Distribuição de Status</h3>
+        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gold-600/20">
+          <h3 className="text-lg font-semibold text-gold-500 mb-4">Distribuição de Status</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -495,40 +874,47 @@ export default function Dashboard() {
                     border: '1px solid rgba(255, 192, 0, 0.2)',
                     borderRadius: '0.5rem'
                   }}
+                  formatter={(value: number) => [value, 'Agendamentos']}
+                />
+                <Legend 
+                  wrapperStyle={{ color: '#666' }}
+                  formatter={(value) => <span style={{ color: '#666' }}>{value}</span>}
                 />
               </PieChart>
             </ResponsiveContainer>
-            <div className="flex justify-center gap-4 mt-4">
-              {dadosAgendamentosPorStatus.map((entry, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <div 
-                    className="w-3 h-3 rounded-full" 
-                    style={{ backgroundColor: entry.color }}
-                  />
-                  <span className="text-sm text-gray-400">{entry.name}</span>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
 
         {/* Gráfico de Agendamentos por Hora */}
-        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-gold-600/20 p-6 lg:col-span-2">
-          <h3 className="text-white text-lg font-semibold mb-4">Agendamentos por Horário</h3>
+        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gold-600/20">
+          <h3 className="text-lg font-semibold text-gold-500 mb-4">Agendamentos por Horário</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dadosAgendamentosPorHora}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="hora" stroke="#666" />
-                <YAxis stroke="#666" />
+              <BarChart data={dadosAgendamentosPorHora} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
+                <XAxis 
+                  dataKey="hora" 
+                  stroke="#666"
+                  tick={{ fill: '#666' }}
+                />
+                <YAxis 
+                  stroke="#666"
+                  tick={{ fill: '#666' }}
+                />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: '#1a1a1a',
                     border: '1px solid rgba(255, 192, 0, 0.2)',
                     borderRadius: '0.5rem'
                   }}
+                  formatter={(value: number) => [value, 'Agendamentos']}
                 />
-                <Bar dataKey="quantidade" fill="#FFC000" />
+                <Bar 
+                  dataKey="quantidade" 
+                  name="Quantidade" 
+                  fill="#FFC000" 
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>

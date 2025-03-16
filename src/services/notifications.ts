@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase'
 import { sounds } from './sounds'
 
-class NotificationService {
+export class NotificationService {
   private static instance: NotificationService
   private subscriptions: (() => void)[] = []
 
@@ -49,6 +49,18 @@ class NotificationService {
     return () => {
       this.subscriptions = this.subscriptions.filter(cb => cb !== callback)
     }
+  }
+
+  show(message: string) {
+    // Implementação existente
+  }
+
+  success(message: string) {
+    this.show(message)
+  }
+
+  error(message: string) {
+    this.show(message)
   }
 }
 
