@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import { sounds } from '../../services/sounds'
 import { notificationService } from '../../services/notifications'
+import { format, toZonedTime } from 'date-fns-tz'
+import { ptBR } from 'date-fns/locale'
+import { useRealtimeAgendamentos } from '../../hooks/useRealtimeAgendamentos'
 
 // Interfaces
 type StatusAgendamento = 'pendente' | 'confirmado' | 'concluido' | 'cancelado'
@@ -90,111 +93,50 @@ export default function FuncionarioArea() {
     return data.toLocaleDateString('en-CA'); // Formato YYYY-MM-DD
   };
 
-  // Função para carregar agendamentos
-  const carregarAgendamentos = async (filtro: string = filtroAtual) => {
+  const carregarAgendamentos = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
 
-      const funcionarioId = (await supabase.auth.getUser()).data.user?.id;
-      if (!funcionarioId) throw new Error('Funcionário não autenticado');
+      // Buscar o ID do funcionário atual
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) throw sessionError
+
+      if (!session?.user) {
+        throw new Error('Usuário não autenticado')
+      }
 
       // Formatar data atual
-      const hoje = new Date();
-      const dataHoje = formatarData(hoje);
-      
-      console.log('Data de hoje formatada:', dataHoje);
+      const dataAtual = format(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd')
 
-      // Preparar query base
-      let query = supabase
+      const { data: agendamentosData, error } = await supabase
         .from('agendamentos')
         .select(`
-          id,
-          data,
-          horario,
-          status,
-          cliente:clientes(nome,telefone),
-          servico:servicos(nome,preco),
-          funcionario:funcionarios(nome,cargo)
+          *,
+          cliente:clientes(nome, telefone),
+          servico:servicos(nome, preco)
         `)
-        .eq('funcionario_id', funcionarioId);
+        .eq('funcionario_id', session.user.id)
+        .eq('data', dataAtual)
+        .order('horario', { ascending: true })
 
-      // Aplicar filtro de data
-      if (filtro === 'hoje') {
-        console.log('Aplicando filtro para hoje:', dataHoje);
-        query = query.eq('data', dataHoje);
-      } else if (filtro === 'semana') {
-        const inicioSemana = new Date(hoje);
-        inicioSemana.setDate(hoje.getDate() - hoje.getDay());
-        const dataInicioSemana = formatarData(inicioSemana);
+      if (error) throw error
 
-        const fimSemana = new Date(hoje);
-        fimSemana.setDate(hoje.getDate() + (6 - hoje.getDay()));
-        const dataFimSemana = formatarData(fimSemana);
-
-        console.log('Aplicando filtro para semana:', { dataInicioSemana, dataFimSemana });
-        
-        query = query
-          .gte('data', dataInicioSemana)
-          .lte('data', dataFimSemana);
-      }
-
-      // Executar query com ordenação
-      const { data: agendamentosRaw, error: dbError } = await query
-        .order('data', { ascending: true })
-        .order('horario', { ascending: true });
-
-      if (dbError) {
-        console.error('Erro do banco:', dbError);
-        throw dbError;
-      }
-
-      console.log('Agendamentos recebidos:', agendamentosRaw);
-
-      // Transformar os dados garantindo que todos os campos obrigatórios existam
-      const agendamentosFormatados = (agendamentosRaw || []).map((item: any): Agendamento => {
-        // Garantir que a data seja válida
-        let dataFormatada = item.data;
-        if (!dataFormatada) {
-          console.warn('Agendamento sem data:', item);
-          dataFormatada = dataHoje;
-        }
-
-        return {
-          id: item.id || '',
-          data: dataFormatada,
-          horario: item.horario || '00:00',
-          status: (item.status as StatusAgendamento) || 'pendente',
-          cliente: {
-            nome: item.cliente?.nome || '',
-            telefone: item.cliente?.telefone || ''
-          },
-          servico: {
-            nome: item.servico?.nome || '',
-            preco: item.servico?.preco || 0
-          },
-          funcionario: {
-            nome: item.funcionario?.nome || '',
-            cargo: (item.funcionario?.cargo as Agendamento['funcionario']['cargo']) || 'barbeiro'
-          }
-        };
-      });
-
-      console.log('Agendamentos formatados:', agendamentosFormatados);
-      setAgendamentos(agendamentosFormatados);
+      setAgendamentos(agendamentosData || [])
     } catch (err) {
-      console.error('Erro ao carregar agendamentos:', err);
-      setError('Erro ao carregar agendamentos');
-      sounds.play('erro');
+      console.error('Erro ao carregar agendamentos:', err)
+      setError('Erro ao carregar agendamentos')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }, [])
 
-  // Efeito para carregar agendamentos iniciais
+  // Usar o hook de Realtime
+  useRealtimeAgendamentos(carregarAgendamentos)
+
   useEffect(() => {
     carregarAgendamentos()
-  }, [])
+  }, [carregarAgendamentos])
 
   // Efeito para notificações em tempo real
   useEffect(() => {
@@ -262,7 +204,7 @@ export default function FuncionarioArea() {
   const handleFiltroChange = async (filtro: string) => {
     setFiltroAtual(filtro)
     sounds.play('filter-change')
-    await carregarAgendamentos(filtro)
+    await carregarAgendamentos()
   }
 
   const handleVisualizacaoChange = (tipo: 'lista' | 'cards') => {

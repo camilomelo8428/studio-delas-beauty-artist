@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { Agendamento, Funcionario } from '../../services/admin'
 import ConfirmationModal from '../ConfirmationModal'
 import { supabase } from '../../lib/supabase'
@@ -7,6 +7,7 @@ import { notificationService } from '../../services/notifications'
 import { format, toZonedTime } from 'date-fns-tz'
 import { parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { useRealtimeAgendamentos } from '../../hooks/useRealtimeAgendamentos'
 
 // Função utilitária para formatar datas
 const formatarData = (data: string) => {
@@ -30,7 +31,7 @@ export default function Agendamentos() {
   const [visualizacao, setVisualizacao] = useState<'lista' | 'cards'>('cards')
   const [agendamentoParaExcluir, setAgendamentoParaExcluir] = useState<Agendamento | null>(null)
 
-  const carregarAgendamentos = async () => {
+  const carregarAgendamentos = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -77,26 +78,14 @@ export default function Agendamentos() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [dataInicial, dataFinal, filtroStatus])
+
+  // Usar o hook de Realtime
+  useRealtimeAgendamentos(carregarAgendamentos)
 
   useEffect(() => {
     carregarAgendamentos()
-  }, [])
-
-  useEffect(() => {
-    // Inicializar o serviço de notificações em tempo real
-    const unsubscribe = notificationService.initializeRealtime()
-
-    // Registrar callback para atualizar dados quando receber novo agendamento
-    const unsubscribeCallback = notificationService.onNewAppointment(async () => {
-      await carregarAgendamentos()
-    })
-
-    return () => {
-      unsubscribe()
-      unsubscribeCallback()
-    }
-  }, [dataInicial, dataFinal, filtroStatus, carregarAgendamentos])
+  }, [carregarAgendamentos])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

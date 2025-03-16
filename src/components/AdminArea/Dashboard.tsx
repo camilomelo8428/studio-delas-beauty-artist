@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAgendamentos } from '../../hooks/useAdmin'
 import type { Agendamento } from '../../services/admin'
 import { jsPDF } from 'jspdf'
@@ -24,6 +24,7 @@ import { notificationService } from '../../services/notifications'
 import { format, subDays, startOfMonth, endOfMonth, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toZonedTime } from 'date-fns-tz'
+import { useRealtimeAgendamentos } from '../../hooks/useRealtimeAgendamentos'
 
 const hoje = format(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd')
 
@@ -73,150 +74,143 @@ export default function Dashboard() {
   const [dadosAgendamentosPorHora, setDadosAgendamentosPorHora] = useState<any[]>([])
   const [periodoSelecionado, setPeriodoSelecionado] = useState<'hoje' | '7dias' | 'mes'>('hoje')
 
-  useEffect(() => {
-    carregarDados()
-  }, [dataInicial, dataFinal])
-
-  const carregarDados = async () => {
+  const carregarDados = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
 
-      // Garantir que as datas estejam definidas
-      const dataAtual = format(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd')
-      const dataInicialFormatada = dataInicial || dataAtual
-      const dataFinalFormatada = dataFinal || dataAtual
+      // Formatar datas para o formato YYYY-MM-DD
+      const dataInicialFormatada = new Date(dataInicial).toISOString().split('T')[0]
+      const dataFinalFormatada = new Date(dataFinal).toISOString().split('T')[0]
 
-      console.log('Datas da consulta:', { dataInicialFormatada, dataFinalFormatada })
+      console.log('Buscando agendamentos:', { dataInicialFormatada, dataFinalFormatada })
 
-      // Buscar agendamentos
-      const { data: agendamentos, error: erroAgendamentos } = await supabase
+      const { data: agendamentosData, error } = await supabase
         .from('agendamentos')
         .select(`
-          id,
-          data,
-          horario,
-          status,
-          cliente:clientes(nome, telefone),
+          *,
+          cliente:clientes(nome),
           funcionario:funcionarios(nome),
           servico:servicos(nome, preco)
         `)
         .gte('data', dataInicialFormatada)
         .lte('data', dataFinalFormatada)
-        .order('data', { ascending: true })
-        .order('horario', { ascending: true })
 
-      if (erroAgendamentos) {
-        console.error('Erro ao buscar agendamentos:', erroAgendamentos)
-        throw new Error('Erro ao buscar agendamentos')
-      }
+      if (error) throw error
 
-      const agendamentosCarregados = agendamentos as unknown as Agendamento[]
-      setAgendamentos(agendamentosCarregados)
-
-      // Calcular estatísticas
-      const stats = {
-        pendentes: agendamentosCarregados.filter(a => a.status === 'pendente').length,
-        confirmados: agendamentosCarregados.filter(a => a.status === 'confirmado').length,
-        concluidos: agendamentosCarregados.filter(a => a.status === 'concluido').length,
-        cancelados: agendamentosCarregados.filter(a => a.status === 'cancelado').length,
-        total: agendamentosCarregados.length
-      }
-      setEstatisticas(stats)
-
-      // Preparar dados para o gráfico de status
-      const dadosStatus = [
-        { name: 'Pendentes', value: stats.pendentes, color: '#EAB308' },
-        { name: 'Confirmados', value: stats.confirmados, color: '#3B82F6' },
-        { name: 'Concluídos', value: stats.concluidos, color: '#10B981' },
-        { name: 'Cancelados', value: stats.cancelados, color: '#EF4444' }
-      ]
-      setDadosAgendamentosPorStatus(dadosStatus)
-
-      // Preparar dados para o gráfico de faturamento
-      const dadosFaturamentoPorDia = new Map<string, number>()
-      agendamentosCarregados
-        .filter(a => a.status === 'concluido')
-        .forEach(agendamento => {
-          const data = format(toZonedTime(parseISO(agendamento.data), 'America/Sao_Paulo'), 'dd/MM', { locale: ptBR })
-          const valorAtual = dadosFaturamentoPorDia.get(data) || 0
-          dadosFaturamentoPorDia.set(data, valorAtual + agendamento.servico.preco)
-        })
-
-      const dadosFaturamentoProcessados = Array.from(dadosFaturamentoPorDia.entries())
-        .map(([data, valor]) => ({ data, valor }))
-        .sort((a, b) => a.data.localeCompare(b.data))
-
-      setDadosFaturamento(dadosFaturamentoProcessados)
-
-      // Preparar dados para o gráfico de agendamentos por hora
-      const dadosPorHora = new Map<string, number>()
-      agendamentosCarregados.forEach(agendamento => {
-        const hora = agendamento.horario.split(':')[0] + 'h'
-        const quantidadeAtual = dadosPorHora.get(hora) || 0
-        dadosPorHora.set(hora, quantidadeAtual + 1)
-      })
-
-      const dadosHoraProcessados = Array.from(dadosPorHora.entries())
-        .map(([hora, quantidade]) => ({ hora, quantidade }))
-        .sort((a, b) => a.hora.localeCompare(b.hora))
-
-      setDadosAgendamentosPorHora(dadosHoraProcessados)
-
-      // Calcular dados de lucro por dia
-      const dadosPorDia = new Map<string, DadosLucro>()
-      
-      agendamentosCarregados.forEach(agendamento => {
-        const data = agendamento.data
-        if (!dadosPorDia.has(data)) {
-          dadosPorDia.set(data, {
-            data,
-            lucroTotal: 0,
-            totalServicos: 0
-          })
-        }
-
-        const dadosDia = dadosPorDia.get(data)!
-        if (agendamento.status === 'concluido') {
-          const valorServico = agendamento.servico.preco
-          
-          dadosDia.lucroTotal += valorServico
-          dadosDia.totalServicos += 1
-        }
-      })
-
-      const dadosOrdenados = Array.from(dadosPorDia.values())
-        .sort((a, b) => a.data.localeCompare(b.data))
-        .map(dado => ({
-          ...dado,
-          data: format(toZonedTime(parseISO(dado.data), 'America/Sao_Paulo'), 'dd/MM', { locale: ptBR })
-        }))
-
-      setDadosLucro(dadosOrdenados)
-
-      // Calcular resumo geral
-      const resumoCalculado = dadosOrdenados.reduce((acc, dado) => ({
-        lucroTotal: acc.lucroTotal + dado.lucroTotal,
-        totalServicos: acc.totalServicos + dado.totalServicos,
-        mediaTicket: 0 // Será calculado abaixo
-      }), {
-        lucroTotal: 0,
-        totalServicos: 0,
-        mediaTicket: 0
-      })
-
-      resumoCalculado.mediaTicket = resumoCalculado.totalServicos > 0 
-        ? resumoCalculado.lucroTotal / resumoCalculado.totalServicos 
-        : 0
-
-      setResumo(resumoCalculado)
-
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error)
-      setError('Erro ao carregar dados. Por favor, tente novamente.')
+      setAgendamentos(agendamentosData || [])
+      calcularEstatisticas(agendamentosData || [])
+    } catch (err) {
+      console.error('Erro ao carregar dados:', err)
+      setError('Erro ao carregar dados')
     } finally {
       setLoading(false)
     }
+  }, [dataInicial, dataFinal])
+
+  // Usar o hook de Realtime
+  useRealtimeAgendamentos(carregarDados)
+
+  useEffect(() => {
+    carregarDados()
+  }, [carregarDados])
+
+  const calcularEstatisticas = (agendamentos: Agendamento[]) => {
+    const stats = {
+      pendentes: agendamentos.filter(a => a.status === 'pendente').length,
+      confirmados: agendamentos.filter(a => a.status === 'confirmado').length,
+      concluidos: agendamentos.filter(a => a.status === 'concluido').length,
+      cancelados: agendamentos.filter(a => a.status === 'cancelado').length,
+      total: agendamentos.length
+    }
+    setEstatisticas(stats)
+
+    // Preparar dados para o gráfico de status
+    const dadosStatus = [
+      { name: 'Pendentes', value: stats.pendentes, color: '#EAB308' },
+      { name: 'Confirmados', value: stats.confirmados, color: '#3B82F6' },
+      { name: 'Concluídos', value: stats.concluidos, color: '#10B981' },
+      { name: 'Cancelados', value: stats.cancelados, color: '#EF4444' }
+    ]
+    setDadosAgendamentosPorStatus(dadosStatus)
+
+    // Preparar dados para o gráfico de faturamento
+    const dadosFaturamentoPorDia = new Map<string, number>()
+    agendamentos
+      .filter(a => a.status === 'concluido')
+      .forEach(agendamento => {
+        const data = format(toZonedTime(parseISO(agendamento.data), 'America/Sao_Paulo'), 'dd/MM', { locale: ptBR })
+        const valorAtual = dadosFaturamentoPorDia.get(data) || 0
+        dadosFaturamentoPorDia.set(data, valorAtual + agendamento.servico.preco)
+      })
+
+    const dadosFaturamentoProcessados = Array.from(dadosFaturamentoPorDia.entries())
+      .map(([data, valor]) => ({ data, valor }))
+      .sort((a, b) => a.data.localeCompare(b.data))
+
+    setDadosFaturamento(dadosFaturamentoProcessados)
+
+    // Preparar dados para o gráfico de agendamentos por hora
+    const dadosPorHora = new Map<string, number>()
+    agendamentos.forEach(agendamento => {
+      const hora = agendamento.horario.split(':')[0] + 'h'
+      const quantidadeAtual = dadosPorHora.get(hora) || 0
+      dadosPorHora.set(hora, quantidadeAtual + 1)
+    })
+
+    const dadosHoraProcessados = Array.from(dadosPorHora.entries())
+      .map(([hora, quantidade]) => ({ hora, quantidade }))
+      .sort((a, b) => a.hora.localeCompare(b.hora))
+
+    setDadosAgendamentosPorHora(dadosHoraProcessados)
+
+    // Calcular dados de lucro por dia
+    const dadosPorDia = new Map<string, DadosLucro>()
+    
+    agendamentos.forEach(agendamento => {
+      const data = agendamento.data
+      if (!dadosPorDia.has(data)) {
+        dadosPorDia.set(data, {
+          data,
+          lucroTotal: 0,
+          totalServicos: 0
+        })
+      }
+
+      const dadosDia = dadosPorDia.get(data)!
+      if (agendamento.status === 'concluido') {
+        const valorServico = agendamento.servico.preco
+        
+        dadosDia.lucroTotal += valorServico
+        dadosDia.totalServicos += 1
+      }
+    })
+
+    const dadosOrdenados = Array.from(dadosPorDia.values())
+      .sort((a, b) => a.data.localeCompare(b.data))
+      .map(dado => ({
+        ...dado,
+        data: format(toZonedTime(parseISO(dado.data), 'America/Sao_Paulo'), 'dd/MM', { locale: ptBR })
+      }))
+
+    setDadosLucro(dadosOrdenados)
+
+    // Calcular resumo geral
+    const resumoCalculado = dadosOrdenados.reduce((acc, dado) => ({
+      lucroTotal: acc.lucroTotal + dado.lucroTotal,
+      totalServicos: acc.totalServicos + dado.totalServicos,
+      mediaTicket: 0 // Será calculado abaixo
+    }), {
+      lucroTotal: 0,
+      totalServicos: 0,
+      mediaTicket: 0
+    })
+
+    resumoCalculado.mediaTicket = resumoCalculado.totalServicos > 0 
+      ? resumoCalculado.lucroTotal / resumoCalculado.totalServicos 
+      : 0
+
+    setResumo(resumoCalculado)
   }
 
   // Função para formatar o valor em reais
