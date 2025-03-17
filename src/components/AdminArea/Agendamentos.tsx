@@ -83,6 +83,26 @@ export default function Agendamentos() {
   // Usar o hook de Realtime
   useRealtimeAgendamentos(carregarAgendamentos)
 
+  // Solicitar permissão de notificações ao montar o componente
+  useEffect(() => {
+    notificationService.requestNotificationPermission()
+  }, [])
+
+  // Inicializar notificações em tempo real
+  useEffect(() => {
+    const unsubscribe = notificationService.initializeRealtime()
+
+    // Registrar callback para atualizar dados quando receber novo agendamento
+    const unsubscribeCallback = notificationService.onNewAppointment(async () => {
+      await carregarAgendamentos()
+    })
+
+    return () => {
+      unsubscribe()
+      unsubscribeCallback()
+    }
+  }, [carregarAgendamentos])
+
   useEffect(() => {
     carregarAgendamentos()
   }, [carregarAgendamentos])
@@ -211,12 +231,12 @@ export default function Agendamentos() {
 
       if (error) throw error
 
-      await carregarAgendamentos()
-      sounds.play('status-change')
+      // Não precisamos mais chamar carregarAgendamentos() aqui
+      // pois o Realtime vai cuidar disso automaticamente
     } catch (err) {
       console.error('Erro ao atualizar agendamento:', err)
       setError('Erro ao atualizar agendamento')
-      sounds.play('erro')
+      notificationService.error('Erro ao atualizar agendamento')
       throw err
     } finally {
       setLoading(false)
@@ -235,12 +255,12 @@ export default function Agendamentos() {
 
       if (error) throw error
 
-      await carregarAgendamentos()
-      sounds.play('status-change')
+      // Não precisamos mais chamar carregarAgendamentos() aqui
+      // pois o Realtime vai cuidar disso automaticamente
     } catch (err) {
       console.error('Erro ao excluir agendamento:', err)
       setError('Erro ao excluir agendamento')
-      sounds.play('erro')
+      notificationService.error('Erro ao excluir agendamento')
       throw err
     } finally {
       setLoading(false)

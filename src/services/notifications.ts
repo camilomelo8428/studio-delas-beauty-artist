@@ -4,6 +4,7 @@ import { sounds } from './sounds'
 export class NotificationService {
   private static instance: NotificationService
   private subscriptions: (() => void)[] = []
+  private channel: any = null
 
   private constructor() {
     // Singleton
@@ -17,19 +18,34 @@ export class NotificationService {
   }
 
   public initializeRealtime() {
+    if (this.channel) {
+      this.channel.unsubscribe()
+    }
+
     // Inscrever para receber atualizações de novos agendamentos
-    const subscription = supabase
+    this.channel = supabase
       .channel('notificacoes-agendamentos')
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*', // Escuta todos os eventos (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'agendamentos'
         },
         async (payload) => {
-          // Tocar som de notificação imediatamente
-          sounds.play('agendamento-admin')
+          console.log('Notificação recebida:', payload)
+          
+          // Tocar som específico baseado no tipo de evento
+          if (payload.eventType === 'INSERT') {
+            sounds.play('agendamento-admin')
+            this.show('Novo agendamento recebido!')
+          } else if (payload.eventType === 'UPDATE') {
+            sounds.play('status-change')
+            this.show('Agendamento atualizado')
+          } else if (payload.eventType === 'DELETE') {
+            sounds.play('delete')
+            this.show('Agendamento cancelado')
+          }
           
           // Notificar todos os callbacks registrados
           this.subscriptions.forEach(callback => callback())
@@ -38,7 +54,10 @@ export class NotificationService {
       .subscribe()
 
     return () => {
-      subscription.unsubscribe()
+      if (this.channel) {
+        this.channel.unsubscribe()
+        this.channel = null
+      }
     }
   }
 
@@ -52,15 +71,37 @@ export class NotificationService {
   }
 
   show(message: string) {
-    // Implementação existente
+    // Implementar notificação visual (toast)
+    if (window.Notification && Notification.permission === 'granted') {
+      new Notification('Studio Delas', {
+        body: message,
+        icon: '/logo.png'
+      })
+    }
   }
 
   success(message: string) {
     this.show(message)
+    sounds.play('sucesso')
   }
 
   error(message: string) {
     this.show(message)
+    sounds.play('erro')
+  }
+
+  // Solicitar permissão para notificações
+  public async requestNotificationPermission() {
+    if (window.Notification && Notification.permission !== 'granted') {
+      try {
+        const permission = await Notification.requestPermission()
+        return permission === 'granted'
+      } catch (error) {
+        console.error('Erro ao solicitar permissão de notificação:', error)
+        return false
+      }
+    }
+    return Notification.permission === 'granted'
   }
 }
 
