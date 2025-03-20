@@ -371,23 +371,7 @@ function AgendarHorario() {
 
   return (
     <div className="space-y-8">
-      {/* Botão de Promoções */}
-      <div className="flex justify-end">
-        <button
-          onClick={() => window.location.href = '#promocoes'}
-          className="bg-gradient-to-r from-red-600 to-red-800 text-white px-6 py-2 rounded-lg hover:from-red-700 hover:to-red-900 transition-all flex items-center gap-2"
-        >
-          <span>🔥</span>
-          <span>Ver Promoções</span>
-        </button>
-      </div>
-
-      {/* Seção de Promoções com ID para ancoragem */}
-      <div id="promocoes">
-        <ServicosPromocao />
-      </div>
-
-      {/* Formulário de Agendamento */}
+      {/* Seção de Agendamento */}
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <h2 className="text-2xl font-bold text-red-500">Agendar Horário</h2>
@@ -575,6 +559,21 @@ function AgendarHorario() {
           cancelText={undefined}
           type="warning"
         />
+      </div>
+
+      {/* Seção de Promoções */}
+      <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-2 text-red-500">
+            <span className="text-2xl">🔥</span>
+            <h2 className="text-2xl font-bold">Promoções Especiais</h2>
+          </div>
+          <div className="flex-1 h-px bg-gradient-to-r from-red-600/20 via-red-600/10 to-transparent"></div>
+        </div>
+        
+        <div id="promocoes">
+          <ServicosPromocao />
+        </div>
       </div>
     </div>
   )

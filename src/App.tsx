@@ -1322,18 +1322,18 @@ function App() {
               {/* Área do Cliente */}
               <button 
                 onClick={() => setIsClientLoginOpen(true)}
-                className="group relative w-full overflow-hidden bg-gradient-to-br from-gold-600 to-gold-800 rounded-xl sm:rounded-2xl p-1"
+                className="group relative w-full overflow-hidden bg-gradient-to-br from-gold-600 to-gold-800 rounded-xl sm:rounded-2xl p-1 hover:shadow-lg hover:shadow-gold-600/20 transition-all duration-500"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-gold-400 to-gold-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20"></div>
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
                 <div className="relative bg-[#1a1a1a] rounded-lg sm:rounded-xl p-3 sm:p-4 h-full transform group-hover:translate-y-1 group-hover:translate-x-1 transition-transform duration-300">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 sm:gap-4">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-gold-500/20 to-gold-700/20 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
-                        <span className="text-xl sm:text-2xl">👤</span>
+                        <span className="text-xl sm:text-2xl animate-bounce">👤</span>
                       </div>
                       <div className="text-left">
-                        <h3 className="text-base sm:text-lg font-bold text-white">Área do Cliente</h3>
+                        <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-gold-400 transition-colors duration-300">Área do Cliente</h3>
                         <p className="text-xs sm:text-sm text-gray-400">Acesse sua conta</p>
                       </div>
                     </div>
@@ -1345,18 +1345,30 @@ function App() {
               {/* Promoções */}
               <button 
                 onClick={() => setShowPromocoes(true)}
-                className="group relative w-full overflow-hidden bg-gradient-to-br from-red-600 to-red-800 rounded-xl sm:rounded-2xl p-1"
+                className="group relative w-full overflow-hidden bg-gradient-to-br from-red-600 to-red-800 rounded-xl sm:rounded-2xl p-1 hover:shadow-lg hover:shadow-red-600/20 transition-all duration-500"
               >
+                <div className="absolute -top-2 -right-2">
+                  <span className="animate-ping absolute inline-flex h-4 w-4 rounded-full bg-red-600 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500"></span>
+                </div>
                 <div className="absolute inset-0 bg-gradient-to-br from-red-400 to-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20"></div>
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
                 <div className="relative bg-[#1a1a1a] rounded-lg sm:rounded-xl p-3 sm:p-4 h-full transform group-hover:translate-y-1 group-hover:translate-x-1 transition-transform duration-300">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 sm:gap-4">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-red-500/20 to-red-700/20 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
-                        <span className="text-xl sm:text-2xl">🔥</span>
+                        <span className="text-xl sm:text-2xl animate-bounce">🔥</span>
                       </div>
                       <div className="text-left">
-                        <h3 className="text-base sm:text-lg font-bold text-white">Promoções</h3>
+                        <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-red-400 transition-colors duration-300">
+                          <span className="relative">
+                            Promoções
+                            <span className="absolute -top-1 -right-4 flex h-3 w-3">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                            </span>
+                          </span>
+                        </h3>
                         <p className="text-xs sm:text-sm text-gray-400">Ofertas especiais</p>
                       </div>
                     </div>
@@ -1368,18 +1380,18 @@ function App() {
               {/* Produtos */}
               <button 
                 onClick={() => setShowProdutos(true)}
-                className="group relative w-full overflow-hidden bg-gradient-to-br from-gold-600 to-gold-800 rounded-xl sm:rounded-2xl p-1"
+                className="group relative w-full overflow-hidden bg-gradient-to-br from-gold-600 to-gold-800 rounded-xl sm:rounded-2xl p-1 hover:shadow-lg hover:shadow-gold-600/20 transition-all duration-500"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-gold-400 to-gold-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20"></div>
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
                 <div className="relative bg-[#1a1a1a] rounded-lg sm:rounded-xl p-3 sm:p-4 h-full transform group-hover:translate-y-1 group-hover:translate-x-1 transition-transform duration-300">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 sm:gap-4">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-gold-500/20 to-gold-700/20 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
-                        <span className="text-xl sm:text-2xl">🛍️</span>
+                        <span className="text-xl sm:text-2xl animate-bounce">🛍️</span>
                       </div>
                       <div className="text-left">
-                        <h3 className="text-base sm:text-lg font-bold text-white">Produtos</h3>
+                        <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-gold-400 transition-colors duration-300">Produtos</h3>
                         <p className="text-xs sm:text-sm text-gray-400">Conheça nossa linha</p>
                       </div>
                     </div>

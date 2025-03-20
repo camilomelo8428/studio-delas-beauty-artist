@@ -75,12 +75,20 @@ export default function ServicosPromocao() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <h2 className="text-2xl font-bold text-red-500">Promoções</h2>
-        <div className="flex-1 h-px bg-gradient-to-r from-red-600/20 via-red-600/10 to-transparent"></div>
+      <div className="relative flex items-center gap-4 bg-gradient-to-r from-red-600/20 via-red-600/10 to-transparent p-4 rounded-lg">
+        <div className="absolute -top-2 -right-2">
+          <span className="animate-ping absolute inline-flex h-4 w-4 rounded-full bg-red-600 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500"></span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-3xl animate-bounce">🔥</span>
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
+            Promoções Imperdíveis
+          </h2>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         <AnimatePresence>
           {servicosPromocao.map((servico, index) => (
             <motion.div
@@ -89,17 +97,20 @@ export default function ServicosPromocao() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-gradient-to-b from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 overflow-hidden hover:border-red-600/40 transition-all group relative"
+              className="group relative bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-lg border border-red-600/20 overflow-hidden hover:border-red-600/40 hover:shadow-lg hover:shadow-red-600/10 transition-all duration-300"
             >
               {/* Badge de Desconto */}
-              <div className="absolute top-3 left-3 z-10">
-                <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                  {calcularDesconto(servico.preco, servico.preco_promocional)}% OFF
-                </span>
+              <div className="absolute top-2 left-2 z-10">
+                <div className="relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-600 opacity-75"></span>
+                  <span className="relative inline-flex bg-red-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+                    {calcularDesconto(servico.preco, servico.preco_promocional)}% OFF
+                  </span>
+                </div>
               </div>
 
               {/* Imagem do Serviço */}
-              <div className="aspect-video relative overflow-hidden bg-[#2a2a2a]">
+              <div className="aspect-[4/3] relative overflow-hidden">
                 {servico.foto_url ? (
                   <img 
                     src={servico.foto_url} 
@@ -107,52 +118,40 @@ export default function ServicosPromocao() {
                     className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-red-600/20">
-                    <span className="text-4xl font-bold text-red-600/40">
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-600/10 to-red-900/10">
+                    <span className="text-3xl font-bold text-red-600/40">
                       {servico.nome.slice(0, 2).toUpperCase()}
                     </span>
                   </div>
                 )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/20"></div>
               </div>
 
               {/* Informações do Serviço */}
-              <div className="p-4 space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">{servico.nome}</h3>
-                  <p className="text-sm text-gray-400 line-clamp-2">{servico.descricao}</p>
-                </div>
+              <div className="p-4">
+                <h3 className="text-base font-semibold text-white mb-1 line-clamp-1">{servico.nome}</h3>
+                <p className="text-xs text-gray-400 line-clamp-2 mb-3">{servico.descricao}</p>
 
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-red-500">
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
                     R$ {servico.preco_promocional.toFixed(2)}
                   </span>
-                  <span className="text-sm text-gray-400 line-through">
+                  <span className="text-xs text-gray-400 line-through">
                     R$ {servico.preco.toFixed(2)}
                   </span>
                 </div>
 
-                <div className="text-sm text-gray-400">
-                  <p>Duração: {servico.duracao_minutos} minutos</p>
-                  <p className="text-xs mt-1">
-                    Promoção válida até {new Date(servico.promocao_fim).toLocaleDateString('pt-BR')}
-                  </p>
+                <div className="flex items-center gap-3 text-xs text-gray-400">
+                  <span className="flex items-center gap-1">
+                    <span className="text-red-500">⏱️</span>
+                    {servico.duracao_minutos} min
+                  </span>
+                  <span className="text-red-500/50">•</span>
+                  <span className="flex items-center gap-1">
+                    <span className="text-red-500">📅</span>
+                    Até {new Date(servico.promocao_fim).toLocaleDateString('pt-BR')}
+                  </span>
                 </div>
-
-                {servico.promocao_descricao && (
-                  <p className="text-sm text-red-400 italic">
-                    {servico.promocao_descricao}
-                  </p>
-                )}
-
-                <button 
-                  className="w-full bg-gradient-to-r from-red-600 to-red-800 text-white py-2 rounded-lg hover:from-red-700 hover:to-red-900 transition-all"
-                  onClick={() => {
-                    // Aqui você pode adicionar a lógica para agendar o serviço
-                    // Por exemplo, abrir o modal de agendamento ou redirecionar para a página de agendamento
-                  }}
-                >
-                  Agendar
-                </button>
               </div>
             </motion.div>
           ))}
