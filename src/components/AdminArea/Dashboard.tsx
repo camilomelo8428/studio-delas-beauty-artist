@@ -34,6 +34,9 @@ interface Servico {
   preco_promocional?: number;
   promocao_ativa?: boolean;
   duracao_minutos: number;
+  preco_efetivo?: number;
+  preco_original?: number;
+  em_promocao?: boolean;
 }
 
 interface Cliente {
@@ -123,15 +126,88 @@ export default function Dashboard() {
           *,
           cliente:clientes(nome),
           funcionario:funcionarios(nome),
-          servico:servicos(nome, preco, preco_promocional, promocao_ativa)
+          servico:servicos(nome, preco, preco_promocional, promocao_ativa),
+          valor_pago,
+          valor_original,
+          em_promocao
         `)
         .gte('data', dataInicialFormatada)
         .lte('data', dataFinalFormatada)
 
       if (error) throw error
 
-      setAgendamentos(agendamentosData || [])
-      calcularEstatisticas(agendamentosData || [])
+      // Buscar histórico de valores dos serviços
+      const { data: historicoValores, error: historicoError } = await supabase
+        .from('historico_valores_servicos')
+        .select('*')
+        .gte('data_alteracao', dataInicialFormatada)
+        .lte('data_alteracao', dataFinalFormatada)
+
+      if (historicoError) throw historicoError
+
+      // Mapear o histórico de valores por serviço e data
+      const mapaHistoricoValores = new Map()
+      historicoValores?.forEach(historico => {
+        const chave = `${historico.servico_id}_${historico.data_alteracao}`
+        mapaHistoricoValores.set(chave, {
+          preco: historico.preco,
+          preco_promocional: historico.preco_promocional,
+          promocao_ativa: historico.promocao_ativa
+        })
+      })
+
+      // Processar agendamentos com valores históricos
+      const agendamentosProcessados = agendamentosData?.map(agendamento => {
+        // Se o agendamento já tem valores salvos, usar eles
+        if (agendamento.valor_pago !== null && agendamento.valor_original !== null) {
+          return {
+            ...agendamento,
+            servico: {
+              ...agendamento.servico,
+              preco_efetivo: agendamento.valor_pago,
+              preco_original: agendamento.valor_original,
+              em_promocao: agendamento.em_promocao
+            }
+          }
+        }
+
+        // Procurar valor histórico mais próximo
+        const dataAgendamento = agendamento.data
+        const historicoServico = Array.from(mapaHistoricoValores.entries())
+          .filter(([chave]) => chave.startsWith(agendamento.servico_id))
+          .filter(([chave]) => {
+            const dataHistorico = chave.split('_')[1]
+            return dataHistorico <= dataAgendamento
+          })
+          .sort(([chaveA], [chaveB]) => chaveB.split('_')[1].localeCompare(chaveA.split('_')[1]))[0]
+
+        if (historicoServico) {
+          const [, valores] = historicoServico
+          return {
+            ...agendamento,
+            servico: {
+              ...agendamento.servico,
+              preco_efetivo: valores.promocao_ativa ? valores.preco_promocional : valores.preco,
+              preco_original: valores.preco,
+              em_promocao: valores.promocao_ativa
+            }
+          }
+        }
+
+        // Se não encontrar histórico, usar valores atuais do serviço
+        return {
+          ...agendamento,
+          servico: {
+            ...agendamento.servico,
+            preco_efetivo: agendamento.servico.promocao_ativa ? agendamento.servico.preco_promocional : agendamento.servico.preco,
+            preco_original: agendamento.servico.preco,
+            em_promocao: agendamento.servico.promocao_ativa
+          }
+        }
+      }) || []
+
+      setAgendamentos(agendamentosProcessados)
+      calcularEstatisticas(agendamentosProcessados)
     } catch (err) {
       console.error('Erro ao carregar dados:', err)
       setError('Erro ao carregar dados')
@@ -173,9 +249,7 @@ export default function Dashboard() {
       .forEach(agendamento => {
         const data = format(toZonedTime(parseISO(agendamento.data), 'America/Sao_Paulo'), 'dd/MM', { locale: ptBR })
         const valorAtual = dadosFaturamentoPorDia.get(data) || 0
-        const valorServico = agendamento.servico.promocao_ativa && agendamento.servico.preco_promocional
-          ? agendamento.servico.preco_promocional
-          : agendamento.servico.preco
+        const valorServico = agendamento.servico.preco_efetivo || agendamento.servico.preco
         dadosFaturamentoPorDia.set(data, valorAtual + valorServico)
       })
 
@@ -214,9 +288,7 @@ export default function Dashboard() {
 
       const dadosDia = dadosPorDia.get(data)!
       if (agendamento.status === 'concluido') {
-        const valorServico = agendamento.servico.promocao_ativa && agendamento.servico.preco_promocional
-          ? agendamento.servico.preco_promocional
-          : agendamento.servico.preco
+        const valorServico = agendamento.servico.preco_efetivo || agendamento.servico.preco
         
         dadosDia.lucroTotal += valorServico
         dadosDia.totalServicos += 1
@@ -266,9 +338,7 @@ export default function Dashboard() {
   const faturamentoHoje = agendamentosHoje
     .filter(a => a && a.status === 'concluido' && a.servico)
     .reduce((total, a) => {
-      const valorServico = a.servico.promocao_ativa && a.servico.preco_promocional
-        ? a.servico.preco_promocional
-        : a.servico.preco
+      const valorServico = a.servico.preco_efetivo || a.servico.preco
       return total + Number(valorServico)
     }, 0)
 
@@ -304,8 +374,8 @@ export default function Dashboard() {
       if (agendamento && agendamento.status) {
         acc[`${agendamento.status}s`]++
         acc.total++
-        if (agendamento.status === 'concluido' && agendamento.servico?.preco) {
-          acc.faturamento += Number(agendamento.servico.preco)
+        if (agendamento.status === 'concluido' && agendamento.servico?.preco_efetivo) {
+          acc.faturamento += Number(agendamento.servico.preco_efetivo)
           acc.clientesAtendidos++
         }
       }
@@ -498,12 +568,11 @@ export default function Dashboard() {
             }
           }
           acc[servicoNome].quantidade++
-          const valorServico = agendamento.servico.promocao_ativa && agendamento.servico.preco_promocional
-            ? agendamento.servico.preco_promocional
-            : agendamento.servico.preco
-          acc[servicoNome].valorTotal += valorServico
-          acc[servicoNome].valorOriginal += agendamento.servico.preco
-          if (agendamento.servico.promocao_ativa && agendamento.servico.preco_promocional) {
+          const valorEfetivo = agendamento.servico.preco_efetivo || agendamento.servico.preco
+          const valorOriginal = agendamento.servico.preco_original || agendamento.servico.preco
+          acc[servicoNome].valorTotal += valorEfetivo
+          acc[servicoNome].valorOriginal += valorOriginal
+          if (agendamento.servico.em_promocao) {
             acc[servicoNome].promocoes++
           }
           acc[servicoNome].duracaoTotal += agendamento.servico.duracao_minutos
@@ -574,12 +643,11 @@ export default function Dashboard() {
             }
           }
           acc[profissionalNome].quantidade++
-          const valorServico = agendamento.servico.promocao_ativa && agendamento.servico.preco_promocional
-            ? agendamento.servico.preco_promocional
-            : agendamento.servico.preco
-          acc[profissionalNome].valorTotal += valorServico
-          acc[profissionalNome].valorOriginal += agendamento.servico.preco
-          if (agendamento.servico.promocao_ativa && agendamento.servico.preco_promocional) {
+          const valorEfetivo = agendamento.servico.preco_efetivo || agendamento.servico.preco
+          const valorOriginal = agendamento.servico.preco_original || agendamento.servico.preco
+          acc[profissionalNome].valorTotal += valorEfetivo
+          acc[profissionalNome].valorOriginal += valorOriginal
+          if (agendamento.servico.em_promocao) {
             acc[profissionalNome].promocoes++
           }
           acc[profissionalNome].duracaoTotal += agendamento.servico.duracao_minutos
