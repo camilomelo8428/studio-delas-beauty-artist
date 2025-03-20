@@ -3,6 +3,7 @@ import { auth, supabase } from '../../lib/supabase'
 import Produtos from './Produtos'
 import ProdutosComponent from './Produtos'
 import ListaProdutos from './ListaProdutos'
+import ServicosPromocao from './ServicosPromocao'
 import ConfirmationModal from '../ConfirmationModal'
 import { sounds } from '../../services/sounds'
 
@@ -369,190 +370,212 @@ function AgendarHorario() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <h2 className="text-2xl font-bold text-red-500 mb-6">Agendar Horário</h2>
-      
-      {success ? (
-        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 mb-6">
-          <p className="text-green-400">Agendamento realizado com sucesso!</p>
-          <button
-            onClick={() => setSuccess(false)}
-            className="mt-4 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors"
-          >
-            Fazer Novo Agendamento
-          </button>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-              <p className="text-red-500 text-sm">{error}</p>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-gray-400 text-sm mb-2">Serviço</label>
-          <select
-            value={selectedService}
-            onChange={(e) => handleServicoChange(e.target.value)}
-                className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-            required
-          >
-            <option value="">Selecione um serviço</option>
-                {servicos.map(servico => (
-              <option key={servico.id} value={servico.id}>
-                    {servico.nome} - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(servico.preco)}
-              </option>
-            ))}
-          </select>
-        </div>
-
-            <div>
-              <label className="block text-gray-400 text-sm mb-2">Profissional</label>
-          <select
-                value={selectedProfessional}
-                onChange={(e) => {
-                  handleProfissionalChange(e.target.value)
-                  setSelectedTime('')
-                }}
-                className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-            required
-          >
-                <option value="">Selecione um profissional</option>
-                {profissionais.map((profissional) => (
-                  <option key={profissional.id} value={profissional.id}>
-                    {profissional.nome} - {CARGO_LABELS[profissional.cargo] || profissional.cargo}
-                  </option>
-            ))}
-          </select>
-            </div>
-        </div>
-
-          <div>
-            <label className="block text-gray-400 text-sm mb-2">Data</label>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => handleDataChange(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-              className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-400 text-sm mb-2">Horário</label>
-            <div className="mb-4 flex gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-[#2a2a2a]"></div>
-                <span className="text-sm text-gray-400">Disponível</span>
-          </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-red-600"></div>
-                <span className="text-sm text-gray-400">Indisponível</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-green-600"></div>
-                <span className="text-sm text-gray-400">Selecionado</span>
-              </div>
-            </div>
-            {loading ? (
-              <div className="flex items-center justify-center h-20">
-                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-red-600"></div>
-              </div>
-            ) : horarios.length > 0 ? (
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                {horarios.map((horario, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => {
-                      if (horario.disponivel) {
-                        handleHorarioChange(horario.hora)
-                      } else {
-                        setHorarioSelecionadoIndisponivel(horario)
-                      }
-                    }}
-                    className={`
-                      group relative p-2 rounded-lg text-sm font-medium transition-all duration-200
-                      ${!horario.disponivel
-                        ? 'bg-red-600/20 text-white cursor-help border border-red-600/30'
-                        : selectedTime === horario.hora
-                          ? 'bg-green-600 text-white shadow-lg scale-105'
-                          : 'bg-[#2a2a2a] text-white hover:bg-green-600/20'
-                      }
-                    `}
-                  >
-                    {horario.hora}
-                    {!horario.disponivel && (
-                      <>
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-600 rounded-full border border-[#1a1a1a] animate-pulse"></div>
-                        
-                        {/* Tooltip */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[200px] p-2 bg-[#1a1a1a] border border-red-600/30 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                          <div className="text-xs text-gray-400 space-y-1">
-                            {horario.motivo && (
-                              <p className="font-medium text-red-500">{horario.motivo}</p>
-                            )}
-                            {horario.profissional && (
-                              <p>Profissional: <span className="text-white">{horario.profissional}</span></p>
-                            )}
-                            {horario.servico && (
-                              <p>Serviço: <span className="text-white">{horario.servico}</span></p>
-                            )}
-                          </div>
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 -translate-y-1 border-4 border-transparent border-t-[#1a1a1a]"></div>
-                        </div>
-                      </>
-                    )}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-400 text-sm">Nenhum horário disponível nesta data</p>
-            )}
-          </div>
-
-        <button 
-          type="submit"
-            disabled={loading || !selectedDate || !selectedTime || !selectedService || !selectedProfessional}
-            onMouseEnter={() => sounds.play('hover')}
-            className="w-full bg-gradient-to-r from-red-600 to-red-800 text-white py-3 rounded-lg hover:from-red-700 hover:to-red-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+    <div className="space-y-8">
+      {/* Botão de Promoções */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => window.location.href = '#promocoes'}
+          className="bg-gradient-to-r from-red-600 to-red-800 text-white px-6 py-2 rounded-lg hover:from-red-700 hover:to-red-900 transition-all flex items-center gap-2"
         >
-            {loading ? 'Confirmando...' : 'Confirmar Agendamento'}
+          <span>🔥</span>
+          <span>Ver Promoções</span>
         </button>
-      </form>
-      )}
+      </div>
 
-      {/* Modal de Horário Indisponível */}
-      <ConfirmationModal
-        isOpen={!!horarioSelecionadoIndisponivel}
-        onClose={() => setHorarioSelecionadoIndisponivel(null)}
-        onConfirm={() => setHorarioSelecionadoIndisponivel(null)}
-        title="Horário Indisponível"
-        message={
-          <div className="space-y-4">
-            <p className="text-gray-400">
-              O horário {horarioSelecionadoIndisponivel?.hora} não está disponível.
-            </p>
-            <p className="text-gray-400">
-              Motivo: {horarioSelecionadoIndisponivel?.motivo}
-            </p>
-            {horarioSelecionadoIndisponivel?.profissional && (
-              <p className="text-gray-400">
-                Profissional: {horarioSelecionadoIndisponivel.profissional}
-              </p>
-            )}
-            <p className="text-gray-400">
-              Por favor, selecione outro horário disponível.
-            </p>
+      {/* Seção de Promoções com ID para ancoragem */}
+      <div id="promocoes">
+        <ServicosPromocao />
+      </div>
+
+      {/* Formulário de Agendamento */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <h2 className="text-2xl font-bold text-red-500">Agendar Horário</h2>
+          <div className="flex-1 h-px bg-gradient-to-r from-red-600/20 via-red-600/10 to-transparent"></div>
+        </div>
+
+        {success ? (
+          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 mb-6">
+            <p className="text-green-400">Agendamento realizado com sucesso!</p>
+            <button
+              onClick={() => setSuccess(false)}
+              className="mt-4 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Fazer Novo Agendamento
+            </button>
           </div>
-        }
-        confirmText="Entendi"
-        cancelText={undefined}
-        type="warning"
-      />
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                <p className="text-red-500 text-sm">{error}</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">Serviço</label>
+                <select
+                  value={selectedService}
+                  onChange={(e) => handleServicoChange(e.target.value)}
+                  className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                  required
+                >
+                  <option value="">Selecione um serviço</option>
+                  {servicos.map(servico => (
+                    <option key={servico.id} value={servico.id}>
+                      {servico.nome} - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(servico.preco)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">Profissional</label>
+                <select
+                  value={selectedProfessional}
+                  onChange={(e) => {
+                    handleProfissionalChange(e.target.value)
+                    setSelectedTime('')
+                  }}
+                  className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                  required
+                >
+                  <option value="">Selecione um profissional</option>
+                  {profissionais.map((profissional) => (
+                    <option key={profissional.id} value={profissional.id}>
+                      {profissional.nome} - {CARGO_LABELS[profissional.cargo] || profissional.cargo}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-gray-400 text-sm mb-2">Data</label>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => handleDataChange(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-400 text-sm mb-2">Horário</label>
+              <div className="mb-4 flex gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-[#2a2a2a]"></div>
+                  <span className="text-sm text-gray-400">Disponível</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-red-600"></div>
+                  <span className="text-sm text-gray-400">Indisponível</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-green-600"></div>
+                  <span className="text-sm text-gray-400">Selecionado</span>
+                </div>
+              </div>
+              {loading ? (
+                <div className="flex items-center justify-center h-20">
+                  <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-red-600"></div>
+                </div>
+              ) : horarios.length > 0 ? (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {horarios.map((horario, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => {
+                        if (horario.disponivel) {
+                          handleHorarioChange(horario.hora)
+                        } else {
+                          setHorarioSelecionadoIndisponivel(horario)
+                        }
+                      }}
+                      className={`
+                        group relative p-2 rounded-lg text-sm font-medium transition-all duration-200
+                        ${!horario.disponivel
+                          ? 'bg-red-600/20 text-white cursor-help border border-red-600/30'
+                          : selectedTime === horario.hora
+                            ? 'bg-green-600 text-white shadow-lg scale-105'
+                            : 'bg-[#2a2a2a] text-white hover:bg-green-600/20'
+                        }
+                      `}
+                    >
+                      {horario.hora}
+                      {!horario.disponivel && (
+                        <>
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-600 rounded-full border border-[#1a1a1a] animate-pulse"></div>
+                          
+                          {/* Tooltip */}
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[200px] p-2 bg-[#1a1a1a] border border-red-600/30 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                            <div className="text-xs text-gray-400 space-y-1">
+                              {horario.motivo && (
+                                <p className="font-medium text-red-500">{horario.motivo}</p>
+                              )}
+                              {horario.profissional && (
+                                <p>Profissional: <span className="text-white">{horario.profissional}</span></p>
+                              )}
+                              {horario.servico && (
+                                <p>Serviço: <span className="text-white">{horario.servico}</span></p>
+                              )}
+                            </div>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 -translate-y-1 border-4 border-transparent border-t-[#1a1a1a]"></div>
+                          </div>
+                        </>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-sm">Nenhum horário disponível nesta data</p>
+              )}
+            </div>
+
+            <button 
+              type="submit"
+              disabled={loading || !selectedDate || !selectedTime || !selectedService || !selectedProfessional}
+              onMouseEnter={() => sounds.play('hover')}
+              className="w-full bg-gradient-to-r from-red-600 to-red-800 text-white py-3 rounded-lg hover:from-red-700 hover:to-red-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Confirmando...' : 'Confirmar Agendamento'}
+            </button>
+          </form>
+        )}
+
+        {/* Modal de Horário Indisponível */}
+        <ConfirmationModal
+          isOpen={!!horarioSelecionadoIndisponivel}
+          onClose={() => setHorarioSelecionadoIndisponivel(null)}
+          onConfirm={() => setHorarioSelecionadoIndisponivel(null)}
+          title="Horário Indisponível"
+          message={
+            <div className="space-y-4">
+              <p className="text-gray-400">
+                O horário {horarioSelecionadoIndisponivel?.hora} não está disponível.
+              </p>
+              <p className="text-gray-400">
+                Motivo: {horarioSelecionadoIndisponivel?.motivo}
+              </p>
+              {horarioSelecionadoIndisponivel?.profissional && (
+                <p className="text-gray-400">
+                  Profissional: {horarioSelecionadoIndisponivel.profissional}
+                </p>
+              )}
+              <p className="text-gray-400">
+                Por favor, selecione outro horário disponível.
+              </p>
+            </div>
+          }
+          confirmText="Entendi"
+          cancelText={undefined}
+          type="warning"
+        />
+      </div>
     </div>
   )
 }

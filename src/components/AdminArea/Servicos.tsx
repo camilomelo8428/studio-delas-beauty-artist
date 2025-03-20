@@ -14,6 +14,11 @@ interface Servico {
   status: boolean
   created_at?: string
   updated_at?: string
+  preco_promocional: number | null
+  promocao_ativa: boolean
+  promocao_inicio: string | null
+  promocao_fim: string | null
+  promocao_descricao: string | null
 }
 
 export default function Servicos() {
@@ -35,7 +40,12 @@ export default function Servicos() {
     duracao_minutos: '',
     foto_url: '',
     categoria: 'barbearia' as 'barbearia' | 'salao',
-    status: true
+    status: true,
+    preco_promocional: '',
+    promocao_ativa: false,
+    promocao_inicio: '',
+    promocao_fim: '',
+    promocao_descricao: ''
   })
 
   useEffect(() => {
@@ -69,6 +79,37 @@ export default function Servicos() {
         throw new Error('Por favor, preencha todos os campos obrigatórios')
       }
 
+      // Validar preço promocional
+      if (novoServico.promocao_ativa) {
+        if (!novoServico.preco_promocional || !novoServico.promocao_inicio || !novoServico.promocao_fim) {
+          throw new Error('Por favor, preencha todos os campos da promoção')
+        }
+
+        const precoOriginal = parseFloat(novoServico.preco)
+        const precoPromocional = parseFloat(novoServico.preco_promocional)
+
+        if (precoPromocional >= precoOriginal) {
+          throw new Error('O preço promocional deve ser menor que o preço original')
+        }
+
+        const dataInicio = new Date(novoServico.promocao_inicio)
+        const dataFim = new Date(novoServico.promocao_fim)
+        const hoje = new Date()
+
+        // Ajusta as datas para considerar apenas o dia (zerando as horas)
+        dataInicio.setHours(0, 0, 0, 0)
+        dataFim.setHours(0, 0, 0, 0)
+        hoje.setHours(0, 0, 0, 0)
+
+        if (dataInicio < hoje) {
+          throw new Error('A data de início da promoção deve ser hoje ou uma data futura')
+        }
+
+        if (dataFim <= dataInicio) {
+          throw new Error('A data de fim deve ser posterior à data de início')
+        }
+      }
+
       const servicoData = {
         nome: novoServico.nome,
         descricao: novoServico.descricao || '',
@@ -76,7 +117,12 @@ export default function Servicos() {
         duracao_minutos: parseInt(novoServico.duracao_minutos),
         foto_url: novoServico.foto_url || undefined,
         categoria: novoServico.categoria,
-        status: novoServico.status
+        status: novoServico.status,
+        preco_promocional: novoServico.promocao_ativa ? parseFloat(novoServico.preco_promocional) : null,
+        promocao_ativa: novoServico.promocao_ativa,
+        promocao_inicio: novoServico.promocao_ativa ? novoServico.promocao_inicio : null,
+        promocao_fim: novoServico.promocao_ativa ? novoServico.promocao_fim : null,
+        promocao_descricao: novoServico.promocao_ativa ? novoServico.promocao_descricao : null
       }
 
       if (servicoEmEdicao) {
@@ -97,7 +143,12 @@ export default function Servicos() {
         duracao_minutos: '',
         foto_url: '',
         categoria: 'barbearia',
-        status: true
+        status: true,
+        preco_promocional: '',
+        promocao_ativa: false,
+        promocao_inicio: '',
+        promocao_fim: '',
+        promocao_descricao: ''
       })
     } catch (err: any) {
       console.error('Erro detalhado:', err)
@@ -195,7 +246,12 @@ export default function Servicos() {
                 duracao_minutos: '',
                 foto_url: '',
                 categoria: 'barbearia',
-                status: true
+                status: true,
+                preco_promocional: '',
+                promocao_ativa: false,
+                promocao_inicio: '',
+                promocao_fim: '',
+                promocao_descricao: ''
               })
             }}
             className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-800 text-white px-4 py-2 rounded-lg hover:from-red-700 hover:to-red-900 transition-all whitespace-nowrap flex-shrink-0"
@@ -259,6 +315,38 @@ export default function Servicos() {
                 {servico.descricao && (
                   <p className="text-sm text-gray-400 mb-4 line-clamp-2">{servico.descricao}</p>
                 )}
+                
+                {/* Informações de Promoção */}
+                {servico.promocao_ativa && (
+                  <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-red-500">🔥</span>
+                      <span className="text-sm font-medium text-red-500">Promoção Ativa</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex flex-col">
+                        <span className="text-gray-400">De: <span className="line-through">{new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL'
+                        }).format(servico.preco)}</span></span>
+                        <span className="text-red-500 font-bold">Por: {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL'
+                        }).format(servico.preco_promocional || 0)}</span>
+                      </div>
+                      <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                        {Math.round((1 - ((servico.preco_promocional || 0) / servico.preco)) * 100)}% OFF
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-400">
+                      <p>Válido de {new Date(servico.promocao_inicio || '').toLocaleDateString('pt-BR')} até {new Date(servico.promocao_fim || '').toLocaleDateString('pt-BR')}</p>
+                      {servico.promocao_descricao && (
+                        <p className="mt-1 text-red-400">{servico.promocao_descricao}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between text-sm text-gray-400">
                   <span>{servico.duracao_minutos} minutos</span>
                   <span className="font-medium text-white">
@@ -284,7 +372,12 @@ export default function Servicos() {
                       duracao_minutos: servico.duracao_minutos.toString(),
                       foto_url: servico.foto_url || '',
                       categoria: servico.categoria,
-                      status: servico.status
+                      status: servico.status,
+                      preco_promocional: servico.preco_promocional?.toString() || '',
+                      promocao_ativa: servico.promocao_ativa,
+                      promocao_inicio: servico.promocao_inicio || '',
+                      promocao_fim: servico.promocao_fim || '',
+                      promocao_descricao: servico.promocao_descricao || ''
                     })
                     setModalAberto(true)
                   }}
@@ -332,7 +425,12 @@ export default function Servicos() {
                     duracao_minutos: '',
                     foto_url: '',
                     categoria: 'barbearia',
-                    status: true
+                    status: true,
+                    preco_promocional: '',
+                    promocao_ativa: false,
+                    promocao_inicio: '',
+                    promocao_fim: '',
+                    promocao_descricao: ''
                   })
                 }}
                 className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
@@ -429,6 +527,76 @@ export default function Servicos() {
                         alt="Preview"
                         className="w-20 h-20 rounded-lg object-cover"
                       />
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="promocao_ativa"
+                      checked={novoServico.promocao_ativa}
+                      onChange={(e) => setNovoServico(prev => ({ ...prev, promocao_ativa: e.target.checked }))}
+                      className="w-4 h-4 rounded border-red-600/20 text-red-600 focus:ring-red-600/20 bg-[#2a2a2a]"
+                    />
+                    <label htmlFor="promocao_ativa" className="text-white font-medium">
+                      Ativar Promoção
+                    </label>
+                  </div>
+
+                  {novoServico.promocao_ativa && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1">
+                          Preço Promocional
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={novoServico.preco_promocional}
+                          onChange={(e) => setNovoServico(prev => ({ ...prev, preco_promocional: e.target.value }))}
+                          className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg px-4 py-2 text-white focus:border-red-600 focus:outline-none"
+                          placeholder="0.00"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1">
+                          Data de Início
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={novoServico.promocao_inicio}
+                          onChange={(e) => setNovoServico(prev => ({ ...prev, promocao_inicio: e.target.value }))}
+                          className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg px-4 py-2 text-white focus:border-red-600 focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1">
+                          Data de Fim
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={novoServico.promocao_fim}
+                          onChange={(e) => setNovoServico(prev => ({ ...prev, promocao_fim: e.target.value }))}
+                          className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg px-4 py-2 text-white focus:border-red-600 focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-gray-400 mb-1">
+                          Descrição da Promoção
+                        </label>
+                        <textarea
+                          value={novoServico.promocao_descricao}
+                          onChange={(e) => setNovoServico(prev => ({ ...prev, promocao_descricao: e.target.value }))}
+                          className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg px-4 py-2 text-white focus:border-red-600 focus:outline-none resize-none"
+                          rows={3}
+                          placeholder="Descreva os detalhes da promoção..."
+                        />
+                      </div>
                     </div>
                   )}
                 </div>

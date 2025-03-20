@@ -14,6 +14,7 @@ import ListaProdutos from './components/ClientArea/ListaProdutos'
 import ReactInputMask from 'react-input-mask'
 import { formatarTelefone, validarTelefone, limparTelefone } from './utils/formatters'
 import toast from 'react-hot-toast'
+import ServicosPromocao from './components/ClientArea/ServicosPromocao'
 
 // Interface para os tipos de dados
 interface Funcionario {
@@ -517,6 +518,7 @@ function ClientLoginModal({ isOpen, onClose, config, initialTab }: {
   const [showSuccess, setShowSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showProdutos, setShowProdutos] = useState(false)
+  const [showPromocoes, setShowPromocoes] = useState(false)
 
   // Resetar estados quando o modal é fechado
   useEffect(() => {
@@ -1158,6 +1160,8 @@ function App() {
   const [isLoginOpen, setIsLoginOpen] = useState(false)
   const [isClientLoginOpen, setIsClientLoginOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [showProdutos, setShowProdutos] = useState(false)
+  const [showPromocoes, setShowPromocoes] = useState(false)
   const [userType, setUserType] = useState<'admin' | 'funcionario' | null>(null)
   const [activeTab, setActiveTab] = useState<'agendar' | 'agendamentos' | 'historico' | 'perfil'>('agendar')
   const [config, setConfig] = useState<ConfiguracoesType>({
@@ -1177,7 +1181,6 @@ function App() {
     whatsapp: '',
     updated_at: new Date().toISOString()
   })
-  const [showProdutos, setShowProdutos] = useState(false)
 
   // Carregar configurações ao montar o componente
   useEffect(() => {
@@ -1315,7 +1318,7 @@ function App() {
           {/* Botões */}
           <div className="w-full max-w-3xl mx-auto space-y-4 sm:space-y-6 px-2">
             {/* Botões Principais */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               {/* Área do Cliente */}
               <button 
                 onClick={() => setIsClientLoginOpen(true)}
@@ -1335,6 +1338,29 @@ function App() {
                       </div>
                     </div>
                     <span className="text-gold-500 transform group-hover:translate-x-2 transition-transform duration-300">→</span>
+                  </div>
+                </div>
+              </button>
+
+              {/* Promoções */}
+              <button 
+                onClick={() => setShowPromocoes(true)}
+                className="group relative w-full overflow-hidden bg-gradient-to-br from-red-600 to-red-800 rounded-xl sm:rounded-2xl p-1"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-red-400 to-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20"></div>
+                <div className="relative bg-[#1a1a1a] rounded-lg sm:rounded-xl p-3 sm:p-4 h-full transform group-hover:translate-y-1 group-hover:translate-x-1 transition-transform duration-300">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-red-500/20 to-red-700/20 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+                        <span className="text-xl sm:text-2xl">🔥</span>
+                      </div>
+                      <div className="text-left">
+                        <h3 className="text-base sm:text-lg font-bold text-white">Promoções</h3>
+                        <p className="text-xs sm:text-sm text-gray-400">Ofertas especiais</p>
+                      </div>
+                    </div>
+                    <span className="text-red-500 transform group-hover:translate-x-2 transition-transform duration-300">→</span>
                   </div>
                 </div>
               </button>
@@ -1603,6 +1629,38 @@ function App() {
               </h2>
               
               <ListaProdutos />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Promoções */}
+      {showPromocoes && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 overflow-y-auto">
+          <div className="bg-[#1a1a1a] w-full h-full md:h-auto md:rounded-xl md:max-w-6xl relative border-y md:border border-red-600/20">
+            {/* Botão Fechar */}
+            <button
+              onClick={() => setShowPromocoes(false)}
+              className="fixed md:absolute top-4 right-4 md:-top-4 md:-right-4 w-10 h-10 md:w-8 md:h-8 bg-red-600 text-white text-xl md:text-base rounded-full flex items-center justify-center hover:bg-red-700 transition-colors z-50"
+            >
+              ×
+            </button>
+            
+            {/* Cabeçalho Mobile */}
+            <div className="sticky top-0 bg-[#1a1a1a] border-b border-red-600/20 p-4 md:hidden z-40">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
+                Promoções Especiais
+              </h2>
+            </div>
+
+            {/* Conteúdo */}
+            <div className="p-4 md:p-6">
+              {/* Título Desktop */}
+              <h2 className="hidden md:block text-3xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent mb-6">
+                Promoções Especiais
+              </h2>
+              
+              <ServicosPromocao />
             </div>
           </div>
         </div>
