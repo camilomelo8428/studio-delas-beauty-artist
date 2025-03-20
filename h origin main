@@ -1,0 +1,5 @@
+[33m2e0152b[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m feat: Implementa sistema de promoções - Adiciona campos e validações para promoções nos serviços - Interface de gerenciamento no painel admin - Exibição visual de promoções ativas - Correção na validação de datas - Melhorias no layout
+[33m2594f95[m[33m ([m[1;31morigin/main[m[33m)[m feat: Implementação do armazenamento de senhas dos clientes e exibição na área administrativa
+[33m9e16686[m feat: Implementação de notificações sonoras em tempo real para agendamentos
+[33m1dcdf83[m feat: Implementação do sistema de atualização em tempo real - Adicionado hook useRealtimeAgendamentos e integração nos componentes principais
+[33ma22d0b3[m feat: Melhorias na tela de agendamentos e dashboard
