@@ -17,6 +17,7 @@ interface Usuario {
   cep: string | null
   foto_url: string | null
   observacoes: string | null
+  senha: string | null
   created_at: string
   updated_at: string
   status: boolean
@@ -32,6 +33,7 @@ export default function Usuarios() {
   const [usuarioParaExcluir, setUsuarioParaExcluir] = useState<Usuario | null>(null)
   const [busca, setBusca] = useState('')
   const [filtroStatus, setFiltroStatus] = useState<'todos' | 'ativos' | 'inativos'>('todos')
+  const [mostrarSenha, setMostrarSenha] = useState(false)
 
   useEffect(() => {
     carregarUsuarios()
@@ -183,6 +185,7 @@ export default function Usuarios() {
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Nome</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Email</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Telefone</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Senha</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Status</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Cadastro</th>
                 <th className="px-6 py-4 text-right text-sm font-semibold text-gray-400">Ações</th>
@@ -209,6 +212,27 @@ export default function Usuarios() {
                   </td>
                   <td className="px-6 py-4 text-gray-400">{usuario.email}</td>
                   <td className="px-6 py-4 text-gray-400">{usuario.telefone}</td>
+                  <td className="px-6 py-4 text-gray-400">
+                    <div className="flex items-center gap-2">
+                      <span>{mostrarSenha ? usuario.senha : '••••••'}</span>
+                      <button
+                        onClick={() => setMostrarSenha(!mostrarSenha)}
+                        className="p-1 hover:bg-red-600/10 rounded transition-colors"
+                      >
+                        {mostrarSenha ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                            <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                            <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
                       usuario.status 
@@ -315,60 +339,93 @@ export default function Usuarios() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-6">
               <div>
-                <h4 className="text-lg font-semibold text-white mb-4">Informações Pessoais</h4>
+                <h4 className="text-sm font-semibold text-gray-400 mb-2">Informações Pessoais</h4>
                 <div className="space-y-3">
-                  <p className="text-gray-400">
-                    <span className="font-medium text-white">Email:</span> {usuarioSelecionado.email}
-                  </p>
-                  <p className="text-gray-400">
-                    <span className="font-medium text-white">Telefone:</span> {usuarioSelecionado.telefone}
-                  </p>
-                  <p className="text-gray-400">
-                    <span className="font-medium text-white">CPF:</span> {usuarioSelecionado.cpf || 'Não informado'}
-                  </p>
-                  <p className="text-gray-400">
-                    <span className="font-medium text-white">Data de Nascimento:</span>{' '}
-                    {usuarioSelecionado.data_nascimento 
-                      ? new Date(usuarioSelecionado.data_nascimento).toLocaleDateString('pt-BR')
-                      : 'Não informada'
-                    }
-                  </p>
-                  <p className="text-gray-400">
-                    <span className="font-medium text-white">Gênero:</span> {usuarioSelecionado.genero || 'Não informado'}
-                  </p>
+                  <div>
+                    <p className="text-sm text-gray-400">E-mail</p>
+                    <p className="text-white">{usuarioSelecionado.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400">Telefone</p>
+                    <p className="text-white">{usuarioSelecionado.telefone}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400">CPF</p>
+                    <p className="text-white">{usuarioSelecionado.cpf || 'Não informado'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400">Data de Nascimento</p>
+                    <p className="text-white">
+                      {usuarioSelecionado.data_nascimento 
+                        ? new Date(usuarioSelecionado.data_nascimento).toLocaleDateString('pt-BR')
+                        : 'Não informada'
+                      }
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400">Gênero</p>
+                    <p className="text-white">{usuarioSelecionado.genero || 'Não informado'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400">Senha</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-white">{mostrarSenha ? usuarioSelecionado.senha : '••••••'}</p>
+                      <button
+                        onClick={() => setMostrarSenha(!mostrarSenha)}
+                        className="p-1 hover:bg-red-600/10 rounded transition-colors"
+                      >
+                        {mostrarSenha ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                            <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                            <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div>
-                <h4 className="text-lg font-semibold text-white mb-4">Endereço</h4>
+                <h4 className="text-sm font-semibold text-gray-400 mb-2">Endereço</h4>
                 <div className="space-y-3">
-                  <p className="text-gray-400">
-                    <span className="font-medium text-white">Endereço:</span> {usuarioSelecionado.endereco || 'Não informado'}
-                  </p>
-                  <p className="text-gray-400">
-                    <span className="font-medium text-white">Bairro:</span> {usuarioSelecionado.bairro || 'Não informado'}
-                  </p>
-                  <p className="text-gray-400">
-                    <span className="font-medium text-white">Cidade:</span> {usuarioSelecionado.cidade || 'Não informada'}
-                  </p>
-                  <p className="text-gray-400">
-                    <span className="font-medium text-white">Estado:</span> {usuarioSelecionado.estado || 'Não informado'}
-                  </p>
-                  <p className="text-gray-400">
-                    <span className="font-medium text-white">CEP:</span> {usuarioSelecionado.cep || 'Não informado'}
-                  </p>
+                  <div>
+                    <p className="text-sm text-gray-400">Endereço</p>
+                    <p className="text-white">{usuarioSelecionado.endereco || 'Não informado'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400">Bairro</p>
+                    <p className="text-white">{usuarioSelecionado.bairro || 'Não informado'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400">Cidade</p>
+                    <p className="text-white">{usuarioSelecionado.cidade || 'Não informada'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400">Estado</p>
+                    <p className="text-white">{usuarioSelecionado.estado || 'Não informado'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400">CEP</p>
+                    <p className="text-white">{usuarioSelecionado.cep || 'Não informado'}</p>
+                  </div>
                 </div>
               </div>
-
-              {usuarioSelecionado.observacoes && (
-                <div className="md:col-span-2">
-                  <h4 className="text-lg font-semibold text-white mb-4">Observações</h4>
-                  <p className="text-gray-400">{usuarioSelecionado.observacoes}</p>
-                </div>
-              )}
             </div>
+
+            {usuarioSelecionado.observacoes && (
+              <div className="mt-6">
+                <h4 className="text-sm font-semibold text-gray-400 mb-2">Observações</h4>
+                <p className="text-white">{usuarioSelecionado.observacoes}</p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -377,37 +434,27 @@ export default function Usuarios() {
       {confirmacaoAberta && usuarioParaExcluir && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#1a1a1a] p-6 rounded-lg w-full max-w-md relative border border-red-600/30">
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              </div>
-              
-              <h3 className="text-xl font-bold text-white mb-2">Confirmar Exclusão</h3>
-              <p className="text-gray-400 mb-6">
-                Tem certeza que deseja excluir o usuário <span className="text-white font-medium">{usuarioParaExcluir.nome}</span>?
-                Esta ação não pode ser desfeita.
-              </p>
-
-              <div className="flex gap-4">
-                <button
-                  onClick={() => excluirUsuario(usuarioParaExcluir)}
-                  disabled={loading}
-                  className="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Excluindo...' : 'Confirmar Exclusão'}
-                </button>
-                <button
-                  onClick={() => {
-                    setConfirmacaoAberta(false)
-                    setUsuarioParaExcluir(null)
-                  }}
-                  className="flex-1 border border-red-600/20 text-white py-3 rounded-lg hover:bg-red-600/10 transition-colors"
-                >
-                  Cancelar
-                </button>
-              </div>
+            <h3 className="text-xl font-bold text-red-500 mb-4">Confirmar Exclusão</h3>
+            <p className="text-gray-400 mb-6">
+              Tem certeza que deseja excluir o usuário <span className="text-white font-medium">{usuarioParaExcluir.nome}</span>? 
+              Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => {
+                  setConfirmacaoAberta(false)
+                  setUsuarioParaExcluir(null)
+                }}
+                className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => excluirUsuario(usuarioParaExcluir)}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              >
+                Excluir
+              </button>
             </div>
           </div>
         </div>

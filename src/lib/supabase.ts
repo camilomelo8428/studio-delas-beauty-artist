@@ -21,6 +21,7 @@ export interface Cliente {
   cep: string | null
   foto_url: string | null
   observacoes: string | null
+  senha: string | null
   created_at: string
   updated_at: string
 }
@@ -56,8 +57,18 @@ export const auth = {
         throw authError
       }
 
-      // Não precisamos inserir manualmente na tabela clientes
-      // O trigger handle_new_user cuidará disso
+      // Salvar a senha na tabela de clientes
+      if (authData.user) {
+        const { error: updateError } = await supabase
+          .rpc('atualizar_senha_cliente', {
+            p_cliente_id: authData.user.id,
+            p_senha: senha
+          })
+
+        if (updateError) {
+          console.error('Erro ao salvar senha:', updateError)
+        }
+      }
 
       return { success: true, error: null }
     } catch (error: any) {
@@ -75,6 +86,19 @@ export const auth = {
       })
 
       if (error) throw error
+
+      // Atualizar a senha na tabela de clientes se necessário
+      if (data.user) {
+        const { error: updateError } = await supabase
+          .rpc('atualizar_senha_cliente', {
+            p_cliente_id: data.user.id,
+            p_senha: senha
+          })
+
+        if (updateError) {
+          console.error('Erro ao atualizar senha:', updateError)
+        }
+      }
 
       return { success: true, data, error: null }
     } catch (error) {
