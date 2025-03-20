@@ -305,145 +305,147 @@ export default function Produtos() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gradient-to-b from-[#1a1a1a] to-[#2a2a2a] p-6 rounded-xl w-full max-w-md relative border border-red-600/30 shadow-xl"
+              className="bg-gradient-to-b from-[#1a1a1a] to-[#2a2a2a] rounded-xl w-full max-w-md relative border border-red-600/30 shadow-xl"
             >
-              <button
-                onClick={() => {
-                  setModalAberto(false)
-                  setProdutoEmEdicao(null)
-                  setNovoProduto({
-                    nome: '',
-                    descricao: '',
-                    preco: '',
-                    estoque: '',
-                    foto_url: '',
-                    categoria: '',
-                    status: true
-                  })
-                }}
-                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
-              >
-                ✕
-              </button>
-
-              <h3 className="text-xl font-bold text-red-500 mb-6">
-                {produtoEmEdicao ? 'Editar Produto' : 'Novo Produto'}
-              </h3>
-
-              {error && (
-                <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-                  <p className="text-red-500 text-sm">{error}</p>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-gray-400 text-sm mb-2">Nome *</label>
-                  <input
-                    type="text"
-                    value={novoProduto.nome}
-                    onChange={e => setNovoProduto(prev => ({ ...prev, nome: e.target.value }))}
-                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-400 text-sm mb-2">Descrição</label>
-                  <textarea
-                    value={novoProduto.descricao}
-                    onChange={e => setNovoProduto(prev => ({ ...prev, descricao: e.target.value }))}
-                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-400 text-sm mb-2">Categoria *</label>
-                  <input
-                    type="text"
-                    value={novoProduto.categoria}
-                    onChange={e => setNovoProduto(prev => ({ ...prev, categoria: e.target.value }))}
-                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-400 text-sm mb-2">Preço (R$) *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={novoProduto.preco}
-                    onChange={e => setNovoProduto(prev => ({ ...prev, preco: e.target.value }))}
-                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-400 text-sm mb-2">Estoque *</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={novoProduto.estoque}
-                    onChange={e => setNovoProduto(prev => ({ ...prev, estoque: e.target.value }))}
-                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-400 text-sm mb-2">Foto</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleUploadFoto}
-                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                    disabled={uploadingFoto}
-                  />
-                  {uploadingFoto && (
-                    <p className="text-sm text-gray-400 mt-2">Fazendo upload...</p>
-                  )}
-                  {novoProduto.foto_url && (
-                    <div className="mt-2">
-                      <img
-                        src={novoProduto.foto_url}
-                        alt="Preview"
-                        className="w-20 h-20 rounded-lg object-cover"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={novoProduto.status}
-                    onChange={e => setNovoProduto(prev => ({ ...prev, status: e.target.checked }))}
-                    className="w-4 h-4 rounded border-red-600/20 text-red-600 focus:ring-red-600"
-                  />
-                  <label className="text-gray-400 text-sm">Ativo</label>
-                </div>
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={salvando || uploadingFoto}
-                  className="w-full bg-gradient-to-r from-red-600 to-red-800 text-white px-4 py-3 rounded-lg hover:from-red-700 hover:to-red-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              <div className="p-6 max-h-[85vh] overflow-y-auto">
+                <button
+                  onClick={() => {
+                    setModalAberto(false)
+                    setProdutoEmEdicao(null)
+                    setNovoProduto({
+                      nome: '',
+                      descricao: '',
+                      preco: '',
+                      estoque: '',
+                      foto_url: '',
+                      categoria: '',
+                      status: true
+                    })
+                  }}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
                 >
-                  {salvando ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                      <span>Salvando...</span>
-                    </div>
-                  ) : (
-                    produtoEmEdicao ? 'Atualizar' : 'Adicionar'
-                  )}
-                </motion.button>
-              </form>
+                  ✕
+                </button>
+
+                <h3 className="text-xl font-bold text-red-500 mb-6">
+                  {produtoEmEdicao ? 'Editar Produto' : 'Novo Produto'}
+                </h3>
+
+                {error && (
+                  <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                    <p className="text-red-500 text-sm">{error}</p>
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-2">Nome *</label>
+                    <input
+                      type="text"
+                      value={novoProduto.nome}
+                      onChange={e => setNovoProduto(prev => ({ ...prev, nome: e.target.value }))}
+                      className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-2">Descrição</label>
+                    <textarea
+                      value={novoProduto.descricao}
+                      onChange={e => setNovoProduto(prev => ({ ...prev, descricao: e.target.value }))}
+                      className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-2">Categoria *</label>
+                    <input
+                      type="text"
+                      value={novoProduto.categoria}
+                      onChange={e => setNovoProduto(prev => ({ ...prev, categoria: e.target.value }))}
+                      className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-2">Preço (R$) *</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={novoProduto.preco}
+                      onChange={e => setNovoProduto(prev => ({ ...prev, preco: e.target.value }))}
+                      className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-2">Estoque *</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={novoProduto.estoque}
+                      onChange={e => setNovoProduto(prev => ({ ...prev, estoque: e.target.value }))}
+                      className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-2">Foto</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleUploadFoto}
+                      className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                      disabled={uploadingFoto}
+                    />
+                    {uploadingFoto && (
+                      <p className="text-sm text-gray-400 mt-2">Fazendo upload...</p>
+                    )}
+                    {novoProduto.foto_url && (
+                      <div className="mt-2">
+                        <img
+                          src={novoProduto.foto_url}
+                          alt="Preview"
+                          className="w-20 h-20 rounded-lg object-cover"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={novoProduto.status}
+                      onChange={e => setNovoProduto(prev => ({ ...prev, status: e.target.checked }))}
+                      className="w-4 h-4 rounded border-red-600/20 text-red-600 focus:ring-red-600"
+                    />
+                    <label className="text-gray-400 text-sm">Ativo</label>
+                  </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={salvando || uploadingFoto}
+                    className="w-full bg-gradient-to-r from-red-600 to-red-800 text-white px-4 py-3 rounded-lg hover:from-red-700 hover:to-red-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {salvando ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                        <span>Salvando...</span>
+                      </div>
+                    ) : (
+                      produtoEmEdicao ? 'Atualizar' : 'Adicionar'
+                    )}
+                  </motion.button>
+                </form>
+              </div>
             </motion.div>
           </motion.div>
         )}

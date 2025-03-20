@@ -588,48 +588,50 @@ export default function Agendamentos() {
       {/* Modal de Editar Status */}
       {modalAberto && agendamentoEmEdicao && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1a1a1a] p-6 rounded-lg w-full max-w-md relative border border-red-600/30">
-            <h3 className="text-xl font-bold text-red-500 mb-6">
-              Editar Status do Agendamento
-            </h3>
+          <div className="bg-[#1a1a1a] rounded-lg w-full max-w-md relative border border-red-600/30">
+            <div className="p-6 max-h-[85vh] overflow-y-auto">
+              <h3 className="text-xl font-bold text-red-500 mb-6">
+                Editar Status do Agendamento
+              </h3>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-gray-400 text-sm mb-2">Status</label>
-                <select
-                  value={agendamentoEmEdicao.status}
-                  onChange={e => setAgendamentoEmEdicao({
-                    ...agendamentoEmEdicao,
-                    status: e.target.value as typeof agendamentoEmEdicao.status
-                  })}
-                  className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                  required
-                >
-                  <option value="pendente">Pendente</option>
-                  <option value="confirmado">Confirmado</option>
-                  <option value="concluido">Concluído</option>
-                  <option value="cancelado">Cancelado</option>
-                </select>
-              </div>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Status</label>
+                  <select
+                    value={agendamentoEmEdicao.status}
+                    onChange={e => setAgendamentoEmEdicao({
+                      ...agendamentoEmEdicao,
+                      status: e.target.value as typeof agendamentoEmEdicao.status
+                    })}
+                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                    required
+                  >
+                    <option value="pendente">Pendente</option>
+                    <option value="confirmado">Confirmado</option>
+                    <option value="concluido">Concluído</option>
+                    <option value="cancelado">Cancelado</option>
+                  </select>
+                </div>
 
-              <div className="flex gap-4 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-red-600 to-red-800 text-white py-3 rounded-lg hover:from-red-700 hover:to-red-900 transition-all"
-                  onMouseEnter={() => sounds.play('hover')}
-                >
-                  Salvar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleModalClose}
-                  className="flex-1 border border-red-600/20 text-white py-3 rounded-lg hover:bg-red-600/10 transition-all"
-                  onMouseEnter={() => sounds.play('hover')}
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
+                <div className="flex gap-4 pt-4">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-gradient-to-r from-red-600 to-red-800 text-white py-3 rounded-lg hover:from-red-700 hover:to-red-900 transition-all"
+                    onMouseEnter={() => sounds.play('hover')}
+                  >
+                    Salvar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleModalClose}
+                    className="flex-1 border border-red-600/20 text-white py-3 rounded-lg hover:bg-red-600/10 transition-all"
+                    onMouseEnter={() => sounds.play('hover')}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

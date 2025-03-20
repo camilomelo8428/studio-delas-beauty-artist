@@ -53,15 +53,15 @@ export default function Funcionarios() {
   const { uploadImagem } = useStorage()
   const [modalAberto, setModalAberto] = useState(false)
   const [funcionarioEmEdicao, setFuncionarioEmEdicao] = useState<Funcionario | null>(null)
-  const [novoFuncionario, setNovoFuncionario] = useState({
+  const [novoFuncionario, setNovoFuncionario] = useState<Omit<Funcionario, 'id' | 'created_at'>>({
     nome: '',
     email: '',
     telefone: '',
     foto_url: '',
-    status: true,
-    cargo: 'barbeiro' as CargoFuncionario,
-    especialidades: [] as string[],
-    senha: ''
+    cargo: 'funcionario',
+    comissao: 0,
+    especialidades: [],
+    status: true
   })
   const [isLoading, setIsLoading] = useState(false)
   const [funcionarioParaExcluir, setFuncionarioParaExcluir] = useState<Funcionario | null>(null)
@@ -132,7 +132,8 @@ export default function Funcionarios() {
         status: true,
         cargo: 'barbeiro',
         especialidades: [],
-        senha: ''
+        senha: '',
+        comissao: 0
       })
     } catch (err) {
       console.error('Erro ao salvar funcionário:', err)
@@ -231,7 +232,8 @@ export default function Funcionarios() {
               status: true,
               cargo: 'barbeiro',
               especialidades: [],
-              senha: ''
+              senha: '',
+              comissao: 0
             })
           }}
           className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-800 text-white px-4 py-2 rounded-lg hover:from-red-700 hover:to-red-900 transition-all whitespace-nowrap"
@@ -297,7 +299,8 @@ export default function Funcionarios() {
                           status: funcionario.status,
                           cargo: funcionario.cargo,
                           especialidades: funcionario.especialidades,
-                          senha: ''
+                          senha: '',
+                          comissao: funcionario.comissao
                         })
                         setModalAberto(true)
                       }}
@@ -324,130 +327,133 @@ export default function Funcionarios() {
       {/* Modal de Adicionar/Editar */}
       {modalAberto && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1a1a1a] p-6 rounded-lg w-full max-w-md relative border border-red-600/30">
-            <h2 className="text-red-600 text-xl font-bold mb-6">
-              {funcionarioEmEdicao ? 'Editar Funcionário' : 'Novo Funcionário'}
-            </h2>
-            
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-gray-400 mb-2">Nome</label>
-                <input
-                  type="text"
-                  value={novoFuncionario.nome}
-                  onChange={(e) => setNovoFuncionario(prev => ({ ...prev, nome: e.target.value }))}
-                  className="w-full bg-[#2a2a2a] border border-red-600/20 rounded p-3 text-white focus:border-red-600 focus:outline-none"
-                  required
-                />
-              </div>
+          <div className="bg-[#1a1a1a] rounded-lg w-full max-w-md relative border border-red-600/30">
+            <div className="p-6 max-h-[85vh] overflow-y-auto">
+              <h2 className="text-red-600 text-xl font-bold mb-6">
+                {funcionarioEmEdicao ? 'Editar Funcionário' : 'Novo Funcionário'}
+              </h2>
+              
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-gray-400 mb-2">Nome</label>
+                  <input
+                    type="text"
+                    value={novoFuncionario.nome}
+                    onChange={(e) => setNovoFuncionario(prev => ({ ...prev, nome: e.target.value }))}
+                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded p-3 text-white focus:border-red-600 focus:outline-none"
+                    required
+                  />
+                </div>
 
-              <div>
-                <label className="block text-gray-400 mb-2">E-mail</label>
-                <input
-                  type="email"
-                  value={novoFuncionario.email}
-                  onChange={(e) => setNovoFuncionario(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full bg-[#2a2a2a] border border-red-600/20 rounded p-3 text-white focus:border-red-600 focus:outline-none"
-                  required
-                />
-              </div>
+                <div>
+                  <label className="block text-gray-400 mb-2">E-mail</label>
+                  <input
+                    type="email"
+                    value={novoFuncionario.email}
+                    onChange={(e) => setNovoFuncionario(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded p-3 text-white focus:border-red-600 focus:outline-none"
+                    required
+                  />
+                </div>
 
-              <div>
-                <label className="block text-gray-400 mb-2">Senha</label>
-                <input
-                  type="password"
-                  value={novoFuncionario.senha}
-                  onChange={(e) => setNovoFuncionario(prev => ({ ...prev, senha: e.target.value }))}
-                  className="w-full bg-[#2a2a2a] border border-red-600/20 rounded p-3 text-white focus:border-red-600 focus:outline-none"
-                  required={!funcionarioEmEdicao}
-                  minLength={6}
-                  placeholder={funcionarioEmEdicao ? "Deixe em branco para manter a senha atual" : "Mínimo 6 caracteres"}
-                />
-              </div>
+                <div>
+                  <label className="block text-gray-400 mb-2">Senha</label>
+                  <input
+                    type="password"
+                    value={novoFuncionario.senha}
+                    onChange={(e) => setNovoFuncionario(prev => ({ ...prev, senha: e.target.value }))}
+                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded p-3 text-white focus:border-red-600 focus:outline-none"
+                    required={!funcionarioEmEdicao}
+                    minLength={6}
+                    placeholder={funcionarioEmEdicao ? "Deixe em branco para manter a senha atual" : "Mínimo 6 caracteres"}
+                  />
+                </div>
 
-              <div>
-                <label className="block text-gray-400 text-sm mb-2">Telefone</label>
-                <input
-                  type="tel"
-                  value={novoFuncionario.telefone}
-                  onChange={e => setNovoFuncionario(prev => ({ 
-                    ...prev, 
-                    telefone: formatarTelefoneInput(e.target.value)
-                  }))}
-                  className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                  placeholder="(91) 99999-9999"
-                  required
-                />
-              </div>
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Telefone</label>
+                  <input
+                    type="tel"
+                    value={novoFuncionario.telefone}
+                    onChange={e => setNovoFuncionario(prev => ({ 
+                      ...prev, 
+                      telefone: formatarTelefoneInput(e.target.value)
+                    }))}
+                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                    placeholder="(91) 99999-9999"
+                    required
+                  />
+                </div>
 
-              <div>
-                <label className="block text-gray-400 text-sm mb-2">Função</label>
-                <select
-                  value={novoFuncionario.cargo}
-                  onChange={e => setNovoFuncionario(prev => ({ 
-                    ...prev, 
-                    cargo: e.target.value as CargoFuncionario
-                  }))}
-                  className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                  required
-                >
-                  {funcoes.map(funcao => (
-                    <option key={funcao.value} value={funcao.value}>
-                      {funcao.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Função</label>
+                  <select
+                    value={novoFuncionario.cargo}
+                    onChange={e => setNovoFuncionario(prev => ({ 
+                      ...prev, 
+                      cargo: e.target.value as CargoFuncionario
+                    }))}
+                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                    required
+                  >
+                    {funcoes.map(funcao => (
+                      <option key={funcao.value} value={funcao.value}>
+                        {funcao.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div>
-                <label className="block text-gray-400 text-sm mb-2">Foto</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFotoChange}
-                  className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                />
-              </div>
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Foto</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFotoChange}
+                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                  />
+                </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={novoFuncionario.status}
-                  onChange={e => setNovoFuncionario(prev => ({ ...prev, status: e.target.checked }))}
-                  className="form-checkbox bg-[#2a2a2a] border-red-600/20 text-red-600 rounded"
-                />
-                <label className="text-gray-400">Ativo</label>
-              </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={novoFuncionario.status}
+                    onChange={e => setNovoFuncionario(prev => ({ ...prev, status: e.target.checked }))}
+                    className="form-checkbox bg-[#2a2a2a] border-red-600/20 text-red-600 rounded"
+                  />
+                  <label className="text-gray-400">Ativo</label>
+                </div>
 
-              <div className="flex gap-4 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-red-600 to-red-800 text-white py-3 rounded-lg hover:from-red-700 hover:to-red-900 transition-all"
-                >
-                  Salvar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setModalAberto(false)
-                    setFuncionarioEmEdicao(null)
-                    setNovoFuncionario({
-                      nome: '',
-                      email: '',
-                      telefone: '',
-                      foto_url: '',
-                      status: true,
-                      cargo: 'barbeiro',
-                      especialidades: [],
-                      senha: ''
-                    })
-                  }}
-                  className="flex-1 border border-red-600/20 text-white py-3 rounded-lg hover:bg-red-600/10 transition-all"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
+                <div className="flex gap-4 pt-4">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-gradient-to-r from-red-600 to-red-800 text-white py-3 rounded-lg hover:from-red-700 hover:to-red-900 transition-all"
+                  >
+                    Salvar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModalAberto(false)
+                      setFuncionarioEmEdicao(null)
+                      setNovoFuncionario({
+                        nome: '',
+                        email: '',
+                        telefone: '',
+                        foto_url: '',
+                        status: true,
+                        cargo: 'barbeiro',
+                        especialidades: [],
+                        senha: '',
+                        comissao: 0
+                      })
+                    }}
+                    className="flex-1 border border-red-600/20 text-white py-3 rounded-lg hover:bg-red-600/10 transition-all"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
