@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAgendamentos } from '../../hooks/useAdmin'
-import type { Agendamento } from '../../services/admin'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import {
@@ -28,24 +27,57 @@ import { useRealtimeAgendamentos } from '../../hooks/useRealtimeAgendamentos'
 
 const hoje = format(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd')
 
+interface Servico {
+  id: string;
+  nome: string;
+  preco: number;
+  preco_promocional?: number;
+  promocao_ativa?: boolean;
+  duracao_minutos: number;
+}
+
+interface Cliente {
+  id: string;
+  nome: string;
+}
+
+interface Funcionario {
+  id: string;
+  nome: string;
+  cargo: string;
+}
+
+interface Agendamento {
+  id: string;
+  cliente_id: string;
+  funcionario_id: string;
+  servico_id: string;
+  data: string;
+  horario: string;
+  status: 'pendente' | 'confirmado' | 'concluido' | 'cancelado';
+  servico: Servico;
+  funcionario: Funcionario;
+  cliente: Cliente;
+}
+
 interface DadosLucro {
-  data: string
-  lucroTotal: number
-  totalServicos: number
+  data: string;
+  lucroTotal: number;
+  totalServicos: number;
 }
 
 interface Estatisticas {
-  pendentes: number
-  confirmados: number
-  concluidos: number
-  cancelados: number
-  total: number
+  pendentes: number;
+  confirmados: number;
+  concluidos: number;
+  cancelados: number;
+  total: number;
 }
 
 interface Resumo {
-  lucroTotal: number
-  totalServicos: number
-  mediaTicket: number
+  lucroTotal: number;
+  totalServicos: number;
+  mediaTicket: number;
 }
 
 export default function Dashboard() {
@@ -91,7 +123,7 @@ export default function Dashboard() {
           *,
           cliente:clientes(nome),
           funcionario:funcionarios(nome),
-          servico:servicos(nome, preco)
+          servico:servicos(nome, preco, preco_promocional, promocao_ativa)
         `)
         .gte('data', dataInicialFormatada)
         .lte('data', dataFinalFormatada)
@@ -141,7 +173,10 @@ export default function Dashboard() {
       .forEach(agendamento => {
         const data = format(toZonedTime(parseISO(agendamento.data), 'America/Sao_Paulo'), 'dd/MM', { locale: ptBR })
         const valorAtual = dadosFaturamentoPorDia.get(data) || 0
-        dadosFaturamentoPorDia.set(data, valorAtual + agendamento.servico.preco)
+        const valorServico = agendamento.servico.promocao_ativa && agendamento.servico.preco_promocional
+          ? agendamento.servico.preco_promocional
+          : agendamento.servico.preco
+        dadosFaturamentoPorDia.set(data, valorAtual + valorServico)
       })
 
     const dadosFaturamentoProcessados = Array.from(dadosFaturamentoPorDia.entries())
@@ -179,7 +214,9 @@ export default function Dashboard() {
 
       const dadosDia = dadosPorDia.get(data)!
       if (agendamento.status === 'concluido') {
-        const valorServico = agendamento.servico.preco
+        const valorServico = agendamento.servico.promocao_ativa && agendamento.servico.preco_promocional
+          ? agendamento.servico.preco_promocional
+          : agendamento.servico.preco
         
         dadosDia.lucroTotal += valorServico
         dadosDia.totalServicos += 1
@@ -227,8 +264,13 @@ export default function Dashboard() {
     : []
 
   const faturamentoHoje = agendamentosHoje
-    .filter(a => a && a.status === 'concluido' && a.servico && a.servico.preco)
-    .reduce((total, a) => total + Number(a.servico.preco), 0)
+    .filter(a => a && a.status === 'concluido' && a.servico)
+    .reduce((total, a) => {
+      const valorServico = a.servico.promocao_ativa && a.servico.preco_promocional
+        ? a.servico.preco_promocional
+        : a.servico.preco
+      return total + Number(valorServico)
+    }, 0)
 
   const clientesAtendidosHoje = agendamentosHoje
     .filter(a => a && a.status === 'concluido')
@@ -450,27 +492,44 @@ export default function Dashboard() {
             acc[servicoNome] = {
               quantidade: 0,
               valorTotal: 0,
-              duracaoTotal: 0
+              valorOriginal: 0,
+              duracaoTotal: 0,
+              promocoes: 0
             }
           }
           acc[servicoNome].quantidade++
-          acc[servicoNome].valorTotal += agendamento.servico.preco
+          const valorServico = agendamento.servico.promocao_ativa && agendamento.servico.preco_promocional
+            ? agendamento.servico.preco_promocional
+            : agendamento.servico.preco
+          acc[servicoNome].valorTotal += valorServico
+          acc[servicoNome].valorOriginal += agendamento.servico.preco
+          if (agendamento.servico.promocao_ativa && agendamento.servico.preco_promocional) {
+            acc[servicoNome].promocoes++
+          }
           acc[servicoNome].duracaoTotal += agendamento.servico.duracao_minutos
           return acc
-        }, {} as Record<string, { quantidade: number; valorTotal: number; duracaoTotal: number }>)
+        }, {} as Record<string, { 
+          quantidade: number; 
+          valorTotal: number; 
+          valorOriginal: number;
+          duracaoTotal: number;
+          promocoes: number;
+        }>)
 
       const dadosServicos = Object.entries(servicosPorTipo).map(([servico, dados]) => [
         servico,
         dados.quantidade.toString(),
         formatarMoeda(dados.valorTotal),
+        formatarMoeda(dados.valorOriginal),
         formatarMoeda(dados.valorTotal / dados.quantidade),
         `${Math.floor(dados.duracaoTotal / 60)}h${dados.duracaoTotal % 60}min`,
-        `${((dados.quantidade / resumo.totalServicos) * 100).toFixed(1)}%`
+        `${((dados.quantidade / resumo.totalServicos) * 100).toFixed(1)}%`,
+        dados.promocoes > 0 ? `${dados.promocoes} promoções` : 'Sem promoção'
       ])
 
       autoTable(doc, {
         startY: posicaoY,
-        head: [['Serviço', 'Quantidade', 'Valor Total', 'Ticket Médio', 'Tempo Total', 'Taxa']],
+        head: [['Serviço', 'Quantidade', 'Valor Total', 'Valor Original', 'Ticket Médio', 'Tempo Total', 'Taxa', 'Promoções']],
         body: dadosServicos,
         theme: 'grid',
         headStyles: {
@@ -508,12 +567,21 @@ export default function Dashboard() {
               cargo: agendamento.funcionario.cargo,
               quantidade: 0,
               valorTotal: 0,
+              valorOriginal: 0,
               duracaoTotal: 0,
-              servicosRealizados: new Set<string>()
+              servicosRealizados: new Set<string>(),
+              promocoes: 0
             }
           }
           acc[profissionalNome].quantidade++
-          acc[profissionalNome].valorTotal += agendamento.servico.preco
+          const valorServico = agendamento.servico.promocao_ativa && agendamento.servico.preco_promocional
+            ? agendamento.servico.preco_promocional
+            : agendamento.servico.preco
+          acc[profissionalNome].valorTotal += valorServico
+          acc[profissionalNome].valorOriginal += agendamento.servico.preco
+          if (agendamento.servico.promocao_ativa && agendamento.servico.preco_promocional) {
+            acc[profissionalNome].promocoes++
+          }
           acc[profissionalNome].duracaoTotal += agendamento.servico.duracao_minutos
           acc[profissionalNome].servicosRealizados.add(agendamento.servico.nome)
           return acc
@@ -521,8 +589,10 @@ export default function Dashboard() {
           cargo: string; 
           quantidade: number; 
           valorTotal: number; 
+          valorOriginal: number;
           duracaoTotal: number;
           servicosRealizados: Set<string>;
+          promocoes: number;
         }>)
 
       const dadosProfissionais = Object.entries(servicosPorProfissional).map(([profissional, dados]) => [
@@ -530,14 +600,16 @@ export default function Dashboard() {
         dados.cargo,
         dados.quantidade.toString(),
         formatarMoeda(dados.valorTotal),
+        formatarMoeda(dados.valorOriginal),
         formatarMoeda(dados.valorTotal / dados.quantidade),
         `${Math.floor(dados.duracaoTotal / 60)}h${dados.duracaoTotal % 60}min`,
-        Array.from(dados.servicosRealizados).join(', ')
+        Array.from(dados.servicosRealizados).join(', '),
+        dados.promocoes > 0 ? `${dados.promocoes} promoções` : 'Sem promoção'
       ])
 
       autoTable(doc, {
         startY: posicaoY,
-        head: [['Profissional', 'Cargo', 'Atendimentos', 'Valor Total', 'Ticket Médio', 'Tempo Total', 'Serviços Realizados']],
+        head: [['Profissional', 'Cargo', 'Atendimentos', 'Valor Total', 'Valor Original', 'Ticket Médio', 'Tempo Total', 'Serviços Realizados', 'Promoções']],
         body: dadosProfissionais,
         theme: 'grid',
         headStyles: {

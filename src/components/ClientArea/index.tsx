@@ -11,24 +11,35 @@ export { AgendarHorario, MeusAgendamentos, Historico, MeuPerfil, Produtos, Lista
 
 // Interfaces
 interface Agendamento {
-  id: number
-  data: string
-  horario: string
-  status: 'pendente' | 'confirmado' | 'concluido' | 'cancelado'
-  observacao?: string
+  id: string;
+  cliente_id: string;
+  funcionario_id: string;
+  servico_id: string;
+  data: string;
+  horario: string;
+  status: 'pendente' | 'confirmado' | 'concluido' | 'cancelado';
+  observacao?: string;
   servico: {
-    id: string
-    nome: string
-    preco: number
-    descricao: string
-    duracao_minutos: number
-  }
+    id: string;
+    nome: string;
+    descricao: string;
+    preco: number;
+    duracao_minutos: number;
+    foto_url?: string;
+    categoria: string;
+    preco_promocional?: number;
+    promocao_ativa?: boolean;
+    promocao_inicio?: string;
+    promocao_fim?: string;
+    promocao_descricao?: string;
+  };
   funcionario: {
-    id: string
-    nome: string
-    cargo: 'barbeiro' | 'cabeleireiro' | 'manicure' | 'esteticista_facial' | 'esteticista_corporal' | 'maquiador' | 'designer_sobrancelhas' | 'massagista' | 'depilador' | 'admin'
-    foto_url: string | null
-  }
+    id: string;
+    nome: string;
+    email: string;
+    foto_url?: string;
+    cargo: string;
+  };
 }
 
 interface Servico {
@@ -37,6 +48,10 @@ interface Servico {
   preco: number
   duracao_minutos: number
   descricao: string
+  preco_original?: number
+  promocao_ativa?: boolean
+  promocao_fim?: string
+  preco_promocional?: number
 }
 
 interface Funcionario {
@@ -139,7 +154,20 @@ function AgendarHorario() {
         .order('nome')
 
       if (error) throw error
-      setServicos(data || [])
+      
+      // Filtra serviços com promoção ativa e ainda não expirada
+      const servicosComPromocao = data?.map(servico => {
+        if (servico.promocao_ativa && new Date(servico.promocao_fim) > new Date()) {
+          return {
+            ...servico,
+            preco_original: servico.preco,
+            preco: servico.preco_promocional
+          }
+        }
+        return servico
+      }) || []
+      
+      setServicos(servicosComPromocao)
     } catch (err) {
       console.error('Erro ao carregar serviços:', err)
       setError('Erro ao carregar serviços')
@@ -309,6 +337,12 @@ function AgendarHorario() {
         throw new Error('Usuário não autenticado')
       }
 
+      // Encontrar o serviço selecionado para obter o preço atual
+      const servicoSelecionado = servicos.find(s => s.id === selectedService)
+      if (!servicoSelecionado) {
+        throw new Error('Serviço não encontrado')
+      }
+
       // Criar o agendamento
       const { error: agendamentoError } = await supabase
         .from('agendamentos')
@@ -319,7 +353,10 @@ function AgendarHorario() {
             servico_id: selectedService,
             data: selectedDate,
             horario: selectedTime,
-            status: 'pendente'
+            status: 'pendente',
+            observacao: servicoSelecionado.preco_original ? 
+              `Valor promocional aplicado: De R$ ${servicoSelecionado.preco_original} por R$ ${servicoSelecionado.preco}` : 
+              undefined
           }
         ])
 
@@ -408,7 +445,13 @@ function AgendarHorario() {
                   <option value="">Selecione um serviço</option>
                   {servicos.map(servico => (
                     <option key={servico.id} value={servico.id}>
-                      {servico.nome} - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(servico.preco)}
+                      {servico.nome} - {servico.preco_original ? (
+                        <>
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(servico.preco)} (Promoção - antes: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(servico.preco_original)})
+                        </>
+                      ) : (
+                        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(servico.preco)
+                      )}
                     </option>
                   ))}
                 </select>
@@ -622,7 +665,7 @@ function MeusAgendamentos() {
     }
   }
 
-  const handleCancelarAgendamento = async (agendamentoId: number) => {
+  const handleCancelarAgendamento = async (agendamentoId: string) => {
     try {
       const { error } = await supabase
         .from('agendamentos')
@@ -854,7 +897,20 @@ function Historico() {
         .order('nome')
 
       if (error) throw error
-      setServicos(data || [])
+      
+      // Filtra serviços com promoção ativa e ainda não expirada
+      const servicosComPromocao = data?.map(servico => {
+        if (servico.promocao_ativa && new Date(servico.promocao_fim) > new Date()) {
+          return {
+            ...servico,
+            preco_original: servico.preco,
+            preco: servico.preco_promocional
+          }
+        }
+        return servico
+      }) || []
+      
+      setServicos(servicosComPromocao)
     } catch (err) {
       console.error('Erro ao carregar serviços:', err)
     }
@@ -995,7 +1051,16 @@ function Historico() {
                         </p>
                         <p className="text-gray-400">
                           <span className="text-gray-500">Valor:</span>{' '}
-                          {formatarPreco(item.servico.preco)}
+                          {item.servico.promocao_ativa && item.servico.preco_promocional ? (
+                            <>
+                              <span className="text-red-500">{formatarPreco(item.servico.preco_promocional)}</span>
+                              <span className="text-gray-500 text-sm line-through ml-2">
+                                {formatarPreco(item.servico.preco)}
+                              </span>
+                            </>
+                          ) : (
+                            formatarPreco(item.servico.preco)
+                          )}
                         </p>
                       </div>
                     </div>
@@ -1053,7 +1118,19 @@ function Historico() {
                   </p>
                   <p className="text-gray-400">
                     <span className="text-gray-500">Valor:</span>{' '}
-                    {formatarPreco(detalhesAgendamento.servico.preco)}
+                    {detalhesAgendamento.servico.promocao_ativa && detalhesAgendamento.servico.preco_promocional ? (
+                      <>
+                        <span className="text-red-500">{formatarPreco(detalhesAgendamento.servico.preco_promocional)}</span>
+                        <span className="text-gray-500 text-sm line-through ml-2">
+                          {formatarPreco(detalhesAgendamento.servico.preco)}
+                        </span>
+                        <span className="text-green-500 text-xs ml-2">
+                          (Promoção aplicada)
+                        </span>
+                      </>
+                    ) : (
+                      formatarPreco(detalhesAgendamento.servico.preco)
+                    )}
                   </p>
                 </div>
               </div>

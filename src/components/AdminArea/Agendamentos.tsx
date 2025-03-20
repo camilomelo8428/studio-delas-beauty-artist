@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { Agendamento, Funcionario } from '../../services/admin'
 import ConfirmationModal from '../ConfirmationModal'
 import { supabase } from '../../lib/supabase'
 import { sounds } from '../../services/sounds'
@@ -8,6 +7,48 @@ import { format, toZonedTime } from 'date-fns-tz'
 import { parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useRealtimeAgendamentos } from '../../hooks/useRealtimeAgendamentos'
+
+interface Servico {
+  id: string;
+  nome: string;
+  preco: number;
+  descricao?: string;
+  duracao_minutos?: number;
+  foto_url?: string;
+  categoria?: string;
+  preco_promocional?: number;
+  promocao_ativa?: boolean;
+  promocao_inicio?: string;
+  promocao_fim?: string;
+  promocao_descricao?: string;
+}
+
+interface Funcionario {
+  id: string;
+  nome: string;
+  cargo: string;
+  foto_url?: string;
+}
+
+interface Cliente {
+  id: string;
+  nome: string;
+  telefone: string;
+}
+
+interface Agendamento {
+  id: string;
+  cliente_id: string;
+  funcionario_id: string;
+  servico_id: string;
+  data: string;
+  horario: string;
+  status: 'pendente' | 'confirmado' | 'concluido' | 'cancelado';
+  observacao?: string;
+  servico: Servico;
+  funcionario: Funcionario;
+  cliente: Cliente;
+}
 
 // Função utilitária para formatar datas
 const formatarData = (data: string) => {
@@ -53,7 +94,7 @@ export default function Agendamentos() {
           *,
           cliente:clientes(nome, telefone),
           funcionario:funcionarios(nome, cargo),
-          servico:servicos(nome, preco)
+          servico:servicos(nome, preco, preco_promocional, promocao_ativa)
         `)
         .gte('data', dataInicialFormatada)
         .lte('data', dataFinalFormatada)
@@ -456,10 +497,27 @@ export default function Agendamentos() {
                       {agendamento.servico.nome}
                     </div>
                     <div className="text-xs text-gray-400 truncate">
-                      {new Intl.NumberFormat('pt-BR', { 
-                        style: 'currency', 
-                        currency: 'BRL' 
-                      }).format(agendamento.servico.preco)}
+                      {agendamento.servico.promocao_ativa && agendamento.servico.preco_promocional ? (
+                        <>
+                          <span className="text-red-500">
+                            {new Intl.NumberFormat('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL' 
+                            }).format(agendamento.servico.preco_promocional)}
+                          </span>
+                          <span className="text-gray-500 line-through ml-2">
+                            {new Intl.NumberFormat('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL' 
+                            }).format(agendamento.servico.preco)}
+                          </span>
+                        </>
+                      ) : (
+                        new Intl.NumberFormat('pt-BR', { 
+                          style: 'currency', 
+                          currency: 'BRL' 
+                        }).format(agendamento.servico.preco)
+                      )}
                     </div>
                   </div>
                 </div>
@@ -527,10 +585,27 @@ export default function Agendamentos() {
                             {agendamento.servico.nome}
                           </div>
                           <div className="text-xs text-gray-400 truncate">
-                            {new Intl.NumberFormat('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL' 
-                            }).format(agendamento.servico.preco)}
+                            {agendamento.servico.promocao_ativa && agendamento.servico.preco_promocional ? (
+                              <>
+                                <span className="text-red-500">
+                                  {new Intl.NumberFormat('pt-BR', { 
+                                    style: 'currency', 
+                                    currency: 'BRL' 
+                                  }).format(agendamento.servico.preco_promocional)}
+                                </span>
+                                <span className="text-gray-500 line-through ml-2">
+                                  {new Intl.NumberFormat('pt-BR', { 
+                                    style: 'currency', 
+                                    currency: 'BRL' 
+                                  }).format(agendamento.servico.preco)}
+                                </span>
+                              </>
+                            ) : (
+                              new Intl.NumberFormat('pt-BR', { 
+                                style: 'currency', 
+                                currency: 'BRL' 
+                              }).format(agendamento.servico.preco)
+                            )}
                           </div>
                         </div>
                       </div>
