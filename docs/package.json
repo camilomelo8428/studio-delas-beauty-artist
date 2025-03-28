@@ -1,0 +1,12 @@
+{
+    "name": "manual-studio-delas",
+    "version": "1.0.0",
+    "description": "Manual do Sistema Studio D'Elas BEAUTY ARTIST",
+    "scripts": {
+        "generate-pdf": "node generate-pdf.js"
+    },
+    "dependencies": {
+        "markdown-pdf": "^11.0.0",
+        "remarkable-meta": "^1.0.1"
+    }
+} 
