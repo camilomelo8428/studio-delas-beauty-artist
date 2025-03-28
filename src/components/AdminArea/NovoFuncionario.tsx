@@ -3,7 +3,7 @@ import type { NovoFuncionario, CargoFuncionario } from '../../services/admin'
 import { useStorage } from '../../hooks/useAdmin'
 
 interface NovoFuncionarioProps {
-  onSubmit: (funcionario: NovoFuncionario) => Promise<void>
+  onSubmit: (funcionario: NovoFuncionario & { senha: string }) => Promise<void>
   onCancel: () => void
 }
 
@@ -11,8 +11,7 @@ const CARGOS = [
   { value: 'barbeiro', label: 'Barbeiro' },
   { value: 'cabeleireiro', label: 'Cabeleireiro' },
   { value: 'manicure', label: 'Manicure' },
-  { value: 'esteticista_facial', label: 'Esteticista Facial' },
-  { value: 'esteticista_corporal', label: 'Esteticista Corporal' },
+  { value: 'esteticista', label: 'Esteticista' },
   { value: 'maquiador', label: 'Maquiador(a)' },
   { value: 'designer_sobrancelhas', label: 'Designer de Sobrancelhas' },
   { value: 'massagista', label: 'Massagista' },
@@ -35,15 +34,13 @@ const ESPECIALIDADES: Record<CargoFuncionario, string[]> = {
     'Hidratação',
     'Penteados'
   ],
-  esteticista_facial: [
+  esteticista: [
     'Limpeza de Pele',
     'Peeling',
     'Microagulhamento',
     'Radiofrequência',
     'Tratamentos Anti-idade',
-    'Drenagem Facial'
-  ],
-  esteticista_corporal: [
+    'Drenagem Facial',
     'Drenagem Linfática',
     'Massagem Modeladora',
     'Tratamento para Celulite',

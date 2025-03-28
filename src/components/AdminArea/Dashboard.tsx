@@ -231,16 +231,16 @@ export default function Dashboard() {
       cancelados: agendamentos.filter(a => a.status === 'cancelado').length,
       total: agendamentos.length
     }
-    setEstatisticas(stats)
+      setEstatisticas(stats)
 
     // Preparar dados para o gráfico de status
-    const dadosStatus = [
-      { name: 'Pendentes', value: stats.pendentes, color: '#EAB308' },
-      { name: 'Confirmados', value: stats.confirmados, color: '#3B82F6' },
+      const dadosStatus = [
+        { name: 'Pendentes', value: stats.pendentes, color: '#EAB308' },
+        { name: 'Confirmados', value: stats.confirmados, color: '#3B82F6' },
       { name: 'Concluídos', value: stats.concluidos, color: '#10B981' },
-      { name: 'Cancelados', value: stats.cancelados, color: '#EF4444' }
-    ]
-    setDadosAgendamentosPorStatus(dadosStatus)
+        { name: 'Cancelados', value: stats.cancelados, color: '#EF4444' }
+      ]
+      setDadosAgendamentosPorStatus(dadosStatus)
 
     // Preparar dados para o gráfico de faturamento
     const dadosFaturamentoPorDia = new Map<string, number>()

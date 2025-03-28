@@ -6,8 +6,7 @@ BEGIN
       'barbeiro',
       'cabeleireiro',
       'manicure',
-      'esteticista_facial',
-      'esteticista_corporal',
+      'esteticista',
       'maquiador',
       'designer_sobrancelhas',
       'massagista',
@@ -16,8 +15,7 @@ BEGIN
     );
   ELSE
     -- Se o tipo já existe, adiciona os novos valores
-    ALTER TYPE cargo_funcionario ADD VALUE IF NOT EXISTS 'esteticista_facial';
-    ALTER TYPE cargo_funcionario ADD VALUE IF NOT EXISTS 'esteticista_corporal';
+    ALTER TYPE cargo_funcionario ADD VALUE IF NOT EXISTS 'esteticista';
     ALTER TYPE cargo_funcionario ADD VALUE IF NOT EXISTS 'maquiador';
     ALTER TYPE cargo_funcionario ADD VALUE IF NOT EXISTS 'designer_sobrancelhas';
     ALTER TYPE cargo_funcionario ADD VALUE IF NOT EXISTS 'massagista';

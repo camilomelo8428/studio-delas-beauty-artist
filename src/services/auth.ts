@@ -4,7 +4,7 @@ export interface FuncionarioAuth {
   id: string
   nome: string
   email: string
-  funcao: 'barbeiro' | 'cabeleireiro' | 'manicure' | 'esteticista_facial' | 'esteticista_corporal' | 'maquiador' | 'designer_sobrancelhas' | 'massagista' | 'depilador' | 'admin'
+  funcao: 'barbeiro' | 'cabeleireiro' | 'manicure' | 'esteticista' | 'maquiador' | 'designer_sobrancelhas' | 'massagista' | 'depilador' | 'admin'
   status: boolean
   foto_url: string | null
   telefone: string

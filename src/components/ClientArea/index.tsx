@@ -61,7 +61,7 @@ interface Funcionario {
   telefone: string
   foto_url: string | null
   status: boolean
-  cargo: 'barbeiro' | 'cabeleireiro' | 'manicure' | 'esteticista_facial' | 'esteticista_corporal' | 'maquiador' | 'designer_sobrancelhas' | 'massagista' | 'depilador' | 'admin'
+  cargo: 'barbeiro' | 'cabeleireiro' | 'manicure' | 'esteticista' | 'maquiador' | 'designer_sobrancelhas' | 'massagista' | 'depilador' | 'admin'
   comissao: number
   especialidades: string[]
 }
@@ -92,8 +92,7 @@ const CARGO_LABELS: { [key: string]: string } = {
   barbeiro: 'Barbeiro',
   cabeleireiro: 'Cabeleireiro',
   manicure: 'Manicure',
-  esteticista_facial: 'Esteticista Facial',
-  esteticista_corporal: 'Esteticista Corporal',
+  esteticista: 'Esteticista',
   maquiador: 'Maquiador(a)',
   designer_sobrancelhas: 'Designer de Sobrancelhas',
   massagista: 'Massagista',
