@@ -1388,11 +1388,11 @@ function App() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 sm:gap-4">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-gold-500/20 to-gold-700/20 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
-                        <span className="text-xl sm:text-2xl animate-bounce">🛍️</span>
+                        <span className="text-xl sm:text-2xl animate-bounce">✨</span>
                       </div>
                       <div className="text-left">
-                        <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-gold-400 transition-colors duration-300">Produtos</h3>
-                        <p className="text-xs sm:text-sm text-gray-400">Conheça nossos serviços e produtos</p>
+                        <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-gold-400 transition-colors duration-300">Serviços & Produtos</h3>
+                        <p className="text-xs sm:text-sm text-gray-400">Explore nossos tratamentos e produtos</p>
                       </div>
                     </div>
                     <span className="text-gold-500 transform group-hover:translate-x-2 transition-transform duration-300">→</span>
