@@ -179,7 +179,7 @@ export default function ListaProdutos() {
               className="group bg-[#1a1a1a] rounded-xl border border-red-600/20 overflow-hidden hover:border-red-600/40 transition-all duration-300 cursor-pointer"
             >
               {/* Imagem */}
-              <div className="relative aspect-[4/3] md:aspect-square overflow-hidden bg-[#2a2a2a]">
+              <div className="relative aspect-[4/3] overflow-hidden bg-[#2a2a2a]">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10"></div>
                 {getImagemPrincipal(produto) ? (
                   <img
@@ -194,63 +194,71 @@ export default function ListaProdutos() {
                 )}
                 
                 {/* Tags */}
-                <div className="absolute top-2 right-2 flex flex-col gap-2 z-20">
+                <div className="absolute top-3 right-3 flex flex-col gap-2 z-20">
                   {produto.destaque && (
-                    <span className="px-2 py-1 bg-red-600 text-white text-xs rounded-full">
+                    <span className="px-3 py-1 bg-red-600 text-white text-xs rounded-full shadow-lg">
                       Destaque
                     </span>
                   )}
                   {produto.preco_promocional && (
-                    <span className="px-2 py-1 bg-green-600 text-white text-xs rounded-full">
-                      Promoção
+                    <span className="px-3 py-1 bg-green-600 text-white text-xs rounded-full shadow-lg animate-pulse">
+                      {Math.round((1 - (produto.preco_promocional / produto.preco)) * 100)}% OFF
                     </span>
                   )}
+                </div>
+
+                {/* Categoria */}
+                <div className="absolute top-3 left-3 z-20">
+                  <span className="flex items-center gap-1 px-2 py-1 bg-white/10 backdrop-blur-sm text-white text-xs rounded-full">
+                    <span>{categorias.find(cat => cat.id === produto.categoria)?.icone}</span>
+                    <span>{categorias.find(cat => cat.id === produto.categoria)?.nome}</span>
+                  </span>
                 </div>
               </div>
 
               {/* Informações */}
-              <div className="p-3 md:p-4">
+              <div className="p-4">
                 <div className="mb-2">
-                  <h3 className="text-base md:text-lg font-semibold text-white line-clamp-1 group-hover:text-red-500 transition-colors">
+                  <h3 className="text-lg font-semibold text-white line-clamp-1 group-hover:text-red-500 transition-colors">
                     {produto.nome}
                   </h3>
-                  <p className="text-xs md:text-sm text-gray-400 line-clamp-2 mt-1">
+                  <p className="text-sm text-gray-400 line-clamp-2 mt-1">
                     {produto.descricao}
                   </p>
                 </div>
 
-                {/* Marca e Categoria */}
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {produto.marca && (
-                    <span className="text-xs px-2 py-0.5 bg-[#2a2a2a] text-gray-400 rounded">
+                {/* Marca */}
+                {produto.marca && (
+                  <div className="mb-3">
+                    <span className="text-xs px-2 py-1 bg-[#2a2a2a] text-gray-400 rounded">
                       {produto.marca}
                     </span>
-                  )}
-                  <span className="text-xs px-2 py-0.5 bg-red-600/20 text-red-500 rounded">
-                    {categorias.find(cat => cat.id === produto.categoria)?.nome}
-                  </span>
-                </div>
+                  </div>
+                )}
 
                 {/* Preço e Botão */}
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-end justify-between gap-3">
                   <div className="flex-1">
                     {produto.preco_promocional ? (
                       <>
                         <p className="text-xs text-gray-500 line-through">
                           {formatarPreco(produto.preco)}
                         </p>
-                        <p className="text-base md:text-lg font-bold text-red-500">
-                          {formatarPreco(produto.preco_promocional)}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-lg font-bold text-red-500">
+                            {formatarPreco(produto.preco_promocional)}
+                          </p>
+                        </div>
                       </>
                     ) : (
-                      <p className="text-base md:text-lg font-bold text-white">
+                      <p className="text-lg font-bold text-white">
                         {formatarPreco(produto.preco)}
                       </p>
                     )}
                   </div>
-                  <button className="shrink-0 px-3 py-1.5 bg-red-600/20 text-red-500 text-sm rounded-lg hover:bg-red-600/30 transition-colors">
-                    Ver mais
+                  <button className="shrink-0 px-4 py-2 bg-red-600/20 text-red-500 text-sm rounded-lg hover:bg-red-600/10 transition-colors flex items-center gap-2">
+                    <span>Saiba mais</span>
+                    <span className="text-lg">✨</span>
                   </button>
                 </div>
               </div>
@@ -261,111 +269,175 @@ export default function ListaProdutos() {
 
       {/* Modal de Detalhes */}
       {produtoSelecionado && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 overflow-y-auto">
-          <div className="bg-[#1a1a1a] w-full h-full md:h-auto md:max-w-4xl md:rounded-xl border-y md:border border-red-600/20 relative">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 overflow-y-auto p-4">
+          <div className="bg-[#1a1a1a] w-full max-w-4xl rounded-xl border border-red-600/20 relative">
             {/* Botão Fechar */}
             <button
               onClick={() => setProdutoSelecionado(null)}
-              className="fixed md:absolute top-4 right-4 md:-top-4 md:-right-4 w-10 h-10 md:w-8 md:h-8 bg-red-600 text-white text-xl md:text-base rounded-full flex items-center justify-center hover:bg-red-700 transition-colors z-50"
+              className="absolute -top-4 -right-4 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center hover:bg-red-700 transition-colors z-50"
             >
               ×
             </button>
 
-            {/* Cabeçalho Mobile */}
-            <div className="sticky top-0 bg-[#1a1a1a] border-b border-red-600/20 p-4 md:hidden z-40">
-              <h2 className="text-xl font-bold text-white">
-                {produtoSelecionado.nome}
-              </h2>
-            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Coluna da Esquerda - Imagens */}
+                <div className="space-y-4">
+                  {/* Imagem Principal */}
+                  <div className="relative aspect-square rounded-lg overflow-hidden bg-[#2a2a2a]">
+                    {getImagemPrincipal(produtoSelecionado) ? (
+                      <img
+                        src={getImagemPrincipal(produtoSelecionado)}
+                        alt={produtoSelecionado.nome}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-500">
+                        <span className="text-6xl">📷</span>
+                      </div>
+                    )}
 
-            <div className="p-4 md:p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                {/* Imagem */}
-                <div className="relative aspect-square rounded-lg overflow-hidden bg-[#2a2a2a]">
-                  {getImagemPrincipal(produtoSelecionado) ? (
-                    <img
-                      src={getImagemPrincipal(produtoSelecionado)}
-                      alt={produtoSelecionado.nome}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-500">
-                      <span className="text-6xl">📷</span>
+                    {/* Tags */}
+                    <div className="absolute top-4 right-4 flex flex-col gap-2">
+                      {produtoSelecionado.destaque && (
+                        <span className="px-3 py-1 bg-red-600 text-white text-sm rounded-full">
+                          Destaque
+                        </span>
+                      )}
+                      {produtoSelecionado.preco_promocional && (
+                        <span className="px-3 py-1 bg-green-600 text-white text-sm rounded-full">
+                          Promoção
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Galeria de Miniaturas */}
+                  {produtoSelecionado.imagens && produtoSelecionado.imagens.length > 1 && (
+                    <div className="grid grid-cols-4 gap-2">
+                      {produtoSelecionado.imagens.map((imagem) => (
+                        <div
+                          key={imagem.id}
+                          className={`aspect-square rounded-lg overflow-hidden cursor-pointer border-2 ${
+                            imagem.principal ? 'border-red-600' : 'border-transparent'
+                          }`}
+                        >
+                          <img
+                            src={imagem.url}
+                            alt={produtoSelecionado.nome}
+                            className="w-full h-full object-cover hover:opacity-80 transition-opacity"
+                          />
+                        </div>
+                      ))}
                     </div>
                   )}
-
-                  {/* Tags */}
-                  <div className="absolute top-4 right-4 flex flex-col gap-2">
-                    {produtoSelecionado.destaque && (
-                      <span className="px-3 py-1 bg-gold-600 text-white text-sm rounded-full">
-                        Destaque
-                      </span>
-                    )}
-                    {produtoSelecionado.preco_promocional && (
-                      <span className="px-3 py-1 bg-green-600 text-white text-sm rounded-full">
-                        Promoção
-                      </span>
-                    )}
-                  </div>
                 </div>
 
-                {/* Informações */}
+                {/* Coluna da Direita - Informações */}
                 <div className="space-y-6">
-                  {/* Título Desktop */}
-                  <h2 className="hidden md:block text-2xl font-bold text-white mb-2">
-                    {produtoSelecionado.nome}
-                  </h2>
-
+                  {/* Cabeçalho */}
                   <div>
-                    <p className="text-gray-400 text-base">
+                    <h2 className="text-2xl font-bold text-white mb-2">
+                      {produtoSelecionado.nome}
+                    </h2>
+                    <p className="text-gray-400">
                       {produtoSelecionado.descricao}
                     </p>
                   </div>
 
                   {/* Marca e Categoria */}
-                  <div className="flex gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     {produtoSelecionado.marca && (
                       <div>
                         <p className="text-sm text-gray-400 mb-1">Marca</p>
-                        <span className="px-3 py-1 bg-[#2a2a2a] text-white rounded">
+                        <span className="px-3 py-1 bg-[#2a2a2a] text-white rounded inline-block">
                           {produtoSelecionado.marca}
                         </span>
                       </div>
                     )}
                     <div>
                       <p className="text-sm text-gray-400 mb-1">Categoria</p>
-                      <span className="px-3 py-1 bg-red-600/20 text-red-500 rounded">
+                      <span className="px-3 py-1 bg-red-600/20 text-red-500 rounded inline-block">
                         {categorias.find(cat => cat.id === produtoSelecionado.categoria)?.nome}
                       </span>
                     </div>
                   </div>
 
-                  {/* Preço */}
-                  <div className="absolute bottom-4 left-4 flex items-center gap-2">
+                  {/* Preço e Promoção */}
+                  <div className="bg-[#2a2a2a] rounded-lg p-4">
                     {produtoSelecionado.preco_promocional ? (
-                      <>
-                        <span className="text-2xl font-bold text-gold-500">
-                          {formatarPreco(produtoSelecionado.preco_promocional)}
-                        </span>
-                        <span className="text-lg text-gray-500 line-through">
-                          {formatarPreco(produtoSelecionado.preco)}
-                        </span>
-                      </>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <span className="text-3xl font-bold text-red-500">
+                            {formatarPreco(produtoSelecionado.preco_promocional)}
+                          </span>
+                          <span className="text-lg text-gray-500 line-through">
+                            {formatarPreco(produtoSelecionado.preco)}
+                          </span>
+                          <span className="px-2 py-1 bg-red-600 text-white text-sm rounded-full">
+                            {Math.round((1 - (produtoSelecionado.preco_promocional / produtoSelecionado.preco)) * 100)}% OFF
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-400">
+                          Economize {formatarPreco(produtoSelecionado.preco - produtoSelecionado.preco_promocional)}
+                        </p>
+                      </div>
                     ) : (
-                      <span className="text-2xl font-bold text-gold-500">
+                      <span className="text-3xl font-bold text-white">
                         {formatarPreco(produtoSelecionado.preco)}
                       </span>
                     )}
                   </div>
 
+                  {/* Informações Adicionais */}
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-400 mb-1">Código do Produto</p>
+                      <p className="text-white font-mono bg-[#2a2a2a] px-3 py-1 rounded">
+                        {produtoSelecionado.id}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 mb-1">Status</p>
+                      <span className={`inline-block px-3 py-1 rounded ${
+                        produtoSelecionado.status
+                          ? 'bg-green-600/20 text-green-500'
+                          : 'bg-red-600/20 text-red-500'
+                      }`}>
+                        {produtoSelecionado.status ? 'Disponível' : 'Indisponível'}
+                      </span>
+                    </div>
+                  </div>
+
                   {/* Botões de Ação */}
-                  <div className="flex gap-3 pt-4">
-                    <button className="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-colors">
-                      Comprar agora
-                    </button>
-                    <button className="flex-1 border border-red-600/20 text-red-500 py-3 rounded-lg hover:bg-red-600/10 transition-colors">
-                      Adicionar ao carrinho
-                    </button>
+                  <div className="pt-4">
+                    <div className="bg-gradient-to-r from-red-600/10 to-red-900/10 rounded-lg p-6 border border-red-600/20">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="w-12 h-12 rounded-full bg-red-600/20 flex items-center justify-center text-2xl">
+                          ✨
+                        </div>
+                        <h3 className="text-xl font-semibold text-white">Venha nos Conhecer!</h3>
+                      </div>
+                      
+                      <p className="text-gray-300 mb-4">
+                        Gostaríamos de convidá-lo(a) para conhecer pessoalmente este e outros produtos/serviços exclusivos em nosso estabelecimento. Nossa equipe especializada está pronta para oferecer um atendimento personalizado e tirar todas as suas dúvidas.
+                      </p>
+                      
+                      <div className="flex flex-col gap-2 text-sm text-gray-400">
+                        <div className="flex items-center gap-2">
+                          <span className="text-red-500">📍</span>
+                          <span>Visite nosso espaço e descubra uma experiência única</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-red-500">💆‍♀️</span>
+                          <span>Atendimento personalizado e profissional</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-red-500">🎁</span>
+                          <span>Condições especiais para sua primeira visita</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

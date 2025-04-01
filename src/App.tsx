@@ -1392,7 +1392,7 @@ function App() {
                       </div>
                       <div className="text-left">
                         <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-gold-400 transition-colors duration-300">Produtos</h3>
-                        <p className="text-xs sm:text-sm text-gray-400">Conheça nossa linha</p>
+                        <p className="text-xs sm:text-sm text-gray-400">Conheça nossos serviços e produtos</p>
                       </div>
                     </div>
                     <span className="text-gold-500 transform group-hover:translate-x-2 transition-transform duration-300">→</span>
@@ -1629,7 +1629,7 @@ function App() {
             {/* Cabeçalho Mobile */}
             <div className="sticky top-0 bg-[#1a1a1a] border-b border-red-600/20 p-4 md:hidden z-40">
               <h2 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
-                Nossos Produtos
+                Nossos Serviços e Produtos
               </h2>
             </div>
 
@@ -1637,7 +1637,7 @@ function App() {
             <div className="p-4 md:p-6">
               {/* Título Desktop */}
               <h2 className="hidden md:block text-3xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent mb-6">
-                Nossos Produtos
+                Nossos Serviços e Produtos
               </h2>
               
               <ListaProdutos />

@@ -2,18 +2,29 @@ import { useState, useEffect } from 'react'
 import { produtoService, storageService } from '../../services/admin/index'
 import { motion, AnimatePresence } from 'framer-motion'
 import ConfirmationModal from '../ConfirmationModal'
+import { supabase } from '../../lib/supabase'
 
 interface Produto {
   id: string
   nome: string
   descricao: string
   preco: number
+  preco_promocional: number | null
   estoque: number
-  foto_url: string | null
-  categoria: string
+  categoria: 'cabelo' | 'estetica' | 'manicure' | 'maquiagem' | 'depilacao' | 'massagem' | 'sobrancelhas' | 'tratamentos'
+  marca: string
+  destaque: boolean
   status: boolean
   created_at?: string
   updated_at?: string
+  imagens?: ProdutoImagem[]
+}
+
+interface ProdutoImagem {
+  id: string
+  url: string
+  principal: boolean
+  ordem: number
 }
 
 export default function Produtos() {
@@ -31,11 +42,26 @@ export default function Produtos() {
     nome: '',
     descricao: '',
     preco: '',
+    preco_promocional: '',
     estoque: '',
-    foto_url: '',
     categoria: '',
+    marca: '',
+    destaque: false,
     status: true
   })
+
+  const [imagensTemporarias, setImagensTemporarias] = useState<{url: string, file: File}[]>([])
+
+  const categorias = [
+    { id: 'cabelo', nome: 'Cabelo', icone: '💇‍♀️' },
+    { id: 'estetica', nome: 'Estética', icone: '✨' },
+    { id: 'manicure', nome: 'Manicure & Pedicure', icone: '💅' },
+    { id: 'maquiagem', nome: 'Maquiagem', icone: '💄' },
+    { id: 'depilacao', nome: 'Depilação', icone: '🌟' },
+    { id: 'massagem', nome: 'Massagem', icone: '💆‍♀️' },
+    { id: 'sobrancelhas', nome: 'Sobrancelhas', icone: '👁️' },
+    { id: 'tratamentos', nome: 'Tratamentos', icone: '⭐' }
+  ]
 
   useEffect(() => {
     carregarProdutos()
@@ -64,38 +90,81 @@ export default function Produtos() {
     setError('')
 
     try {
-      if (!novoProduto.nome || !novoProduto.preco || !novoProduto.estoque || !novoProduto.categoria) {
+      // Validação dos campos obrigatórios
+      if (!novoProduto.nome || !novoProduto.preco || !novoProduto.estoque || !novoProduto.categoria || !novoProduto.marca) {
         throw new Error('Por favor, preencha todos os campos obrigatórios')
+      }
+
+      // Validação da categoria
+      const categoriasValidas = ['cabelo', 'estetica', 'manicure', 'maquiagem', 'depilacao', 'massagem', 'sobrancelhas', 'tratamentos']
+      if (!categoriasValidas.includes(novoProduto.categoria)) {
+        throw new Error('Categoria inválida')
       }
 
       const produtoData = {
         nome: novoProduto.nome,
         descricao: novoProduto.descricao || '',
         preco: parseFloat(novoProduto.preco),
+        preco_promocional: novoProduto.preco_promocional ? parseFloat(novoProduto.preco_promocional) : null,
         estoque: parseInt(novoProduto.estoque),
-        foto_url: novoProduto.foto_url || null,
-        categoria: novoProduto.categoria,
+        categoria: novoProduto.categoria as 'cabelo' | 'estetica' | 'manicure' | 'maquiagem' | 'depilacao' | 'massagem' | 'sobrancelhas' | 'tratamentos',
+        marca: novoProduto.marca,
+        destaque: novoProduto.destaque,
         status: novoProduto.status
       }
 
+      // Se estiver editando
       if (produtoEmEdicao) {
         const { error } = await produtoService.atualizar(produtoEmEdicao.id, produtoData)
         if (error) throw error
-      } else {
-        const { error } = await produtoService.criar(produtoData)
-        if (error) throw error
+      } 
+      // Se estiver criando
+      else {
+        // Primeiro cria o produto
+        const { data: novoProdutoCriado, error: errorCriarProduto } = await produtoService.criar(produtoData)
+        if (errorCriarProduto) throw errorCriarProduto
+
+        // Se houver imagens temporárias, faz o upload delas
+        if (imagensTemporarias.length > 0) {
+          for (let i = 0; i < imagensTemporarias.length; i++) {
+            const { file } = imagensTemporarias[i]
+            const fileName = `${Date.now()}-${file.name}`
+            
+            const result = await storageService.upload('produtos', fileName, file)
+            if (!result) throw new Error('Erro ao fazer upload da foto')
+
+            const url = await storageService.getPublicUrl('produtos', result.path)
+            if (!url) throw new Error('Erro ao obter URL da foto')
+
+            const { error } = await supabase
+              .from('produto_imagens')
+              .insert([{
+                produto_id: novoProdutoCriado.id,
+                url,
+                principal: i === 0, // primeira imagem será a principal
+                ordem: i
+              }])
+              .select()
+              .single()
+
+            if (error) throw error
+          }
+        }
       }
 
       await carregarProdutos()
       setModalAberto(false)
       setProdutoEmEdicao(null)
+      setImagensTemporarias([]) // Limpa as imagens temporárias
       setNovoProduto({
         nome: '',
         descricao: '',
         preco: '',
+        preco_promocional: '',
         estoque: '',
-        foto_url: '',
         categoria: '',
+        marca: '',
+        destaque: false,
         status: true
       })
     } catch (err: any) {
@@ -114,20 +183,110 @@ export default function Produtos() {
 
     try {
       const file = e.target.files[0]
-      const fileName = `${Date.now()}-${file.name}`
       
-      const result = await storageService.upload('produtos', fileName, file)
-      if (!result) throw new Error('Erro ao fazer upload da foto')
+      // Se estiver editando um produto existente
+      if (produtoEmEdicao) {
+        const fileName = `${Date.now()}-${file.name}`
+        const result = await storageService.upload('produtos', fileName, file)
+        if (!result) throw new Error('Erro ao fazer upload da foto')
 
-      const url = await storageService.getPublicUrl('produtos', result.path)
-      if (!url) throw new Error('Erro ao obter URL da foto')
+        const url = await storageService.getPublicUrl('produtos', result.path)
+        if (!url) throw new Error('Erro ao obter URL da foto')
 
-      setNovoProduto(prev => ({ ...prev, foto_url: url }))
+        // Verifica se já existe alguma imagem principal
+        const { data: imagensExistentes } = await supabase
+          .from('produto_imagens')
+          .select('*')
+          .eq('produto_id', produtoEmEdicao.id)
+          .eq('principal', true)
+
+        // Define se a nova imagem será principal
+        const principal = !imagensExistentes || imagensExistentes.length === 0
+
+        // Obtém a maior ordem atual
+        const { data: ultimaImagem } = await supabase
+          .from('produto_imagens')
+          .select('ordem')
+          .eq('produto_id', produtoEmEdicao.id)
+          .order('ordem', { ascending: false })
+          .limit(1)
+
+        const novaOrdem = ultimaImagem && ultimaImagem.length > 0 ? ultimaImagem[0].ordem + 1 : 0
+
+        const { error } = await supabase
+          .from('produto_imagens')
+          .insert([{
+            produto_id: produtoEmEdicao.id,
+            url,
+            principal,
+            ordem: novaOrdem
+          }])
+          .select()
+          .single()
+
+        if (error) throw error
+
+        // Atualiza a lista de produtos
+        await carregarProdutos()
+      } 
+      // Se estiver criando um novo produto
+      else {
+        // Cria uma URL temporária para preview
+        const url = URL.createObjectURL(file)
+        setImagensTemporarias(prev => [...prev, { url, file }])
+      }
     } catch (err: any) {
       setError('Erro ao fazer upload da foto: ' + err.message)
       console.error('Erro ao fazer upload:', err)
     } finally {
       setUploadingFoto(false)
+    }
+  }
+
+  const handleDefinirImagemPrincipal = async (imagemId: string) => {
+    if (!produtoEmEdicao) return
+    
+    setError('')
+    try {
+      // Primeiro remove o status principal de todas as imagens do produto
+      await supabase
+        .from('produto_imagens')
+        .update({ principal: false })
+        .eq('produto_id', produtoEmEdicao.id)
+
+      // Define a nova imagem principal
+      const { error } = await supabase
+        .from('produto_imagens')
+        .update({ principal: true })
+        .eq('id', imagemId)
+
+      if (error) throw error
+
+      // Atualiza a lista de produtos
+      await carregarProdutos()
+    } catch (err: any) {
+      setError('Erro ao definir imagem principal: ' + err.message)
+      console.error('Erro ao definir imagem principal:', err)
+    }
+  }
+
+  const handleExcluirImagem = async (imagemId: string) => {
+    if (!produtoEmEdicao) return
+    
+    setError('')
+    try {
+      const { error } = await supabase
+        .from('produto_imagens')
+        .delete()
+        .eq('id', imagemId)
+
+      if (error) throw error
+
+      // Atualiza a lista de produtos
+      await carregarProdutos()
+    } catch (err: any) {
+      setError('Erro ao excluir imagem: ' + err.message)
+      console.error('Erro ao excluir imagem:', err)
     }
   }
 
@@ -178,9 +337,11 @@ export default function Produtos() {
                 nome: '',
                 descricao: '',
                 preco: '',
+                preco_promocional: '',
                 estoque: '',
-                foto_url: '',
                 categoria: '',
+                marca: '',
+                destaque: false,
                 status: true
               })
             }}
@@ -212,9 +373,9 @@ export default function Produtos() {
             >
               {/* Imagem do Produto */}
               <div className="aspect-video relative overflow-hidden bg-[#2a2a2a]">
-                {produto.foto_url ? (
+                {produto.imagens?.length ? (
                   <img 
-                    src={produto.foto_url} 
+                    src={produto.imagens.find(img => img.principal)?.url || produto.imagens[0].url} 
                     alt={produto.nome}
                     className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                   />
@@ -233,8 +394,9 @@ export default function Produtos() {
                   }`}>
                     {produto.status ? 'Ativo' : 'Inativo'}
                   </span>
-                  <span className="px-3 py-1 rounded-full text-xs bg-white/10 text-white backdrop-blur-sm">
-                    {produto.categoria}
+                  <span className="px-3 py-1 rounded-full text-xs bg-white/10 text-white backdrop-blur-sm flex items-center gap-1">
+                    <span>{categorias.find(cat => cat.id === produto.categoria)?.icone}</span>
+                    <span>{categorias.find(cat => cat.id === produto.categoria)?.nome}</span>
                   </span>
                 </div>
               </div>
@@ -267,9 +429,11 @@ export default function Produtos() {
                       nome: produto.nome,
                       descricao: produto.descricao,
                       preco: produto.preco.toString(),
+                      preco_promocional: produto.preco_promocional ? produto.preco_promocional.toString() : '',
                       estoque: produto.estoque.toString(),
-                      foto_url: produto.foto_url || '',
                       categoria: produto.categoria,
+                      marca: produto.marca,
+                      destaque: produto.destaque,
                       status: produto.status
                     })
                     setModalAberto(true)
@@ -316,9 +480,11 @@ export default function Produtos() {
                       nome: '',
                       descricao: '',
                       preco: '',
+                      preco_promocional: '',
                       estoque: '',
-                      foto_url: '',
                       categoria: '',
+                      marca: '',
+                      destaque: false,
                       status: true
                     })
                   }}
@@ -360,14 +526,29 @@ export default function Produtos() {
                   </div>
 
                   <div>
-                    <label className="block text-gray-400 text-sm mb-2">Categoria *</label>
+                    <label className="block text-gray-400 text-sm mb-2">Marca *</label>
                     <input
                       type="text"
+                      value={novoProduto.marca}
+                      onChange={e => setNovoProduto(prev => ({ ...prev, marca: e.target.value }))}
+                      className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-2">Categoria *</label>
+                    <select
                       value={novoProduto.categoria}
                       onChange={e => setNovoProduto(prev => ({ ...prev, categoria: e.target.value }))}
                       className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
                       required
-                    />
+                    >
+                      <option value="">Selecione uma categoria</option>
+                      {categorias.map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.nome}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
@@ -384,6 +565,18 @@ export default function Produtos() {
                   </div>
 
                   <div>
+                    <label className="block text-gray-400 text-sm mb-2">Preço Promocional (R$)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={novoProduto.preco_promocional}
+                      onChange={e => setNovoProduto(prev => ({ ...prev, preco_promocional: e.target.value }))}
+                      className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
                     <label className="block text-gray-400 text-sm mb-2">Estoque *</label>
                     <input
                       type="number"
@@ -393,6 +586,28 @@ export default function Produtos() {
                       className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
                       required
                     />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="destaque"
+                      checked={novoProduto.destaque}
+                      onChange={e => setNovoProduto(prev => ({ ...prev, destaque: e.target.checked }))}
+                      className="w-4 h-4 text-red-600 bg-[#2a2a2a] border-red-600/20 rounded focus:ring-red-600"
+                    />
+                    <label htmlFor="destaque" className="text-gray-400 text-sm">Produto em Destaque</label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="status"
+                      checked={novoProduto.status}
+                      onChange={e => setNovoProduto(prev => ({ ...prev, status: e.target.checked }))}
+                      className="w-4 h-4 text-red-600 bg-[#2a2a2a] border-red-600/20 rounded focus:ring-red-600"
+                    />
+                    <label htmlFor="status" className="text-gray-400 text-sm">Produto Ativo</label>
                   </div>
 
                   <div>
@@ -407,25 +622,68 @@ export default function Produtos() {
                     {uploadingFoto && (
                       <p className="text-sm text-gray-400 mt-2">Fazendo upload...</p>
                     )}
-                    {novoProduto.foto_url && (
-                      <div className="mt-2">
-                        <img
-                          src={novoProduto.foto_url}
-                          alt="Preview"
-                          className="w-20 h-20 rounded-lg object-cover"
-                        />
-                      </div>
+                    {/* Preview de imagens */}
+                    {produtoEmEdicao ? (
+                      // Se estiver editando, mostra as imagens do produto
+                      produtoEmEdicao.imagens?.length ? (
+                        <div className="mt-2 grid grid-cols-4 gap-2">
+                          {produtoEmEdicao.imagens.map((imagem) => (
+                            <div key={imagem.id} className="relative group">
+                              <img
+                                src={imagem.url}
+                                alt="Preview"
+                                className={`w-full aspect-square rounded-lg object-cover ${imagem.principal ? 'ring-2 ring-red-600' : ''}`}
+                              />
+                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                {!imagem.principal && (
+                                  <button
+                                    onClick={() => handleDefinirImagemPrincipal(imagem.id)}
+                                    className="p-2 bg-blue-500 rounded-full hover:bg-blue-600 transition-colors"
+                                    title="Definir como principal"
+                                  >
+                                    ⭐
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleExcluirImagem(imagem.id)}
+                                  className="p-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+                                  title="Excluir imagem"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null
+                    ) : (
+                      // Se estiver criando, mostra as imagens temporárias
+                      imagensTemporarias.length > 0 && (
+                        <div className="mt-2 grid grid-cols-4 gap-2">
+                          {imagensTemporarias.map((imagem, index) => (
+                            <div key={index} className="relative group">
+                              <img
+                                src={imagem.url}
+                                alt="Preview"
+                                className={`w-full aspect-square rounded-lg object-cover ${index === 0 ? 'ring-2 ring-red-600' : ''}`}
+                              />
+                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                <button
+                                  onClick={() => {
+                                    setImagensTemporarias(prev => prev.filter((_, i) => i !== index))
+                                    URL.revokeObjectURL(imagem.url) // Libera a URL temporária
+                                  }}
+                                  className="p-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+                                  title="Remover imagem"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )
                     )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={novoProduto.status}
-                      onChange={e => setNovoProduto(prev => ({ ...prev, status: e.target.checked }))}
-                      className="w-4 h-4 rounded border-red-600/20 text-red-600 focus:ring-red-600"
-                    />
-                    <label className="text-gray-400 text-sm">Ativo</label>
                   </div>
 
                   <motion.button
