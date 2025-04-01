@@ -27,17 +27,7 @@ export default function ListaProdutos() {
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState('')
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null)
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>('todos')
   const [termoBusca, setTermoBusca] = useState('')
-
-  const categorias = [
-    { id: 'todos', nome: 'Todos', icone: '🛍️' },
-    { id: 'cabelo', nome: 'Cabelo', icone: '💇‍♂️' },
-    { id: 'barba', nome: 'Barba', icone: '🧔' },
-    { id: 'skincare', nome: 'Skincare', icone: '✨' },
-    { id: 'perfumaria', nome: 'Perfumaria', icone: '🌺' },
-    { id: 'acessorios', nome: 'Acessórios', icone: '✂️' }
-  ]
 
   useEffect(() => {
     carregarProdutos()
@@ -86,11 +76,10 @@ export default function ListaProdutos() {
   }
 
   const produtosFiltrados = produtos.filter(produto => {
-    const matchCategoria = categoriaSelecionada === 'todos' || produto.categoria === categoriaSelecionada
     const matchBusca = produto.nome.toLowerCase().includes(termoBusca.toLowerCase()) ||
                       produto.descricao.toLowerCase().includes(termoBusca.toLowerCase()) ||
                       produto.marca.toLowerCase().includes(termoBusca.toLowerCase())
-    return matchCategoria && matchBusca
+    return matchBusca
   })
 
   if (loading) {
@@ -131,7 +120,7 @@ export default function ListaProdutos() {
               type="text"
               value={termoBusca}
               onChange={(e) => setTermoBusca(e.target.value)}
-              placeholder="Buscar produtos..."
+              placeholder="Buscar serviços e produtos..."
               className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg pl-10 pr-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-red-600/40"
             />
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -142,26 +131,8 @@ export default function ListaProdutos() {
           {/* Contador de Produtos */}
           <div className="hidden sm:flex items-center gap-2 text-sm text-gray-400">
             <span>{produtosFiltrados.length}</span>
-            <span>produtos encontrados</span>
+            <span>itens encontrados</span>
           </div>
-        </div>
-
-        {/* Categorias */}
-        <div className="mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-red-600/30 scrollbar-track-transparent">
-          {categorias.map(categoria => (
-            <button
-              key={categoria.id}
-              onClick={() => setCategoriaSelecionada(categoria.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
-                categoriaSelecionada === categoria.id
-                  ? 'bg-red-600 text-white'
-                  : 'bg-[#2a2a2a] text-gray-400 hover:bg-red-600/10 hover:text-white'
-              }`}
-            >
-              <span>{categoria.icone}</span>
-              <span>{categoria.nome}</span>
-            </button>
-          ))}
         </div>
       </div>
 
@@ -205,14 +176,6 @@ export default function ListaProdutos() {
                       {Math.round((1 - (produto.preco_promocional / produto.preco)) * 100)}% OFF
                     </span>
                   )}
-                </div>
-
-                {/* Categoria */}
-                <div className="absolute top-3 left-3 z-20">
-                  <span className="flex items-center gap-1 px-2 py-1 bg-white/10 backdrop-blur-sm text-white text-xs rounded-full">
-                    <span>{categorias.find(cat => cat.id === produto.categoria)?.icone}</span>
-                    <span>{categorias.find(cat => cat.id === produto.categoria)?.nome}</span>
-                  </span>
                 </div>
               </div>
 
@@ -355,12 +318,6 @@ export default function ListaProdutos() {
                         </span>
                       </div>
                     )}
-                    <div>
-                      <p className="text-sm text-gray-400 mb-1">Categoria</p>
-                      <span className="px-3 py-1 bg-red-600/20 text-red-500 rounded inline-block">
-                        {categorias.find(cat => cat.id === produtoSelecionado.categoria)?.nome}
-                      </span>
-                    </div>
                   </div>
 
                   {/* Preço e Promoção */}
