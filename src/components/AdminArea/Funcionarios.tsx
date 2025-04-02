@@ -57,12 +57,13 @@ export default function Funcionarios() {
     nome: '',
     email: '',
     telefone: '',
-    foto_url: '',
-    cargo: 'funcionario',
-    comissao: 0,
+    foto_url: null,
+    cargo: 'esteticista',
+    comissao: 30,
     especialidades: [],
     status: true
   })
+  const [senha, setSenha] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [funcionarioParaExcluir, setFuncionarioParaExcluir] = useState<Funcionario | null>(null)
 
@@ -81,10 +82,10 @@ export default function Funcionarios() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      // Separa a senha dos dados do funcionário
-      const { senha, ...dadosFuncionario } = {
+      const dadosFuncionario = {
         ...novoFuncionario,
-        telefone: formatarTelefone(novoFuncionario.telefone)
+        telefone: formatarTelefone(novoFuncionario.telefone),
+        cargo: novoFuncionario.cargo.trim() as CargoFuncionario
       }
 
       if (funcionarioEmEdicao) {
@@ -127,13 +128,13 @@ export default function Funcionarios() {
         nome: '',
         email: '',
         telefone: '',
-        foto_url: '',
+        foto_url: null,
         status: true,
-        cargo: 'barbeiro',
-        especialidades: [],
-        senha: '',
-        comissao: 0
+        cargo: 'esteticista',
+        comissao: 30,
+        especialidades: []
       })
+      setSenha('')
     } catch (err) {
       console.error('Erro ao salvar funcionário:', err)
       toast.error('Erro ao salvar funcionário')
@@ -227,12 +228,11 @@ export default function Funcionarios() {
               nome: '',
               email: '',
               telefone: '',
-              foto_url: '',
+              foto_url: null,
               status: true,
-              cargo: 'barbeiro',
-              especialidades: [],
-              senha: '',
-              comissao: 0
+              cargo: 'esteticista',
+              comissao: 30,
+              especialidades: []
             })
           }}
           className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-800 text-white px-4 py-2 rounded-lg hover:from-red-700 hover:to-red-900 transition-all whitespace-nowrap"
@@ -294,11 +294,10 @@ export default function Funcionarios() {
                           nome: funcionario.nome,
                           email: funcionario.email,
                           telefone: funcionario.telefone,
-                          foto_url: funcionario.foto_url || '',
+                          foto_url: funcionario.foto_url || null,
                           status: funcionario.status,
                           cargo: funcionario.cargo,
                           especialidades: funcionario.especialidades,
-                          senha: '',
                           comissao: funcionario.comissao
                         })
                         setModalAberto(true)
@@ -359,8 +358,8 @@ export default function Funcionarios() {
                   <label className="block text-gray-400 mb-2">Senha</label>
                   <input
                     type="password"
-                    value={novoFuncionario.senha}
-                    onChange={(e) => setNovoFuncionario(prev => ({ ...prev, senha: e.target.value }))}
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
                     className="w-full bg-[#2a2a2a] border border-red-600/20 rounded p-3 text-white focus:border-red-600 focus:outline-none"
                     required={!funcionarioEmEdicao}
                     minLength={6}
@@ -438,12 +437,11 @@ export default function Funcionarios() {
                         nome: '',
                         email: '',
                         telefone: '',
-                        foto_url: '',
+                        foto_url: null,
                         status: true,
-                        cargo: 'barbeiro',
-                        especialidades: [],
-                        senha: '',
-                        comissao: 0
+                        cargo: 'esteticista',
+                        comissao: 30,
+                        especialidades: []
                       })
                     }}
                     className="flex-1 border border-red-600/20 text-white py-3 rounded-lg hover:bg-red-600/10 transition-all"

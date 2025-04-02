@@ -28,6 +28,7 @@ export interface Funcionario {
   foto_url: string | null
   status: boolean
   cargo: CargoFuncionario
+  comissao: number
   especialidades: string[]
   created_at?: string
   updated_at?: string
@@ -89,8 +90,9 @@ export interface NovoFuncionario {
   nome: string
   email: string
   telefone: string
-  foto_url: string
+  foto_url: string | null
   cargo: CargoFuncionario
+  comissao: number
   especialidades: string[]
   status: boolean
 }
@@ -101,7 +103,7 @@ export interface AtualizarFuncionario {
   senha?: string
   cargo?: CargoFuncionario
   telefone?: string
-  foto_url?: string
+  foto_url?: string | null
   comissao?: number
   especialidades?: string[]
   status?: boolean

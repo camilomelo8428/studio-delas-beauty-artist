@@ -200,7 +200,7 @@ export default function ListaProdutos() {
                 )}
 
                 {/* Preço e Botão */}
-                <div className="flex items-end justify-between gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
                   <div className="flex-1">
                     {produto.preco_promocional ? (
                       <>
@@ -219,7 +219,7 @@ export default function ListaProdutos() {
                       </p>
                     )}
                   </div>
-                  <button className="shrink-0 px-4 py-2 bg-red-600/20 text-red-500 text-sm rounded-lg hover:bg-red-600/10 transition-colors flex items-center gap-2">
+                  <button className="w-full sm:w-auto px-4 py-3 sm:py-2 bg-red-600/20 text-red-500 text-sm rounded-lg hover:bg-red-600/10 transition-colors flex items-center justify-center sm:justify-start gap-2">
                     <span>Saiba mais</span>
                     <span className="text-lg">✨</span>
                   </button>
@@ -232,18 +232,23 @@ export default function ListaProdutos() {
 
       {/* Modal de Detalhes */}
       {produtoSelecionado && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 overflow-y-auto p-4">
-          <div className="bg-[#1a1a1a] w-full max-w-4xl rounded-xl border border-red-600/20 relative">
-            {/* Botão Fechar */}
-            <button
-              onClick={() => setProdutoSelecionado(null)}
-              className="absolute -top-4 -right-4 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center hover:bg-red-700 transition-colors z-50"
-            >
-              ×
-            </button>
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 overflow-y-auto">
+          <div className="bg-[#1a1a1a] w-full h-full md:h-auto md:max-h-[90vh] md:max-w-4xl rounded-none md:rounded-xl border-y md:border border-red-600/20 relative overflow-y-auto">
+            {/* Header Fixo */}
+            <div className="sticky top-0 z-50 bg-[#1a1a1a] border-b border-red-600/20 p-4 flex items-center justify-between">
+              <button
+                onClick={() => setProdutoSelecionado(null)}
+                className="flex items-center gap-2 text-gray-400 hover:text-red-500 transition-colors"
+              >
+                <span className="text-xl">←</span>
+                <span>Voltar</span>
+              </button>
+              <h2 className="text-lg font-semibold text-white">Detalhes do Produto</h2>
+              <div className="w-20"></div>
+            </div>
 
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="p-4 md:p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                 {/* Coluna da Esquerda - Imagens */}
                 <div className="space-y-4">
                   {/* Imagem Principal */}
@@ -263,13 +268,13 @@ export default function ListaProdutos() {
                     {/* Tags */}
                     <div className="absolute top-4 right-4 flex flex-col gap-2">
                       {produtoSelecionado.destaque && (
-                        <span className="px-3 py-1 bg-red-600 text-white text-sm rounded-full">
+                        <span className="px-3 py-1 bg-red-600 text-white text-sm rounded-full shadow-lg">
                           Destaque
                         </span>
                       )}
                       {produtoSelecionado.preco_promocional && (
-                        <span className="px-3 py-1 bg-green-600 text-white text-sm rounded-full">
-                          Promoção
+                        <span className="px-3 py-1 bg-green-600 text-white text-sm rounded-full shadow-lg animate-pulse">
+                          {Math.round((1 - (produtoSelecionado.preco_promocional / produtoSelecionado.preco)) * 100)}% OFF
                         </span>
                       )}
                     </div>
@@ -324,7 +329,7 @@ export default function ListaProdutos() {
                   <div className="bg-[#2a2a2a] rounded-lg p-4">
                     {produtoSelecionado.preco_promocional ? (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
                           <span className="text-3xl font-bold text-red-500">
                             {formatarPreco(produtoSelecionado.preco_promocional)}
                           </span>
@@ -366,36 +371,43 @@ export default function ListaProdutos() {
                     </div>
                   </div>
 
-                  {/* Botões de Ação */}
-                  <div className="pt-4">
-                    <div className="bg-gradient-to-r from-red-600/10 to-red-900/10 rounded-lg p-6 border border-red-600/20">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="w-12 h-12 rounded-full bg-red-600/20 flex items-center justify-center text-2xl">
-                          ✨
-                        </div>
-                        <h3 className="text-xl font-semibold text-white">Venha nos Conhecer!</h3>
+                  {/* Seção Venha nos Conhecer */}
+                  <div className="bg-gradient-to-r from-red-600/10 to-red-900/10 rounded-lg p-6 border border-red-600/20">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-red-600/20 flex items-center justify-center text-2xl">
+                        ✨
                       </div>
-                      
-                      <p className="text-gray-300 mb-4">
-                        Gostaríamos de convidá-lo(a) para conhecer pessoalmente este e outros produtos/serviços exclusivos em nosso estabelecimento. Nossa equipe especializada está pronta para oferecer um atendimento personalizado e tirar todas as suas dúvidas.
-                      </p>
-                      
-                      <div className="flex flex-col gap-2 text-sm text-gray-400">
-                        <div className="flex items-center gap-2">
-                          <span className="text-red-500">📍</span>
-                          <span>Visite nosso espaço e descubra uma experiência única</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-red-500">💆‍♀️</span>
-                          <span>Atendimento personalizado e profissional</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-red-500">🎁</span>
-                          <span>Condições especiais para sua primeira visita</span>
-                        </div>
+                      <h3 className="text-xl font-semibold text-white">Venha nos Conhecer!</h3>
+                    </div>
+                    
+                    <p className="text-gray-300 mb-4">
+                      Gostaríamos de convidá-lo(a) para conhecer pessoalmente este e outros produtos/serviços exclusivos em nosso estabelecimento. Nossa equipe especializada está pronta para oferecer um atendimento personalizado e tirar todas as suas dúvidas.
+                    </p>
+                    
+                    <div className="flex flex-col gap-3 text-sm text-gray-400">
+                      <div className="flex items-center gap-2">
+                        <span className="text-red-500">📍</span>
+                        <span>Visite nosso espaço e descubra uma experiência única</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-red-500">💆‍♀️</span>
+                        <span>Atendimento personalizado e profissional</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-red-500">🎁</span>
+                        <span>Condições especiais para sua primeira visita</span>
                       </div>
                     </div>
                   </div>
+
+                  {/* Botão de Fechar Mobile */}
+                  <button
+                    onClick={() => setProdutoSelecionado(null)}
+                    className="w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors md:hidden flex items-center justify-center gap-2"
+                  >
+                    <span>Voltar para a lista</span>
+                    <span>←</span>
+                  </button>
                 </div>
               </div>
             </div>
