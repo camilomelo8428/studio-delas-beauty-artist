@@ -39,8 +39,9 @@ export interface Servico {
   nome: string
   descricao: string
   preco: number
+  preco_original?: number
   duracao_minutos: number
-  foto_url: string | null
+  foto_url?: string | null
   status: boolean
   created_at: string
   updated_at: string

@@ -432,134 +432,208 @@ function AgendarHorario() {
               </div>
             )}
 
+            {/* Seleção de Serviço */}
+            <div>
+              <label className="block text-gray-400 text-sm mb-4">Selecione o Serviço</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {servicos.map((servico) => (
+                  <button
+                    key={servico.id}
+                    type="button"
+                    onClick={() => handleServicoChange(servico.id)}
+                    className={`relative group p-4 rounded-xl border transition-all ${
+                      selectedService === servico.id
+                        ? 'bg-red-600/20 border-red-600'
+                        : 'bg-[#2a2a2a] border-red-600/20 hover:border-red-600/40'
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      {servico.foto_url ? (
+                        <img
+                          src={servico.foto_url}
+                          alt={servico.nome}
+                          className="w-12 h-12 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-red-600/10 flex items-center justify-center">
+                          <span className="text-2xl">✨</span>
+                        </div>
+                      )}
+                      <div className="flex-1 text-left">
+                        <h3 className={`font-medium mb-1 ${
+                          selectedService === servico.id ? 'text-red-500' : 'text-white'
+                        }`}>
+                          {servico.nome}
+                        </h3>
+                        <p className="text-sm text-gray-400 line-clamp-2">{servico.descricao}</p>
+                        <div className="mt-2 flex items-center justify-between">
+                          <span className={`text-sm ${
+                            selectedService === servico.id ? 'text-red-500' : 'text-gray-400'
+                          }`}>
+                            {servico.duracao_minutos}min
+                          </span>
+                          <span className={`font-medium ${
+                            selectedService === servico.id ? 'text-red-500' : 'text-white'
+                          }`}>
+                            {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL'
+                            }).format(servico.preco)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    {selectedService === servico.id && (
+                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm">✓</span>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Seleção de Profissional */}
+            <div>
+              <label className="block text-gray-400 text-sm mb-4">Selecione o Profissional</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {profissionais.map((profissional) => (
+                  <button
+                    key={profissional.id}
+                    type="button"
+                    onClick={() => {
+                      handleProfissionalChange(profissional.id)
+                      setSelectedTime('')
+                    }}
+                    className={`relative group p-4 rounded-xl border transition-all ${
+                      selectedProfessional === profissional.id
+                        ? 'bg-red-600/20 border-red-600'
+                        : 'bg-[#2a2a2a] border-red-600/20 hover:border-red-600/40'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      {profissional.foto_url ? (
+                        <img
+                          src={profissional.foto_url}
+                          alt={profissional.nome}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-red-600/10 flex items-center justify-center">
+                          <span className="text-2xl">👤</span>
+                        </div>
+                      )}
+                      <div className="flex-1 text-left">
+                        <h3 className={`font-medium ${
+                          selectedProfessional === profissional.id ? 'text-red-500' : 'text-white'
+                        }`}>
+                          {profissional.nome}
+                        </h3>
+                        <p className="text-sm text-gray-400">
+                          {CARGO_LABELS[profissional.cargo] || profissional.cargo}
+                        </p>
+                        {profissional.especialidades && profissional.especialidades.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {profissional.especialidades.map((esp, index) => (
+                              <span
+                                key={index}
+                                className="text-xs px-2 py-1 rounded-full bg-red-600/10 text-red-500"
+                              >
+                                {esp}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {selectedProfessional === profissional.id && (
+                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm">✓</span>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Data e Horário */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-gray-400 text-sm mb-2">Serviço</label>
-                <select
-                  value={selectedService}
-                  onChange={(e) => handleServicoChange(e.target.value)}
+                <label className="block text-gray-400 text-sm mb-2">Data</label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => handleDataChange(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
                   className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
                   required
-                >
-                  <option value="">Selecione um serviço</option>
-                  {servicos.map(servico => (
-                    <option key={servico.id} value={servico.id}>
-                      {servico.nome} - {servico.preco_original ? (
-                        <>
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(servico.preco)} (Promoção - antes: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(servico.preco_original)})
-                        </>
-                      ) : (
-                        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(servico.preco)
-                      )}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div>
-                <label className="block text-gray-400 text-sm mb-2">Profissional</label>
-                <select
-                  value={selectedProfessional}
-                  onChange={(e) => {
-                    handleProfissionalChange(e.target.value)
-                    setSelectedTime('')
-                  }}
-                  className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                  required
-                >
-                  <option value="">Selecione um profissional</option>
-                  {profissionais.map((profissional) => (
-                    <option key={profissional.id} value={profissional.id}>
-                      {profissional.nome} - {CARGO_LABELS[profissional.cargo] || profissional.cargo}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+                <label className="block text-gray-400 text-sm mb-2">Horário</label>
+                <div className="mb-4 flex gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-[#2a2a2a]"></div>
+                    <span className="text-sm text-gray-400">Disponível</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-red-600"></div>
+                    <span className="text-sm text-gray-400">Indisponível</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-green-600"></div>
+                    <span className="text-sm text-gray-400">Selecionado</span>
+                  </div>
+                </div>
 
-            <div>
-              <label className="block text-gray-400 text-sm mb-2">Data</label>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => handleDataChange(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-400 text-sm mb-2">Horário</label>
-              <div className="mb-4 flex gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-[#2a2a2a]"></div>
-                  <span className="text-sm text-gray-400">Disponível</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-red-600"></div>
-                  <span className="text-sm text-gray-400">Indisponível</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-green-600"></div>
-                  <span className="text-sm text-gray-400">Selecionado</span>
-                </div>
-              </div>
-              {loading ? (
-                <div className="flex items-center justify-center h-20">
-                  <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-red-600"></div>
-                </div>
-              ) : horarios.length > 0 ? (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {horarios.map((horario, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => {
-                        if (horario.disponivel) {
-                          handleHorarioChange(horario.hora)
-                        } else {
-                          setHorarioSelecionadoIndisponivel(horario)
-                        }
-                      }}
-                      className={`
-                        group relative p-2 rounded-lg text-sm font-medium transition-all duration-200
-                        ${!horario.disponivel
-                          ? 'bg-red-600/20 text-white cursor-help border border-red-600/30'
-                          : selectedTime === horario.hora
-                            ? 'bg-green-600 text-white shadow-lg scale-105'
-                            : 'bg-[#2a2a2a] text-white hover:bg-green-600/20'
-                        }
-                      `}
-                    >
-                      {horario.hora}
-                      {!horario.disponivel && (
-                        <>
-                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-600 rounded-full border border-[#1a1a1a] animate-pulse"></div>
-                          
-                          {/* Tooltip */}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[200px] p-2 bg-[#1a1a1a] border border-red-600/30 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                            <div className="text-xs text-gray-400 space-y-1">
-                              {horario.motivo && (
-                                <p className="font-medium text-red-500">{horario.motivo}</p>
-                              )}
-                              {horario.profissional && (
-                                <p>Profissional: <span className="text-white">{horario.profissional}</span></p>
-                              )}
-                              {horario.servico && (
-                                <p>Serviço: <span className="text-white">{horario.servico}</span></p>
-                              )}
+                {loading ? (
+                  <div className="flex items-center justify-center h-20">
+                    <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-red-600"></div>
+                  </div>
+                ) : horarios.length > 0 ? (
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                    {horarios.map((horario) => (
+                      <button
+                        key={horario.hora}
+                        type="button"
+                        disabled={!horario.disponivel}
+                        onClick={() => handleHorarioChange(horario.hora)}
+                        className={`relative group p-2 rounded text-center ${
+                          selectedTime === horario.hora
+                            ? 'bg-green-600 text-white'
+                            : horario.disponivel
+                            ? 'bg-[#2a2a2a] text-white hover:bg-[#3a3a3a]'
+                            : 'bg-red-600/20 text-red-500 cursor-not-allowed'
+                        }`}
+                      >
+                        {horario.hora}
+                        {!horario.disponivel && (
+                          <>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[200px] p-2 bg-[#1a1a1a] border border-red-600/30 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                              <div className="text-xs text-gray-400 space-y-1">
+                                {horario.motivo && (
+                                  <p className="font-medium text-red-500">{horario.motivo}</p>
+                                )}
+                                {horario.profissional && (
+                                  <p>Profissional: <span className="text-white">{horario.profissional}</span></p>
+                                )}
+                                {horario.servico && (
+                                  <p>Serviço: <span className="text-white">{horario.servico}</span></p>
+                                )}
+                              </div>
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 -translate-y-1 border-4 border-transparent border-t-[#1a1a1a]"></div>
                             </div>
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 -translate-y-1 border-4 border-transparent border-t-[#1a1a1a]"></div>
-                          </div>
-                        </>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-400 text-sm">Nenhum horário disponível nesta data</p>
-              )}
+                          </>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-400 text-sm">Nenhum horário disponível nesta data</p>
+                )}
+              </div>
             </div>
 
             <button 
