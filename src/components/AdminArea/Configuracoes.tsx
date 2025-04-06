@@ -21,7 +21,7 @@ export default function Configuracoes() {
     horario_funcionamento: 'Seg à Sex: 09h - 20h | Sáb: 09h - 18h | Dom: Fechado',
     instagram: '@barbeariaskull',
     facebook: '/barbeariaskull',
-    whatsapp: '(91) 98888-7777',
+    whatsapp: '(91) 98184-5943',
     updated_at: new Date().toISOString()
   })
 
