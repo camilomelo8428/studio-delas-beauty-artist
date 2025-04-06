@@ -647,144 +647,168 @@ function ClientLoginModal({ isOpen, onClose, config, initialTab }: {
               </button>
             </div>
 
-            {/* Menu de Opções Mobile */}
-            <div className="overflow-x-auto scrollbar-none p-4 border-b border-red-600/20">
-              <div className="flex gap-3 min-w-max">
+            {/* Menu de Opções */}
+            <div className="border-b border-red-600/20">
+              {/* Menu Mobile */}
+              <div className="md:hidden overflow-x-auto scrollbar-none p-4">
+                <div className="flex gap-3 min-w-max">
+                  {/* Agendar Horário */}
+                  <button 
+                    onClick={() => {
+                      handleTabChange('agendar')
+                      sounds.play('click')
+                    }}
+                    onMouseEnter={() => sounds.play('hover')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                      activeTab === 'agendar' 
+                        ? 'bg-red-600 text-white' 
+                        : 'bg-[#2a2a2a] text-gray-400 hover:bg-red-600/10 hover:text-white'
+                    }`}
+                  >
+                    <span className="text-xl">✂️</span>
+                    <span>Agendar</span>
+                  </button>
+
+                  {/* Meus Agendamentos */}
+                  <button 
+                    onClick={() => {
+                      handleTabChange('agendamentos')
+                      sounds.play('click')
+                    }}
+                    onMouseEnter={() => sounds.play('hover')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                      activeTab === 'agendamentos' 
+                        ? 'bg-red-600 text-white' 
+                        : 'bg-[#2a2a2a] text-gray-400 hover:bg-red-600/10 hover:text-white'
+                    }`}
+                  >
+                    <span className="text-xl">📅</span>
+                    <span>Agendamentos</span>
+                  </button>
+
+                  {/* Histórico */}
+                  <button 
+                    onClick={() => {
+                      handleTabChange('historico')
+                      sounds.play('click')
+                    }}
+                    onMouseEnter={() => sounds.play('hover')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                      activeTab === 'historico' 
+                        ? 'bg-red-600 text-white' 
+                        : 'bg-[#2a2a2a] text-gray-400 hover:bg-red-600/10 hover:text-white'
+                    }`}
+                  >
+                    <span className="text-xl">📊</span>
+                    <span>Histórico</span>
+                  </button>
+
+                  {/* Meu Perfil */}
+                  <button 
+                    onClick={() => {
+                      handleTabChange('perfil')
+                      sounds.play('click')
+                    }}
+                    onMouseEnter={() => sounds.play('hover')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                      activeTab === 'perfil' 
+                        ? 'bg-red-600 text-white' 
+                        : 'bg-[#2a2a2a] text-gray-400 hover:bg-red-600/10 hover:text-white'
+                    }`}
+                  >
+                    <span className="text-xl">👤</span>
+                    <span>Perfil</span>
+                  </button>
+
+                  {/* Sair (Mobile) */}
+                  <button 
+                    onClick={() => {
+                      handleLogout()
+                      sounds.play('click')
+                    }}
+                    onMouseEnter={() => sounds.play('hover')}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all bg-[#2a2a2a] text-red-500 hover:bg-red-600/10 hover:text-red-400"
+                  >
+                    <span className="text-xl">🚪</span>
+                    <span>Sair</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Menu Desktop */}
+              <div className="hidden md:grid grid-cols-4 lg:grid-cols-6 gap-4 p-4">
                 {/* Agendar Horário */}
                 <button 
-                  onClick={() => handleTabChange('agendar')}
+                  onClick={() => {
+                    setActiveTab('agendar')
+                    sounds.play('click')
+                  }}
                   onMouseEnter={() => sounds.play('hover')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                  className={`group relative bg-[#2a2a2a] p-4 rounded-xl border ${
                     activeTab === 'agendar' 
-                      ? 'bg-red-600 text-white' 
-                      : 'bg-[#2a2a2a] text-gray-400 hover:bg-red-600/10 hover:text-white'
-                  }`}
+                      ? 'border-red-600/40 bg-gradient-to-br from-red-600/10 to-red-800/10' 
+                      : 'border-red-600/20 hover:border-red-600/40'
+                  } transition-all`}
                 >
-                  <span className="text-xl">✂️</span>
-                  <span>Agendar</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 to-red-800/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity"></div>
+                  <span className="text-2xl mb-2 block transform group-hover:scale-110 transition-transform">✂️</span>
+                  <h3 className="text-sm font-semibold text-red-500">Agendar</h3>
                 </button>
 
                 {/* Meus Agendamentos */}
                 <button 
-                  onClick={() => handleTabChange('agendamentos')}
+                  onClick={() => {
+                    setActiveTab('agendamentos')
+                    sounds.play('click')
+                  }}
                   onMouseEnter={() => sounds.play('hover')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                  className={`group relative bg-[#2a2a2a] p-4 rounded-xl border ${
                     activeTab === 'agendamentos' 
-                      ? 'bg-red-600 text-white' 
-                      : 'bg-[#2a2a2a] text-gray-400 hover:bg-red-600/10 hover:text-white'
-                  }`}
+                      ? 'border-red-600/40 bg-gradient-to-br from-red-600/10 to-red-800/10' 
+                      : 'border-red-600/20 hover:border-red-600/40'
+                  } transition-all`}
                 >
-                  <span className="text-xl">📅</span>
-                  <span>Agendamentos</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 to-red-800/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity"></div>
+                  <span className="text-2xl mb-2 block transform group-hover:scale-110 transition-transform">📅</span>
+                  <h3 className="text-sm font-semibold text-red-500">Agendamentos</h3>
                 </button>
 
                 {/* Histórico */}
                 <button 
-                  onClick={() => handleTabChange('historico')}
+                  onClick={() => {
+                    setActiveTab('historico')
+                    sounds.play('click')
+                  }}
                   onMouseEnter={() => sounds.play('hover')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                  className={`group relative bg-[#2a2a2a] p-4 rounded-xl border ${
                     activeTab === 'historico' 
-                      ? 'bg-red-600 text-white' 
-                      : 'bg-[#2a2a2a] text-gray-400 hover:bg-red-600/10 hover:text-white'
-                  }`}
+                      ? 'border-red-600/40 bg-gradient-to-br from-red-600/10 to-red-800/10' 
+                      : 'border-red-600/20 hover:border-red-600/40'
+                  } transition-all`}
                 >
-                  <span className="text-xl">📊</span>
-                  <span>Histórico</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 to-red-800/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity"></div>
+                  <span className="text-2xl mb-2 block transform group-hover:scale-110 transition-transform">📋</span>
+                  <h3 className="text-sm font-semibold text-red-500">Histórico</h3>
                 </button>
 
-                {/* Meu Perfil */}
+                {/* Perfil */}
                 <button 
-                  onClick={() => handleTabChange('perfil')}
+                  onClick={() => {
+                    setActiveTab('perfil')
+                    sounds.play('click')
+                  }}
                   onMouseEnter={() => sounds.play('hover')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                  className={`group relative bg-[#2a2a2a] p-4 rounded-xl border ${
                     activeTab === 'perfil' 
-                      ? 'bg-red-600 text-white' 
-                      : 'bg-[#2a2a2a] text-gray-400 hover:bg-red-600/10 hover:text-white'
-                  }`}
+                      ? 'border-red-600/40 bg-gradient-to-br from-red-600/10 to-red-800/10' 
+                      : 'border-red-600/20 hover:border-red-600/40'
+                  } transition-all`}
                 >
-                  <span className="text-xl">👤</span>
-                  <span>Perfil</span>
-                </button>
-
-                {/* Sair (Mobile) */}
-                <button 
-                  onClick={handleLogout}
-                  onMouseEnter={() => sounds.play('hover')}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all bg-[#2a2a2a] text-red-500 hover:bg-red-600/10 hover:text-red-400 sm:hidden"
-                >
-                  <span className="text-xl">🚪</span>
-                  <span>Sair</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 to-red-800/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity"></div>
+                  <span className="text-2xl mb-2 block transform group-hover:scale-110 transition-transform">👤</span>
+                  <h3 className="text-sm font-semibold text-red-500">Perfil</h3>
                 </button>
               </div>
-            </div>
-
-            {/* Menu Desktop */}
-            <div className="hidden md:grid grid-cols-4 lg:grid-cols-6 gap-4 p-4 shrink-0">
-              {/* Agendar Horário */}
-              <button 
-                onClick={() => setActiveTab('agendar')}
-                className={`group relative bg-[#2a2a2a] p-4 rounded-xl border ${
-                  activeTab === 'agendar' 
-                    ? 'border-red-600/40 bg-gradient-to-br from-red-600/10 to-red-800/10' 
-                    : 'border-red-600/20 hover:border-red-600/40'
-                } transition-all`}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 to-red-800/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity"></div>
-                <span className="text-2xl mb-2 block transform group-hover:scale-110 transition-transform">✂️</span>
-                <h3 className="text-sm font-semibold text-red-500">Agendar</h3>
-              </button>
-
-              {/* Meus Agendamentos */}
-              <button 
-                onClick={() => setActiveTab('agendamentos')}
-                className={`group relative bg-[#2a2a2a] p-4 rounded-xl border ${
-                  activeTab === 'agendamentos' 
-                    ? 'border-red-600/40 bg-gradient-to-br from-red-600/10 to-red-800/10' 
-                    : 'border-red-600/20 hover:border-red-600/40'
-                } transition-all`}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 to-red-800/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity"></div>
-                <span className="text-2xl mb-2 block transform group-hover:scale-110 transition-transform">📅</span>
-                <h3 className="text-sm font-semibold text-red-500">Agendamentos</h3>
-              </button>
-
-              {/* Histórico */}
-              <button 
-                onClick={() => setActiveTab('historico')}
-                className={`group relative bg-[#2a2a2a] p-4 rounded-xl border ${
-                  activeTab === 'historico' 
-                    ? 'border-red-600/40 bg-gradient-to-br from-red-600/10 to-red-800/10' 
-                    : 'border-red-600/20 hover:border-red-600/40'
-                } transition-all`}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 to-red-800/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity"></div>
-                <span className="text-2xl mb-2 block transform group-hover:scale-110 transition-transform">📋</span>
-                <h3 className="text-sm font-semibold text-red-500">Histórico</h3>
-              </button>
-
-              {/* Perfil */}
-              <button 
-                onClick={() => setActiveTab('perfil')}
-                className={`group relative bg-[#2a2a2a] p-4 rounded-xl border ${
-                  activeTab === 'perfil' 
-                    ? 'border-red-600/40 bg-gradient-to-br from-red-600/10 to-red-800/10' 
-                    : 'border-red-600/20 hover:border-red-600/40'
-                } transition-all`}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 to-red-800/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity"></div>
-                <span className="text-2xl mb-2 block transform group-hover:scale-110 transition-transform">👤</span>
-                <h3 className="text-sm font-semibold text-red-500">Perfil</h3>
-              </button>
-
-              {/* Sair */}
-              <button 
-                onClick={handleLogout}
-                className="group relative bg-[#2a2a2a] p-4 rounded-xl border border-red-600/20 hover:border-red-600/40 transition-all"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 to-red-800/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity"></div>
-                <span className="text-2xl mb-2 block transform group-hover:scale-110 transition-transform">🚪</span>
-                <h3 className="text-sm font-semibold text-red-500">Sair</h3>
-              </button>
             </div>
 
             {/* Conteúdo da Tab Ativa */}
@@ -1321,30 +1345,39 @@ function App() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               {/* Área do Cliente */}
               <button 
-                onClick={() => setIsClientLoginOpen(true)}
+                onClick={() => {
+                  setIsClientLoginOpen(true)
+                  sounds.play('click')
+                }}
+                onMouseEnter={() => sounds.play('hover')}
                 className="group relative w-full overflow-hidden bg-gradient-to-br from-gold-600 to-gold-800 rounded-xl sm:rounded-2xl p-1 hover:shadow-lg hover:shadow-gold-600/20 transition-all duration-500"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-gold-400 to-gold-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,215,0,0.1),transparent_70%)] opacity-0 group-hover:opacity-100 animate-pulse-slow"></div>
                 <div className="relative bg-[#1a1a1a] rounded-lg sm:rounded-xl p-3 sm:p-4 h-full transform group-hover:translate-y-1 group-hover:translate-x-1 transition-transform duration-300">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 sm:gap-4">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-gold-500/20 to-gold-700/20 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
-                        <span className="text-xl sm:text-2xl animate-bounce">👤</span>
+                        <span className="text-xl sm:text-2xl group-hover:animate-bounce">👤</span>
                       </div>
                       <div className="text-left">
                         <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-gold-400 transition-colors duration-300">Área do Cliente</h3>
-                        <p className="text-xs sm:text-sm text-gray-400">Acesse sua conta</p>
+                        <p className="text-xs sm:text-sm text-gray-400 group-hover:text-gold-500/70 transition-colors duration-300">Acesse sua conta</p>
                       </div>
                     </div>
-                    <span className="text-gold-500 transform group-hover:translate-x-2 transition-transform duration-300">→</span>
+                    <span className="text-gold-500 transform group-hover:translate-x-2 group-hover:scale-110 transition-all duration-300">→</span>
                   </div>
                 </div>
               </button>
 
               {/* Promoções */}
               <button 
-                onClick={() => setShowPromocoes(true)}
+                onClick={() => {
+                  setShowPromocoes(true)
+                  sounds.play('click')
+                }}
+                onMouseEnter={() => sounds.play('hover')}
                 className="group relative w-full overflow-hidden bg-gradient-to-br from-red-600 to-red-800 rounded-xl sm:rounded-2xl p-1 hover:shadow-lg hover:shadow-red-600/20 transition-all duration-500"
               >
                 <div className="absolute -top-2 -right-2">
@@ -1353,11 +1386,12 @@ function App() {
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-br from-red-400 to-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,0,0,0.1),transparent_70%)] opacity-0 group-hover:opacity-100 animate-pulse-slow"></div>
                 <div className="relative bg-[#1a1a1a] rounded-lg sm:rounded-xl p-3 sm:p-4 h-full transform group-hover:translate-y-1 group-hover:translate-x-1 transition-transform duration-300">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 sm:gap-4">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-red-500/20 to-red-700/20 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
-                        <span className="text-xl sm:text-2xl animate-bounce">🔥</span>
+                        <span className="text-xl sm:text-2xl group-hover:animate-bounce">🔥</span>
                       </div>
                       <div className="text-left">
                         <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-red-400 transition-colors duration-300">
@@ -1369,33 +1403,38 @@ function App() {
                             </span>
                           </span>
                         </h3>
-                        <p className="text-xs sm:text-sm text-gray-400">Ofertas especiais</p>
+                        <p className="text-xs sm:text-sm text-gray-400 group-hover:text-red-500/70 transition-colors duration-300">Ofertas especiais</p>
                       </div>
                     </div>
-                    <span className="text-red-500 transform group-hover:translate-x-2 transition-transform duration-300">→</span>
+                    <span className="text-red-500 transform group-hover:translate-x-2 group-hover:scale-110 transition-all duration-300">→</span>
                   </div>
                 </div>
               </button>
 
               {/* Produtos */}
               <button 
-                onClick={() => setShowProdutos(true)}
+                onClick={() => {
+                  setShowProdutos(true)
+                  sounds.play('click')
+                }}
+                onMouseEnter={() => sounds.play('hover')}
                 className="group relative w-full overflow-hidden bg-gradient-to-br from-gold-600 to-gold-800 rounded-xl sm:rounded-2xl p-1 hover:shadow-lg hover:shadow-gold-600/20 transition-all duration-500"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-gold-400 to-gold-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,215,0,0.1),transparent_70%)] opacity-0 group-hover:opacity-100 animate-pulse-slow"></div>
                 <div className="relative bg-[#1a1a1a] rounded-lg sm:rounded-xl p-3 sm:p-4 h-full transform group-hover:translate-y-1 group-hover:translate-x-1 transition-transform duration-300">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 sm:gap-4">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-gold-500/20 to-gold-700/20 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
-                        <span className="text-xl sm:text-2xl animate-bounce">✨</span>
+                        <span className="text-xl sm:text-2xl group-hover:animate-bounce">✨</span>
                       </div>
                       <div className="text-left">
                         <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-gold-400 transition-colors duration-300">Serviços & Produtos</h3>
-                        <p className="text-xs sm:text-sm text-gray-400">Explore nossos tratamentos e produtos</p>
+                        <p className="text-xs sm:text-sm text-gray-400 group-hover:text-gold-500/70 transition-colors duration-300">Explore nossos tratamentos e produtos</p>
                       </div>
                     </div>
-                    <span className="text-gold-500 transform group-hover:translate-x-2 transition-transform duration-300">→</span>
+                    <span className="text-gold-500 transform group-hover:translate-x-2 group-hover:scale-110 transition-all duration-300">→</span>
                   </div>
                 </div>
               </button>

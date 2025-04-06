@@ -24,6 +24,9 @@ export default {
             thumb: 'rgba(255, 192, 0, 0.3)', // Dourado com 30% de opacidade
             'thumb-hover': 'rgba(255, 192, 0, 0.5)' // Dourado com 50% de opacidade
           }
+        },
+        animation: {
+          'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         }
       },
     },
