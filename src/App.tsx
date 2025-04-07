@@ -1718,7 +1718,7 @@ function App() {
       )}
 
       {/* Botão Flutuante do WhatsApp */}
-      {!isAuthenticated && !isClientLoginOpen && !isLoginOpen && (
+      {!isAuthenticated && !isClientLoginOpen && !isLoginOpen && !showPromocoes && !showProdutos && (
         <button
           onClick={() => {
             const numeroLimpo = config.whatsapp.replace(/\D/g, '')
