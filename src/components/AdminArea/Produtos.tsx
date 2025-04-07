@@ -37,7 +37,7 @@ export default function Produtos() {
   const [salvando, setSalvando] = useState(false)
   const [confirmationOpen, setConfirmationOpen] = useState(false)
   const [produtoParaExcluir, setProdutoParaExcluir] = useState<Produto | null>(null)
-  
+
   const [novoProduto, setNovoProduto] = useState({
     nome: '',
     descricao: '',
@@ -154,19 +154,19 @@ export default function Produtos() {
 
       await carregarProdutos()
       setModalAberto(false)
-      setProdutoEmEdicao(null)
+    setProdutoEmEdicao(null)
       setImagensTemporarias([]) // Limpa as imagens temporárias
-      setNovoProduto({
-        nome: '',
-        descricao: '',
+    setNovoProduto({
+      nome: '',
+      descricao: '',
         preco: '',
         preco_promocional: '',
         estoque: '',
         categoria: '',
-        marca: '',
-        destaque: false,
-        status: true
-      })
+      marca: '',
+      destaque: false,
+      status: true
+    })
     } catch (err: any) {
       console.error('Erro detalhado:', err)
       setError(err.message)
@@ -286,7 +286,7 @@ export default function Produtos() {
       await carregarProdutos()
     } catch (err: any) {
       setError('Erro ao excluir imagem: ' + err.message)
-      console.error('Erro ao excluir imagem:', err)
+        console.error('Erro ao excluir imagem:', err)
     }
   }
 
@@ -330,9 +330,9 @@ export default function Produtos() {
           <motion.button 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => {
+          onClick={() => {
               setProdutoEmEdicao(null)
-              setModalAberto(true)
+            setModalAberto(true)
               setNovoProduto({
                 nome: '',
                 descricao: '',
@@ -346,9 +346,9 @@ export default function Produtos() {
               })
             }}
             className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-800 text-white px-4 py-2 rounded-lg hover:from-red-700 hover:to-red-900 transition-all whitespace-nowrap flex-shrink-0"
-          >
-            <span>+</span>
-            <span>Adicionar Produto</span>
+        >
+          <span>+</span>
+          <span>Adicionar Produto</span>
           </motion.button>
         </div>
       </div>
@@ -358,7 +358,7 @@ export default function Produtos() {
           <p className="text-red-500 text-sm">{error}</p>
         </div>
       )}
-      
+
       {/* Grid de Produtos */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <AnimatePresence>
@@ -376,24 +376,24 @@ export default function Produtos() {
                 {produto.imagens?.length ? (
                   <img 
                     src={produto.imagens.find(img => img.principal)?.url || produto.imagens[0].url} 
-                    alt={produto.nome}
+                          alt={produto.nome}
                     className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
-                  />
-                ) : (
+                        />
+                      ) : (
                   <div className="w-full h-full flex items-center justify-center bg-red-600/20">
                     <span className="text-4xl font-bold text-red-600/40">
                       {produto.nome.slice(0, 2).toUpperCase()}
                     </span>
-                  </div>
-                )}
+                        </div>
+                      )}
                 <div className="absolute top-3 right-3 flex items-center gap-2">
                   <span className={`px-3 py-1 rounded-full text-xs ${
-                    produto.status 
-                      ? 'bg-green-500/20 text-green-400'
-                      : 'bg-red-500/20 text-red-400'
-                  }`}>
-                    {produto.status ? 'Ativo' : 'Inativo'}
-                  </span>
+                      produto.status 
+                        ? 'bg-green-500/20 text-green-400'
+                        : 'bg-red-500/20 text-red-400'
+                    }`}>
+                      {produto.status ? 'Ativo' : 'Inativo'}
+                    </span>
                   <span className="px-3 py-1 rounded-full text-xs bg-white/10 text-white backdrop-blur-sm flex items-center gap-1">
                     <span>{categorias.find(cat => cat.id === produto.categoria)?.icone}</span>
                     <span>{categorias.find(cat => cat.id === produto.categoria)?.nome}</span>
@@ -438,16 +438,16 @@ export default function Produtos() {
                     })
                     setModalAberto(true)
                   }}
-                  className="text-blue-500 hover:text-blue-400 transition-colors"
-                >
+                      className="text-blue-500 hover:text-blue-400 transition-colors"
+                    >
                   Editar
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleExcluir(produto)}
-                  className="text-red-500 hover:text-red-400 transition-colors"
-                >
+                      className="text-red-500 hover:text-red-400 transition-colors"
+                    >
                   Excluir
                 </motion.button>
               </div>
@@ -458,7 +458,7 @@ export default function Produtos() {
 
       {/* Modal de Formulário */}
       <AnimatePresence>
-        {modalAberto && (
+      {modalAberto && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -493,9 +493,9 @@ export default function Produtos() {
                   ✕
                 </button>
 
-                <h3 className="text-xl font-bold text-red-500 mb-6">
-                  {produtoEmEdicao ? 'Editar Produto' : 'Novo Produto'}
-                </h3>
+            <h3 className="text-xl font-bold text-red-500 mb-6">
+              {produtoEmEdicao ? 'Editar Produto' : 'Novo Produto'}
+            </h3>
 
                 {error && (
                   <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
@@ -506,26 +506,26 @@ export default function Produtos() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label className="block text-gray-400 text-sm mb-2">Nome *</label>
-                    <input
-                      type="text"
-                      value={novoProduto.nome}
-                      onChange={e => setNovoProduto(prev => ({ ...prev, nome: e.target.value }))}
-                      className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                      required
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    value={novoProduto.nome}
+                    onChange={e => setNovoProduto(prev => ({ ...prev, nome: e.target.value }))}
+                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                    required
+                  />
+                </div>
 
                   <div>
-                    <label className="block text-gray-400 text-sm mb-2">Descrição</label>
-                    <textarea
-                      value={novoProduto.descricao}
-                      onChange={e => setNovoProduto(prev => ({ ...prev, descricao: e.target.value }))}
-                      className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                      rows={3}
-                    />
-                  </div>
+                  <label className="block text-gray-400 text-sm mb-2">Descrição</label>
+                  <textarea
+                    value={novoProduto.descricao}
+                    onChange={e => setNovoProduto(prev => ({ ...prev, descricao: e.target.value }))}
+                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                    rows={3}
+                  />
+                </div>
 
-                  <div>
+                <div>
                     <label className="block text-gray-400 text-sm mb-2">Marca *</label>
                     <input
                       type="text"
@@ -553,40 +553,40 @@ export default function Produtos() {
 
                   <div>
                     <label className="block text-gray-400 text-sm mb-2">Preço (R$) *</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={novoProduto.preco}
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={novoProduto.preco}
                       onChange={e => setNovoProduto(prev => ({ ...prev, preco: e.target.value }))}
-                      className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                      required
-                    />
-                  </div>
+                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                    required
+                  />
+                </div>
 
-                  <div>
+                <div>
                     <label className="block text-gray-400 text-sm mb-2">Preço Promocional (R$)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
                       value={novoProduto.preco_promocional}
                       onChange={e => setNovoProduto(prev => ({ ...prev, preco_promocional: e.target.value }))}
-                      className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                    />
-                  </div>
+                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                  />
+                </div>
 
-                  <div>
+                <div>
                     <label className="block text-gray-400 text-sm mb-2">Estoque *</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={novoProduto.estoque}
+                  <input
+                    type="number"
+                    min="0"
+                    value={novoProduto.estoque}
                       onChange={e => setNovoProduto(prev => ({ ...prev, estoque: e.target.value }))}
-                      className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                      required
-                    />
-                  </div>
+                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                    required
+                  />
+                </div>
 
                   <div className="flex items-center gap-2">
                     <input
@@ -608,7 +608,7 @@ export default function Produtos() {
                       className="w-4 h-4 text-red-600 bg-[#2a2a2a] border-red-600/20 rounded focus:ring-red-600"
                     />
                     <label htmlFor="status" className="text-gray-400 text-sm">Produto Ativo</label>
-                  </div>
+              </div>
 
                   <div>
                     <label className="block text-gray-400 text-sm mb-2">Foto</label>
@@ -644,13 +644,13 @@ export default function Produtos() {
                                     ⭐
                                   </button>
                                 )}
-                                <button
+                <button
                                   onClick={() => handleExcluirImagem(imagem.id)}
                                   className="p-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
                                   title="Excluir imagem"
                                 >
                                   🗑️
-                                </button>
+                </button>
                               </div>
                             </div>
                           ))}
@@ -668,17 +668,17 @@ export default function Produtos() {
                                 className={`w-full aspect-square rounded-lg object-cover ${index === 0 ? 'ring-2 ring-red-600' : ''}`}
                               />
                               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                <button
-                                  onClick={() => {
+                <button
+                  onClick={() => {
                                     setImagensTemporarias(prev => prev.filter((_, i) => i !== index))
                                     URL.revokeObjectURL(imagem.url) // Libera a URL temporária
-                                  }}
+                  }}
                                   className="p-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
                                   title="Remover imagem"
-                                >
+                >
                                   🗑️
-                                </button>
-                              </div>
+                </button>
+              </div>
                             </div>
                           ))}
                         </div>
@@ -702,11 +702,11 @@ export default function Produtos() {
                       produtoEmEdicao ? 'Atualizar' : 'Adicionar'
                     )}
                   </motion.button>
-                </form>
-              </div>
+            </form>
+          </div>
             </motion.div>
           </motion.div>
-        )}
+      )}
       </AnimatePresence>
 
       {/* Modal de Confirmação de Exclusão */}
