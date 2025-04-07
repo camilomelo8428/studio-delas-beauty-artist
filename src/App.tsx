@@ -845,20 +845,38 @@ function ClientLoginModal({ isOpen, onClose, config, initialTab }: {
           </button>
 
           {/* Logo e Título */}
-          <div className="text-center mb-8">
-            <div className="w-20 h-20 mx-auto mb-4 relative">
-              <div className="rounded-full bg-gold-600/20 absolute inset-0 blur-md"></div>
-              <img
-                src={config.logo_url || ""}
-                alt="Logo"
-                className="w-full h-full object-cover rounded-full relative z-10 border-2 border-gold-600/50"
-              />
+          <div className="text-center mb-8 sm:mb-12">
+            <div className="relative w-32 h-32 sm:w-56 sm:h-56 mx-auto mb-6 sm:mb-8 group">
+              {/* Rotating border effect */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-gold-600 via-gold-400 to-gold-600 rounded-full opacity-75 group-hover:opacity-100 blur-sm animate-rotate"></div>
+              
+              {/* Pulsing ring effect */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-gold-600 to-gold-800 animate-pulse-ring"></div>
+              
+              {/* Shine effect container */}
+              <div className="relative w-full h-full rounded-full p-2 bg-gradient-to-r from-gold-600/20 via-gold-400/40 to-gold-600/20 backdrop-blur-sm border border-gold-600/20 animate-shine overflow-hidden">
+                {/* Logo container with float animation */}
+                <div className="relative w-full h-full rounded-full overflow-hidden animate-float">
+                  <img
+                    src={config.logo_url || ""}
+                    alt="Barbearia Logo"
+                    className="w-full h-full object-cover rounded-full transform group-hover:scale-110 transition-all duration-700"
+                  />
+                  
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-gold-600/0 to-gold-600/40 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                </div>
+              </div>
+              
+              {/* Extra glow effect on hover */}
+              <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-gold-600 to-gold-800 opacity-0 group-hover:opacity-20 blur-xl transition-all duration-700"></div>
             </div>
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-gold-500 to-gold-800 bg-clip-text text-transparent">
-              {showCadastro ? 'Criar Conta' : 'Bem-vindo'}
-            </h2>
-            <p className="text-gray-400 text-sm mt-2">
-              {showCadastro ? 'Preencha seus dados para começar' : 'Faça login para agendar seu horário'}
+            
+            <h1 className="text-4xl sm:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-white via-gold-500 to-gold-800 bg-clip-text text-transparent px-2">
+              {config.nome_empresa}
+            </h1>
+            <p className="text-lg sm:text-2xl text-gray-300 max-w-2xl mx-auto px-4 leading-relaxed">
+              Transformando seu estilo com <span className="text-gold-500">excelência</span> e <span className="text-gold-500">tradição</span>
             </p>
           </div>
 
@@ -1320,15 +1338,29 @@ function App() {
           {/* Logo e Título */}
           <div className="text-center mb-8 sm:mb-12">
             <div className="relative w-32 h-32 sm:w-56 sm:h-56 mx-auto mb-6 sm:mb-8 group">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-gold-600 to-gold-800 blur-2xl opacity-40 group-hover:opacity-60 transition-all duration-500"></div>
-              <div className="relative w-full h-full rounded-full p-2 bg-gradient-to-br from-gold-600/20 to-gold-900/20 backdrop-blur-sm border border-gold-600/20">
-                <img
-                  src={config.logo_url || ""}
-                  alt="Barbearia Logo"
-                  className="w-full h-full object-cover rounded-full transform group-hover:scale-105 transition-all duration-500"
-                />
+              {/* Rotating border effect */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-gold-600 via-gold-400 to-gold-600 rounded-full opacity-75 group-hover:opacity-100 blur-sm animate-rotate"></div>
+              
+              {/* Pulsing ring effect */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-gold-600 to-gold-800 animate-pulse-ring"></div>
+              
+              {/* Shine effect container */}
+              <div className="relative w-full h-full rounded-full p-2 bg-gradient-to-r from-gold-600/20 via-gold-400/40 to-gold-600/20 backdrop-blur-sm border border-gold-600/20 animate-shine overflow-hidden">
+                {/* Logo container with float animation */}
+                <div className="relative w-full h-full rounded-full overflow-hidden animate-float">
+                  <img
+                    src={config.logo_url || ""}
+                    alt="Barbearia Logo"
+                    className="w-full h-full object-cover rounded-full transform group-hover:scale-110 transition-all duration-700"
+                  />
+                  
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-gold-600/0 to-gold-600/40 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                </div>
               </div>
-              <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-gold-600 to-gold-800 opacity-0 group-hover:opacity-20 blur-2xl transition-all duration-500"></div>
+              
+              {/* Extra glow effect on hover */}
+              <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-gold-600 to-gold-800 opacity-0 group-hover:opacity-20 blur-xl transition-all duration-700"></div>
             </div>
             
             <h1 className="text-4xl sm:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-white via-gold-500 to-gold-800 bg-clip-text text-transparent px-2">
