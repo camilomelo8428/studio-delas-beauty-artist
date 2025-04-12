@@ -27,12 +27,24 @@ export function useFuncionarios() {
       setLoading(true)
       const { data, error } = await supabase
         .from('funcionarios')
-        .select('*')
+        .select(`
+          *,
+          funcoes:funcionario_funcoes (
+            funcao,
+            principal
+          )
+        `)
         .order('created_at', { ascending: false })
 
       if (error) throw error
 
-      setFuncionarios(data)
+      // Transforma os dados para manter compatibilidade com a interface existente
+      const funcionariosFormatados = data.map(funcionario => ({
+        ...funcionario,
+        cargo: funcionario.funcoes?.find(f => f.principal)?.funcao || 'barbeiro'
+      }))
+
+      setFuncionarios(funcionariosFormatados)
     } catch (err) {
       setError('Erro ao carregar funcionários')
       console.error(err)
@@ -50,18 +62,60 @@ export function useFuncionarios() {
     comissao: number
     especialidades: string[]
     status: boolean
+    funcoes: { funcao: CargoFuncionario; principal: boolean }[]
   }) => {
     try {
-      const { data, error } = await supabase
+      // Inicia uma transação
+      const { data: funcionario, error: funcionarioError } = await supabase
         .from('funcionarios')
-        .insert([novoFuncionario])
+        .insert([{
+          nome: novoFuncionario.nome,
+          email: novoFuncionario.email,
+          telefone: novoFuncionario.telefone,
+          foto_url: novoFuncionario.foto_url,
+          comissao: novoFuncionario.comissao,
+          especialidades: novoFuncionario.especialidades,
+          status: novoFuncionario.status
+        }])
         .select()
         .single()
 
-      if (error) throw error
+      if (funcionarioError) throw funcionarioError
 
-      setFuncionarios(prev => [data, ...prev])
-      return data
+      // Insere as funções do funcionário
+      const { error: funcoesError } = await supabase
+        .from('funcionario_funcoes')
+        .insert(
+          novoFuncionario.funcoes.map(funcao => ({
+            funcionario_id: funcionario.id,
+            funcao: funcao.funcao,
+            principal: funcao.principal
+          }))
+        )
+
+      if (funcoesError) throw funcoesError
+
+      // Busca o funcionário com suas funções
+      const { data: funcionarioCompleto, error: fetchError } = await supabase
+        .from('funcionarios')
+        .select(`
+          *,
+          funcoes:funcionario_funcoes (
+            funcao,
+            principal
+          )
+        `)
+        .eq('id', funcionario.id)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      setFuncionarios(prev => [{
+        ...funcionarioCompleto,
+        cargo: funcionarioCompleto.funcoes?.find(f => f.principal)?.funcao || 'barbeiro'
+      }, ...prev])
+
+      return funcionarioCompleto
     } catch (err) {
       console.error('Erro ao adicionar funcionário:', err)
       throw err
@@ -77,19 +131,72 @@ export function useFuncionarios() {
     comissao?: number
     especialidades?: string[]
     status?: boolean
+    funcoes?: { funcao: CargoFuncionario; principal: boolean }[]
   }) => {
     try {
-      const { data, error } = await supabase
+      // Atualiza os dados básicos do funcionário
+      const { data: funcionario, error: funcionarioError } = await supabase
         .from('funcionarios')
-        .update(dadosAtualizados)
+        .update({
+          nome: dadosAtualizados.nome,
+          email: dadosAtualizados.email,
+          telefone: dadosAtualizados.telefone,
+          foto_url: dadosAtualizados.foto_url,
+          comissao: dadosAtualizados.comissao,
+          especialidades: dadosAtualizados.especialidades,
+          status: dadosAtualizados.status
+        })
         .eq('id', id)
         .select()
         .single()
 
-      if (error) throw error
+      if (funcionarioError) throw funcionarioError
 
-      setFuncionarios(prev => prev.map(f => f.id === id ? data : f))
-      return data
+      // Se houver funções para atualizar
+      if (dadosAtualizados.funcoes) {
+        // Remove todas as funções existentes
+        const { error: deleteError } = await supabase
+          .from('funcionario_funcoes')
+          .delete()
+          .eq('funcionario_id', id)
+
+        if (deleteError) throw deleteError
+
+        // Insere as novas funções
+        const { error: insertError } = await supabase
+          .from('funcionario_funcoes')
+          .insert(
+            dadosAtualizados.funcoes.map(funcao => ({
+              funcionario_id: id,
+              funcao: funcao.funcao,
+              principal: funcao.principal
+            }))
+          )
+
+        if (insertError) throw insertError
+      }
+
+      // Busca o funcionário atualizado com suas funções
+      const { data: funcionarioCompleto, error: fetchError } = await supabase
+        .from('funcionarios')
+        .select(`
+          *,
+          funcoes:funcionario_funcoes (
+            funcao,
+            principal
+          )
+        `)
+        .eq('id', id)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      setFuncionarios(prev => prev.map(f => f.id === id ? {
+        ...funcionarioCompleto,
+        cargo: funcionarioCompleto.funcoes?.find(f => f.principal)?.funcao || 'barbeiro'
+      } : f))
+
+      return funcionarioCompleto
     } catch (err) {
       console.error('Erro ao atualizar funcionário:', err)
       throw err
@@ -115,7 +222,7 @@ export function useFuncionarios() {
         }
       }
 
-      // Remove o funcionário (os agendamentos serão removidos automaticamente pelo CASCADE)
+      // Remove o funcionário (as funções serão removidas automaticamente pelo CASCADE)
       const { error: deleteError } = await supabase
         .from('funcionarios')
         .delete()

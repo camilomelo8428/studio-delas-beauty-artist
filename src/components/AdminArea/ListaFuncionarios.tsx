@@ -35,21 +35,21 @@ export default function ListaFuncionarios({ funcionarios, onEdit, onDelete }: Li
   }
 
   return (
-    <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] p-6 rounded-xl border border-gold-600/20">
-      <h2 className="text-2xl font-bold text-gold-500 mb-6">Funcionários</h2>
+    <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] p-6 rounded-xl border border-pink-600/20">
+      <h2 className="text-2xl font-bold text-pink-500 mb-6">Funcionários</h2>
 
       <div className="grid grid-cols-1 gap-4">
         {funcionarios.map((funcionario) => (
           <div
             key={funcionario.id}
-            className="bg-[#1a1a1a] border border-gold-600/20 rounded-lg p-4 flex flex-col md:flex-row md:items-center justify-between gap-4"
+            className="bg-[#1a1a1a] border border-pink-600/20 rounded-lg p-4 flex flex-col md:flex-row md:items-center justify-between gap-4"
           >
             <div className="flex items-center gap-4">
               {funcionario.foto_url && (
                 <img
                   src={funcionario.foto_url}
                   alt={funcionario.nome}
-                  className="w-12 h-12 rounded-full object-cover border border-gold-600/20"
+                  className="w-12 h-12 rounded-full object-cover border border-pink-600/20"
                 />
               )}
               <div>
@@ -57,7 +57,7 @@ export default function ListaFuncionarios({ funcionarios, onEdit, onDelete }: Li
                 <p className="text-sm text-gray-400">{funcionario.email}</p>
                 <p className="text-sm text-gray-400">{funcionario.telefone}</p>
                 <div className="mt-2">
-                  <span className="inline-block px-2 py-1 text-xs rounded-full bg-gold-600/10 text-gold-500">
+                  <span className="inline-block px-2 py-1 text-xs rounded-full bg-pink-600/10 text-pink-500">
                     {CARGO_LABELS[funcionario.cargo]}
                   </span>
                 </div>
@@ -79,7 +79,7 @@ export default function ListaFuncionarios({ funcionarios, onEdit, onDelete }: Li
             <div className="flex items-center gap-2">
               <button
                 onClick={() => onEdit(funcionario)}
-                className="p-2 text-gold-500 hover:text-gold-400 transition-colors"
+                className="p-2 text-pink-500 hover:text-pink-400 transition-colors"
                 title="Editar"
               >
                 <FaEdit size={20} />
@@ -99,7 +99,7 @@ export default function ListaFuncionarios({ funcionarios, onEdit, onDelete }: Li
       {/* Modal de confirmação de exclusão */}
       {funcionarioParaDeletar && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-[#1a1a1a] border border-gold-600/20 rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="bg-[#1a1a1a] border border-pink-600/20 rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-xl font-bold text-white mb-4">Confirmar Exclusão</h3>
             <p className="text-gray-300 mb-6">
               Tem certeza que deseja excluir o funcionário {funcionarioParaDeletar.nome}?
@@ -108,7 +108,7 @@ export default function ListaFuncionarios({ funcionarios, onEdit, onDelete }: Li
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setFuncionarioParaDeletar(null)}
-                className="px-4 py-2 border border-gold-600/20 text-white rounded-lg hover:bg-gold-600/10"
+                className="px-4 py-2 border border-pink-600/20 text-white rounded-lg hover:bg-pink-600/10"
               >
                 Cancelar
               </button>

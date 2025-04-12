@@ -5,8 +5,23 @@ import { storageService } from '../../services/storage'
 import toast from 'react-hot-toast'
 import type { FuncionarioAuth } from '../../services/auth'
 
+type FuncaoTipo = 'barbeiro' | 'cabeleireiro' | 'manicure' | 'esteticista' | 'maquiador' | 'designer_sobrancelhas' | 'massagista' | 'depilador' | 'admin'
+
+const funcaoNomes: Record<FuncaoTipo, string> = {
+  barbeiro: 'Barbeiro',
+  cabeleireiro: 'Cabeleireiro',
+  manicure: 'Manicure',
+  esteticista: 'Esteticista',
+  maquiador: 'Maquiador',
+  designer_sobrancelhas: 'Designer de Sobrancelhas',
+  massagista: 'Massagista',
+  depilador: 'Depilador',
+  admin: 'Administrador'
+}
+
 export default function MeuPerfil() {
   const [funcionario, setFuncionario] = useState<FuncionarioAuth | null>(null)
+  const [funcoes, setFuncoes] = useState<Array<{ funcao: FuncaoTipo; principal: boolean }>>([])
   const [loading, setLoading] = useState(false)
   const [uploadingFoto, setUploadingFoto] = useState(false)
   const [senha, setSenha] = useState('')
@@ -17,6 +32,27 @@ export default function MeuPerfil() {
   useEffect(() => {
     const func = authService.getFuncionarioLogado()
     setFuncionario(func)
+
+    // Buscar funções do funcionário
+    const buscarFuncoes = async () => {
+      if (!func) return
+      
+      try {
+        const { data, error } = await supabase
+          .from('funcionario_funcoes')
+          .select('funcao, principal')
+          .eq('funcionario_id', func.id)
+          .order('principal', { ascending: false })
+
+        if (error) throw error
+        setFuncoes(data || [])
+      } catch (err) {
+        console.error('Erro ao buscar funções:', err)
+        toast.error('Erro ao carregar funções')
+      }
+    }
+
+    buscarFuncoes()
   }, [])
 
   if (!funcionario) {
@@ -29,7 +65,7 @@ export default function MeuPerfil() {
 
   async function handleUploadFoto() {
     const file = fileInputRef.current?.files?.[0]
-    if (!file) return
+    if (!file || !funcionario) return
 
     try {
       setUploadingFoto(true)
@@ -51,7 +87,12 @@ export default function MeuPerfil() {
 
       // Atualizar o estado local e o localStorage
       const funcionarioAtualizado: FuncionarioAuth = {
-        ...funcionario,
+        id: funcionario.id,
+        nome: funcionario.nome,
+        email: funcionario.email,
+        funcao: funcionario.funcao,
+        status: funcionario.status,
+        telefone: funcionario.telefone,
         foto_url: publicUrl
       }
       setFuncionario(funcionarioAtualizado)
@@ -71,6 +112,8 @@ export default function MeuPerfil() {
 
   async function handleAlterarSenha(e: React.FormEvent) {
     e.preventDefault()
+    
+    if (!funcionario) return
     
     if (novaSenha !== confirmarSenha) {
       toast.error('As senhas não coincidem')
@@ -211,8 +254,18 @@ export default function MeuPerfil() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">Função</label>
-            <p className="text-white capitalize">{funcionario.funcao}</p>
+            <label className="block text-sm font-medium text-gray-400 mb-2">Funções</label>
+            <div className="space-y-2">
+              {funcoes.map((f, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${f.principal ? 'bg-red-500' : 'bg-gray-500'}`}></span>
+                  <p className="text-white">
+                    {funcaoNomes[f.funcao]}
+                    {f.principal && <span className="text-xs text-red-500 ml-2">(Principal)</span>}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div>

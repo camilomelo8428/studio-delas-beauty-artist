@@ -7,22 +7,22 @@ export default {
     theme: {
       extend: {
         colors: {
-          gold: {
-            50: '#FFF9E5',
-            100: '#FFF2CC',
-            200: '#FFE699',
-            300: '#FFD966',
-            400: '#FFCD33',
-            500: '#FFC000',  // Cor dourada principal
-            600: '#CC9A00',
-            700: '#997300',
-            800: '#664D00',
-            900: '#332600'
+          pink: {
+            50: '#FFF0F7',
+            100: '#FFE0EF',
+            200: '#FFC2DF',
+            300: '#FFA3CF',
+            400: '#FF85BF',
+            500: '#FF66AF',  // Cor rosa principal
+            600: '#CC529C',
+            700: '#993D74',
+            800: '#66294C',
+            900: '#331426'
           },
           scrollbar: {
             track: 'transparent',
-            thumb: 'rgba(255, 192, 0, 0.3)', // Dourado com 30% de opacidade
-            'thumb-hover': 'rgba(255, 192, 0, 0.5)' // Dourado com 50% de opacidade
+            thumb: 'rgba(255, 102, 175, 0.3)', // Rosa com 30% de opacidade
+            'thumb-hover': 'rgba(255, 102, 175, 0.5)' // Rosa com 50% de opacidade
           }
         },
         animation: {

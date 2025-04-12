@@ -728,8 +728,8 @@ export default function Dashboard() {
     return (
       <div className="min-h-[400px] flex items-center justify-center">
         <div className="relative w-16 h-16">
-          <div className="absolute inset-0 rounded-full border-4 border-gold-600/20"></div>
-          <div className="absolute inset-0 rounded-full border-4 border-gold-600 border-t-transparent animate-spin"></div>
+          <div className="absolute inset-0 rounded-full border-4 border-pink-600/20"></div>
+          <div className="absolute inset-0 rounded-full border-4 border-pink-600 border-t-transparent animate-spin"></div>
         </div>
       </div>
     )
@@ -763,7 +763,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Cabeçalho e Filtros */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-gold-500">Dashboard</h2>
+        <h2 className="text-2xl font-bold text-pink-500">Dashboard</h2>
         
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
@@ -773,7 +773,7 @@ export default function Dashboard() {
                 type="date"
                 value={dataInicial}
                 onChange={(e) => setDataInicial(e.target.value)}
-                className="bg-[#1a1a1a] border border-gold-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-gold-600/40"
+                className="bg-[#1a1a1a] border border-pink-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-pink-600/40"
               />
             </div>
             <div className="flex flex-col">
@@ -782,12 +782,12 @@ export default function Dashboard() {
                 type="date"
                 value={dataFinal}
                 onChange={(e) => setDataFinal(e.target.value)}
-                className="bg-[#1a1a1a] border border-gold-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-gold-600/40"
+                className="bg-[#1a1a1a] border border-pink-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-pink-600/40"
               />
             </div>
             <button
               onClick={handlePeriodoChange}
-              className="mt-6 px-4 py-2 bg-gold-600 text-white rounded-lg hover:bg-gold-700 transition-colors"
+              className="mt-6 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors"
             >
               Filtrar
             </button>
@@ -795,7 +795,7 @@ export default function Dashboard() {
           
           <button
             onClick={gerarRelatorioPDF}
-            className="px-4 py-2 bg-gold-600/20 text-gold-500 rounded-lg hover:bg-gold-600/30 transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-pink-600/20 text-pink-500 rounded-lg hover:bg-pink-600/30 transition-colors flex items-center gap-2"
           >
             <span>📊</span>
             Gerar Relatório PDF
@@ -805,8 +805,8 @@ export default function Dashboard() {
 
       {/* Estatísticas do Dia */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gold-600/20">
-          <h3 className="text-lg font-semibold text-gold-500 mb-4">Agendamentos Hoje</h3>
+        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-pink-600/20">
+          <h3 className="text-lg font-semibold text-pink-500 mb-4">Agendamentos Hoje</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-gray-400">Pendentes:</span>
@@ -824,21 +824,21 @@ export default function Dashboard() {
               <span className="text-gray-400">Cancelados:</span>
               <span className="text-red-500 font-semibold">{estatisticas.cancelados}</span>
             </div>
-            <div className="pt-2 border-t border-gold-600/10">
+            <div className="pt-2 border-t border-pink-600/10">
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Total:</span>
-                <span className="text-gold-500 font-semibold">{estatisticas.total}</span>
+                <span className="text-pink-500 font-semibold">{estatisticas.total}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gold-600/20">
-          <h3 className="text-lg font-semibold text-gold-500 mb-4">Faturamento Hoje</h3>
+        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-pink-600/20">
+          <h3 className="text-lg font-semibold text-pink-500 mb-4">Faturamento Hoje</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-gray-400">Valor Total:</span>
-              <span className="text-gold-500 font-semibold">{formatarMoeda(faturamentoHoje)}</span>
+              <span className="text-pink-500 font-semibold">{formatarMoeda(faturamentoHoje)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-400">Clientes Atendidos:</span>
@@ -851,8 +851,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gold-600/20">
-          <h3 className="text-lg font-semibold text-gold-500 mb-4">Taxa de Conclusão</h3>
+        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-pink-600/20">
+          <h3 className="text-lg font-semibold text-pink-500 mb-4">Taxa de Conclusão</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-gray-400">Agendados:</span>
@@ -864,7 +864,7 @@ export default function Dashboard() {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-400">Taxa:</span>
-              <span className="text-gold-500 font-semibold">
+              <span className="text-pink-500 font-semibold">
             {estatisticas.total > 0 
                   ? `${((estatisticas.concluidos / estatisticas.total) * 100).toFixed(1)}%`
               : '0%'
@@ -874,14 +874,14 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gold-600/20">
-          <h3 className="text-lg font-semibold text-gold-500 mb-4">Resumo do Período</h3>
+        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-pink-600/20">
+          <h3 className="text-lg font-semibold text-pink-500 mb-4">Resumo do Período</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-gray-400">Lucro Total:</span>
-              <span className="text-gold-500 font-semibold">{formatarMoeda(resumo.lucroTotal)}</span>
+              <span className="text-pink-500 font-semibold">{formatarMoeda(resumo.lucroTotal)}</span>
             </div>
-            <div className="pt-2 border-t border-gold-600/10">
+            <div className="pt-2 border-t border-pink-600/10">
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Média Diária:</span>
                 <span className="text-emerald-500 font-semibold">
@@ -895,22 +895,22 @@ export default function Dashboard() {
 
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[#1a1a1a] p-4 rounded-xl border border-gold-600/20">
+        <div className="bg-[#1a1a1a] p-4 rounded-xl border border-pink-600/20">
           <h3 className="text-sm text-gray-400 mb-2">Lucro Total</h3>
-          <p className="text-2xl font-bold text-gold-500">{formatarMoeda(resumo.lucroTotal)}</p>
+          <p className="text-2xl font-bold text-pink-500">{formatarMoeda(resumo.lucroTotal)}</p>
           <p className="text-sm text-gray-400 mt-1">No período selecionado</p>
         </div>
-        <div className="bg-[#1a1a1a] p-4 rounded-xl border border-gold-600/20">
+        <div className="bg-[#1a1a1a] p-4 rounded-xl border border-pink-600/20">
           <h3 className="text-sm text-gray-400 mb-2">Total de Serviços</h3>
           <p className="text-2xl font-bold text-purple-500">{resumo.totalServicos}</p>
           <p className="text-sm text-gray-400 mt-1">Serviços realizados</p>
         </div>
-        <div className="bg-[#1a1a1a] p-4 rounded-xl border border-gold-600/20">
+        <div className="bg-[#1a1a1a] p-4 rounded-xl border border-pink-600/20">
           <h3 className="text-sm text-gray-400 mb-2">Ticket Médio</h3>
           <p className="text-2xl font-bold text-rose-500">{formatarMoeda(resumo.mediaTicket)}</p>
           <p className="text-sm text-gray-400 mt-1">Por atendimento</p>
         </div>
-        <div className="bg-[#1a1a1a] p-4 rounded-xl border border-gold-600/20">
+        <div className="bg-[#1a1a1a] p-4 rounded-xl border border-pink-600/20">
           <h3 className="text-sm text-gray-400 mb-2">Média Diária</h3>
           <p className="text-2xl font-bold text-emerald-500">
             {formatarMoeda(resumo.lucroTotal / (dadosLucro.length || 1))}
@@ -922,8 +922,8 @@ export default function Dashboard() {
       {/* Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Gráfico de Linha - Evolução do Lucro */}
-        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gold-600/20">
-          <h3 className="text-lg font-semibold text-gold-500 mb-4">Evolução do Lucro</h3>
+        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-pink-600/20">
+          <h3 className="text-lg font-semibold text-pink-500 mb-4">Evolução do Lucro</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dadosLucro} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -959,8 +959,8 @@ export default function Dashboard() {
         </div>
 
         {/* Gráfico de Barras - Comparativo */}
-        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gold-600/20">
-          <h3 className="text-lg font-semibold text-gold-500 mb-4">Comparativo</h3>
+        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-pink-600/20">
+          <h3 className="text-lg font-semibold text-pink-500 mb-4">Comparativo</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dadosLucro} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -993,8 +993,8 @@ export default function Dashboard() {
         </div>
 
         {/* Gráfico de Status */}
-        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gold-600/20">
-          <h3 className="text-lg font-semibold text-gold-500 mb-4">Distribuição de Status</h3>
+        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-pink-600/20">
+          <h3 className="text-lg font-semibold text-pink-500 mb-4">Distribuição de Status</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -1029,8 +1029,8 @@ export default function Dashboard() {
         </div>
 
         {/* Gráfico de Agendamentos por Hora */}
-        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gold-600/20">
-          <h3 className="text-lg font-semibold text-gold-500 mb-4">Agendamentos por Horário</h3>
+        <div className="bg-[#1a1a1a] p-6 rounded-xl border border-pink-600/20">
+          <h3 className="text-lg font-semibold text-pink-500 mb-4">Agendamentos por Horário</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dadosAgendamentosPorHora} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -1065,11 +1065,11 @@ export default function Dashboard() {
       </div>
 
       {/* Próximos Agendamentos */}
-      <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-gold-600/20 p-6">
+      <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-pink-600/20 p-6">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-white">Próximos Agendamentos</h3>
           <button 
-            className="text-gold-500 hover:text-gold-400 transition-colors"
+            className="text-pink-500 hover:text-pink-400 transition-colors"
             onClick={handleVerTodosClick}
             onMouseEnter={handleCardHover}
           >
@@ -1081,11 +1081,11 @@ export default function Dashboard() {
           {agendamentosFiltrados.map(agendamento => (
             <div
               key={agendamento.id}
-              className="flex items-center justify-between p-4 bg-[#1a1a1a] rounded-lg border border-gold-600/10"
+              className="flex items-center justify-between p-4 bg-[#1a1a1a] rounded-lg border border-pink-600/10"
               onMouseEnter={handleCardHover}
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-gold-600/20 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-pink-600/20 flex items-center justify-center">
                   <span className="text-lg font-semibold">
                     {agendamento.horario}
                   </span>

@@ -50,17 +50,17 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
   return (
     <div className="min-h-screen bg-[#121212] text-white">
       {/* Header Mobile */}
-      <header className="lg:hidden bg-[#1a1a1a]/80 backdrop-blur-lg border-b border-gold-600/20 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+      <header className="lg:hidden bg-[#1a1a1a]/80 backdrop-blur-lg border-b border-pink-600/20 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="w-10 h-10 flex items-center justify-center rounded-lg bg-gold-600/10 text-gold-500 hover:bg-gold-600/20 transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-lg bg-pink-600/10 text-pink-500 hover:bg-pink-600/20 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <span className="text-lg font-bold bg-gradient-to-r from-gold-500 to-gold-600 bg-clip-text text-transparent">Painel Administrativo</span>
+          <span className="text-lg font-bold bg-gradient-to-r from-pink-500 to-pink-600 bg-clip-text text-transparent">Painel Administrativo</span>
         </div>
 
         <button 
@@ -268,6 +268,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
 function FuncionarioPanel({ onLogout }: { onLogout: () => void }) {
   const [activeTab, setActiveTab] = useState<'agendamentos' | 'perfil'>('agendamentos')
   const [funcionario, setFuncionario] = useState<FuncionarioAuth | null>(null)
+  const [funcaoPrincipal, setFuncaoPrincipal] = useState<string | null>(null)
 
   useEffect(() => {
     const func = authService.getFuncionarioLogado()
@@ -276,9 +277,40 @@ function FuncionarioPanel({ onLogout }: { onLogout: () => void }) {
       return
     }
     setFuncionario(func)
+
+    // Buscar função principal do funcionário
+    const buscarFuncaoPrincipal = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('funcionario_funcoes')
+          .select('funcao')
+          .eq('funcionario_id', func.id)
+          .eq('principal', true)
+          .single()
+
+        if (error) throw error
+        if (data) setFuncaoPrincipal(data.funcao)
+      } catch (err) {
+        console.error('Erro ao buscar função principal:', err)
+      }
+    }
+
+    buscarFuncaoPrincipal()
   }, [])
 
   if (!funcionario) return null
+
+  const funcaoNomes: Record<string, string> = {
+    barbeiro: 'Barbeiro',
+    cabeleireiro: 'Cabeleireiro',
+    manicure: 'Manicure',
+    esteticista: 'Esteticista',
+    maquiador: 'Maquiador',
+    designer_sobrancelhas: 'Designer de Sobrancelhas',
+    massagista: 'Massagista',
+    depilador: 'Depilador',
+    admin: 'Administrador'
+  }
 
   return (
     <div className="min-h-screen bg-[#121212]">
@@ -294,9 +326,9 @@ function FuncionarioPanel({ onLogout }: { onLogout: () => void }) {
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
               </svg>
-                      </button>
-                    </div>
-                        </div>
+            </button>
+          </div>
+        </div>
       </header>
 
       {/* Informações do Funcionário */}
@@ -316,17 +348,19 @@ function FuncionarioPanel({ onLogout }: { onLogout: () => void }) {
                 </span>
               </div>
             )}
-                              <div>
+            <div>
               <h2 className="text-xl font-bold text-white">{funcionario.nome}</h2>
               <div className="flex items-center gap-4 mt-1">
                 <p className="text-gray-400 text-sm">{funcionario.email}</p>
-                <span className="inline-block px-2 py-1 bg-red-600/20 text-red-500 text-xs rounded-full">
-                  {funcionario.funcao.charAt(0).toUpperCase() + funcionario.funcao.slice(1)}
-                            </span>
-                              </div>
-                              </div>
-                  </div>
-                </div>
+                {funcaoPrincipal && (
+                  <span className="inline-block px-2 py-1 bg-red-600/20 text-red-500 text-xs rounded-full">
+                    {funcaoNomes[funcaoPrincipal] || funcaoPrincipal}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Navegação */}
         <div className="flex gap-2 mb-6">
@@ -339,7 +373,7 @@ function FuncionarioPanel({ onLogout }: { onLogout: () => void }) {
             }`}
           >
             Meus Agendamentos
-                  </button>
+          </button>
           <button
             onClick={() => setActiveTab('perfil')}
             className={`px-4 py-2 rounded-lg transition-colors ${
@@ -349,17 +383,17 @@ function FuncionarioPanel({ onLogout }: { onLogout: () => void }) {
             }`}
           >
             Meu Perfil
-                  </button>
-                </div>
+          </button>
+        </div>
 
         {/* Conteúdo */}
-                  <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6">
+        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6">
           {activeTab === 'agendamentos' ? (
             <FuncionarioAgendamentos funcionarioId={funcionario.id} />
           ) : (
             <FuncionarioPerfil />
-            )}
-          </div>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -410,8 +444,8 @@ function LoginModal({ isOpen, onClose, onLoginSuccess }: {
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1a1a1a] p-6 sm:p-8 rounded-lg w-full max-w-md relative border border-gold-600/30">
-        <h2 className="text-gold-500 text-3xl font-bold mb-8 text-center">ÁREA RESTRITA</h2>
+      <div className="bg-[#1a1a1a] p-6 sm:p-8 rounded-lg w-full max-w-md relative border border-pink-600/30">
+        <h2 className="text-pink-500 text-3xl font-bold mb-8 text-center">ÁREA RESTRITA</h2>
         
         {/* Tipo de Acesso */}
         <div className="mb-6">
@@ -424,8 +458,8 @@ function LoginModal({ isOpen, onClose, onLoginSuccess }: {
               }}
               className={`py-2 px-4 rounded transition-colors ${
                 tipoAcesso === 'administrador'
-                  ? 'bg-gold-600 text-white'
-                  : 'border border-gold-600 text-white hover:bg-gold-600/10'
+                  ? 'bg-pink-600 text-white'
+                  : 'border border-pink-600 text-white hover:bg-pink-600/10'
               }`}
             >
               ADMINISTRADOR
@@ -437,8 +471,8 @@ function LoginModal({ isOpen, onClose, onLoginSuccess }: {
               }}
               className={`py-2 px-4 rounded transition-colors ${
                 tipoAcesso === 'funcionario'
-                  ? 'bg-gold-600 text-white'
-                  : 'border border-gold-600 text-white hover:bg-gold-600/10'
+                  ? 'bg-pink-600 text-white'
+                  : 'border border-pink-600 text-white hover:bg-pink-600/10'
               }`}
             >
               FUNCIONÁRIO
@@ -454,7 +488,7 @@ function LoginModal({ isOpen, onClose, onLoginSuccess }: {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-[#2a2a2a] border border-gold-600/20 rounded p-3 text-white focus:border-gold-600 focus:outline-none"
+              className="w-full bg-[#2a2a2a] border border-pink-600/20 rounded p-3 text-white focus:border-pink-600 focus:outline-none"
               required
             />
           </div>
@@ -465,7 +499,7 @@ function LoginModal({ isOpen, onClose, onLoginSuccess }: {
               type="password"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              className="w-full bg-[#2a2a2a] border border-gold-600/20 rounded p-3 text-white focus:border-gold-600 focus:outline-none"
+              className="w-full bg-[#2a2a2a] border border-pink-600/20 rounded p-3 text-white focus:border-pink-600 focus:outline-none"
               required
             />
           </div>
@@ -479,7 +513,7 @@ function LoginModal({ isOpen, onClose, onLoginSuccess }: {
             <button
               type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-gold-600 to-gold-800 text-white py-3 rounded hover:from-gold-700 hover:to-gold-900 transition-all disabled:opacity-50"
+            className="w-full bg-gradient-to-r from-pink-600 to-pink-800 text-white py-3 rounded hover:from-pink-700 hover:to-pink-900 transition-all disabled:opacity-50"
           >
             {loading ? (
               <div className="flex items-center justify-center gap-2">
@@ -494,7 +528,7 @@ function LoginModal({ isOpen, onClose, onLoginSuccess }: {
 
             <button
               onClick={onClose}
-          className="w-full mt-4 py-3 border border-gold-600/20 text-white rounded hover:bg-gold-600/10 transition-colors"
+          className="w-full mt-4 py-3 border border-pink-600/20 text-white rounded hover:bg-pink-600/10 transition-colors"
             >
               VOLTAR PARA HOME
             </button>
@@ -830,16 +864,16 @@ function ClientLoginModal({ isOpen, onClose, config, initialTab }: {
 
   return (
     <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-      <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] p-6 sm:p-8 rounded-xl w-full max-w-md relative border border-gold-600/30 shadow-2xl">
+      <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] p-6 sm:p-8 rounded-xl w-full max-w-md relative border border-pink-600/30 shadow-2xl">
         {/* Efeito de Brilho */}
-        <div className="absolute -inset-[2px] bg-gradient-to-r from-gold-600/20 to-gold-800/20 rounded-xl blur-xl opacity-50"></div>
+        <div className="absolute -inset-[2px] bg-gradient-to-r from-pink-600/20 to-pink-800/20 rounded-xl blur-xl opacity-50"></div>
         
         {/* Conteúdo */}
         <div className="relative z-10">
           {/* Botão Voltar */}
           <button
             onClick={onClose}
-            className="absolute -top-2 -left-2 w-8 h-8 bg-gold-600 text-white rounded-full flex items-center justify-center hover:bg-gold-700 transition-colors"
+            className="absolute -top-2 -left-2 w-8 h-8 bg-pink-600 text-white rounded-full flex items-center justify-center hover:bg-pink-700 transition-colors"
           >
             ×
           </button>
@@ -848,13 +882,13 @@ function ClientLoginModal({ isOpen, onClose, config, initialTab }: {
           <div className="text-center mb-8 sm:mb-12">
             <div className="relative w-32 h-32 sm:w-56 sm:h-56 mx-auto mb-6 sm:mb-8 group">
               {/* Rotating border effect */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-gold-600 via-gold-400 to-gold-600 rounded-full opacity-75 group-hover:opacity-100 blur-sm animate-rotate"></div>
+              <div className="absolute -inset-1 bg-gradient-to-r from-pink-600 via-pink-400 to-pink-600 rounded-full opacity-75 group-hover:opacity-100 blur-sm animate-rotate"></div>
               
               {/* Pulsing ring effect */}
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-gold-600 to-gold-800 animate-pulse-ring"></div>
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-pink-600 to-pink-800 animate-pulse-ring"></div>
               
               {/* Shine effect container */}
-              <div className="relative w-full h-full rounded-full p-2 bg-gradient-to-r from-gold-600/20 via-gold-400/40 to-gold-600/20 backdrop-blur-sm border border-gold-600/20 animate-shine overflow-hidden">
+              <div className="relative w-full h-full rounded-full p-2 bg-gradient-to-r from-pink-600/20 via-pink-400/40 to-pink-600/20 backdrop-blur-sm border border-pink-600/20 animate-shine overflow-hidden">
                 {/* Logo container with float animation */}
                 <div className="relative w-full h-full rounded-full overflow-hidden animate-float">
                   <img
@@ -864,19 +898,19 @@ function ClientLoginModal({ isOpen, onClose, config, initialTab }: {
                   />
                   
                   {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-gold-600/0 to-gold-600/40 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                  <div className="absolute inset-0 bg-gradient-to-tr from-pink-600/0 to-pink-600/40 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                 </div>
               </div>
               
               {/* Extra glow effect on hover */}
-              <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-gold-600 to-gold-800 opacity-0 group-hover:opacity-20 blur-xl transition-all duration-700"></div>
+              <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-pink-600 to-pink-800 opacity-0 group-hover:opacity-20 blur-xl transition-all duration-700"></div>
             </div>
             
-            <h1 className="text-4xl sm:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-white via-gold-500 to-gold-800 bg-clip-text text-transparent px-2">
+            <h1 className="text-4xl sm:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-white via-pink-500 to-pink-800 bg-clip-text text-transparent px-2">
               {config.nome_empresa}
             </h1>
             <p className="text-lg sm:text-2xl text-gray-300 max-w-2xl mx-auto px-4 leading-relaxed">
-              Transformando seu estilo com <span className="text-gold-500">excelência</span> e <span className="text-gold-500">tradição</span>
+              Transformando seu estilo com <span className="text-pink-500">excelência</span> e <span className="text-pink-500">tradição</span>
             </p>
           </div>
 
@@ -892,20 +926,20 @@ function ClientLoginModal({ isOpen, onClose, config, initialTab }: {
               <div className="space-y-4">
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gold-500">@</span>
+                    <span className="text-pink-500">@</span>
                   </div>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-[#ffffff0a] border border-gold-600/20 rounded-lg p-3 pl-10 text-white focus:border-gold-600 focus:outline-none focus:ring-1 focus:ring-gold-600 placeholder-gray-500"
+                    className="w-full bg-[#ffffff0a] border border-pink-600/20 rounded-lg p-3 pl-10 text-white focus:border-pink-600 focus:outline-none focus:ring-1 focus:ring-pink-600 placeholder-gray-500"
                     placeholder="Seu e-mail"
                     required
                   />
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gold-500">🔒</span>
+                    <span className="text-pink-500">🔒</span>
                   </div>
                   <input
                     type="password"
@@ -1058,65 +1092,65 @@ function CadastroForm({ onSuccess, onBack, setErro }: {
       <div className="space-y-4">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <span className="text-gold-500">👤</span>
+            <span className="text-pink-500">👤</span>
           </div>
           <input
             type="text"
             value={nomeCadastro}
             onChange={(e) => setNomeCadastro(e.target.value)}
-            className="w-full bg-[#ffffff0a] border border-gold-600/20 rounded-lg p-3 pl-10 text-white focus:border-gold-600 focus:outline-none focus:ring-1 focus:ring-gold-600 placeholder-gray-500"
+            className="w-full bg-[#ffffff0a] border border-pink-600/20 rounded-lg p-3 pl-10 text-white focus:border-pink-600 focus:outline-none focus:ring-1 focus:ring-pink-600 placeholder-gray-500"
             placeholder="Nome completo"
             required
           />
         </div>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <span className="text-gold-500">@</span>
+            <span className="text-pink-500">@</span>
           </div>
           <input
             type="email"
             value={emailCadastro}
             onChange={(e) => setEmailCadastro(e.target.value)}
-            className="w-full bg-[#ffffff0a] border border-gold-600/20 rounded-lg p-3 pl-10 text-white focus:border-gold-600 focus:outline-none focus:ring-1 focus:ring-gold-600 placeholder-gray-500"
+            className="w-full bg-[#ffffff0a] border border-pink-600/20 rounded-lg p-3 pl-10 text-white focus:border-pink-600 focus:outline-none focus:ring-1 focus:ring-pink-600 placeholder-gray-500"
             placeholder="Seu e-mail"
             required
           />
         </div>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <span className="text-gold-500">📱</span>
+            <span className="text-pink-500">📱</span>
           </div>
           <input
             type="tel"
             value={telefoneCadastro}
             onChange={handleTelefoneChange}
-            className="w-full bg-[#ffffff0a] border border-gold-600/20 rounded-lg p-3 pl-10 text-white focus:border-gold-600 focus:outline-none focus:ring-1 focus:ring-gold-600 placeholder-gray-500"
+            className="w-full bg-[#ffffff0a] border border-pink-600/20 rounded-lg p-3 pl-10 text-white focus:border-pink-600 focus:outline-none focus:ring-1 focus:ring-pink-600 placeholder-gray-500"
             placeholder="Seu telefone"
             required
           />
         </div>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <span className="text-gold-500">🔒</span>
+            <span className="text-pink-500">🔒</span>
           </div>
           <input
             type="password"
             value={senhaCadastro}
             onChange={(e) => setSenhaCadastro(e.target.value)}
-            className="w-full bg-[#ffffff0a] border border-gold-600/20 rounded-lg p-3 pl-10 text-white focus:border-gold-600 focus:outline-none focus:ring-1 focus:ring-gold-600 placeholder-gray-500"
+            className="w-full bg-[#ffffff0a] border border-pink-600/20 rounded-lg p-3 pl-10 text-white focus:border-pink-600 focus:outline-none focus:ring-1 focus:ring-pink-600 placeholder-gray-500"
             placeholder="Crie uma senha"
             required
           />
         </div>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <span className="text-gold-500">🔒</span>
+            <span className="text-pink-500">🔒</span>
           </div>
           <input
             type="password"
             value={confirmarSenha}
             onChange={(e) => setConfirmarSenha(e.target.value)}
-            className="w-full bg-[#ffffff0a] border border-gold-600/20 rounded-lg p-3 pl-10 text-white focus:border-gold-600 focus:outline-none focus:ring-1 focus:ring-gold-600 placeholder-gray-500"
+            className="w-full bg-[#ffffff0a] border border-pink-600/20 rounded-lg p-3 pl-10 text-white focus:border-pink-600 focus:outline-none focus:ring-1 focus:ring-pink-600 placeholder-gray-500"
             placeholder="Confirme sua senha"
             required
           />
@@ -1126,7 +1160,7 @@ function CadastroForm({ onSuccess, onBack, setErro }: {
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-gradient-to-r from-gold-600 to-gold-700 text-white py-3 rounded-lg hover:from-gold-700 hover:to-gold-800 transition-all duration-300 font-medium transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+        className="w-full bg-gradient-to-r from-pink-600 to-pink-700 text-white py-3 rounded-lg hover:from-pink-700 hover:to-pink-800 transition-all duration-300 font-medium transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
       >
         {loading ? (
           <div className="flex items-center justify-center gap-2">
@@ -1142,7 +1176,7 @@ function CadastroForm({ onSuccess, onBack, setErro }: {
         <button
           type="button"
           onClick={onBack}
-          className="text-gold-500 hover:text-gold-400 transition-all duration-300 text-sm hover:tracking-wider"
+          className="text-pink-500 hover:text-pink-400 transition-all duration-300 text-sm hover:tracking-wider"
         >
           ← Voltar para o login
         </button>
@@ -1298,8 +1332,8 @@ function App() {
                   alt="Logo"
                   className="w-8 h-8 sm:w-12 sm:h-12 rounded-full"
                 />
-                <span className="text-base sm:text-2xl font-bold bg-gradient-to-r from-gold-400 via-gold-500 to-gold-300 bg-clip-text text-transparent">
-                  Studio D'Elas BEAUTY ARTIST
+                <span className="text-base sm:text-2xl font-bold bg-gradient-to-r from-pink-400 via-pink-500 to-pink-300 bg-clip-text text-transparent">
+                  {config.nome_empresa}
                 </span>
               </div>
 
@@ -1339,13 +1373,13 @@ function App() {
           <div className="text-center mb-8 sm:mb-12">
             <div className="relative w-32 h-32 sm:w-56 sm:h-56 mx-auto mb-6 sm:mb-8 group">
               {/* Rotating border effect */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-gold-600 via-gold-400 to-gold-600 rounded-full opacity-75 group-hover:opacity-100 blur-sm animate-rotate"></div>
+              <div className="absolute -inset-1 bg-gradient-to-r from-pink-600 via-pink-400 to-pink-600 rounded-full opacity-75 group-hover:opacity-100 blur-sm animate-rotate"></div>
               
               {/* Pulsing ring effect */}
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-gold-600 to-gold-800 animate-pulse-ring"></div>
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-pink-600 to-pink-800 animate-pulse-ring"></div>
               
               {/* Shine effect container */}
-              <div className="relative w-full h-full rounded-full p-2 bg-gradient-to-r from-gold-600/20 via-gold-400/40 to-gold-600/20 backdrop-blur-sm border border-gold-600/20 animate-shine overflow-hidden">
+              <div className="relative w-full h-full rounded-full p-2 bg-gradient-to-r from-pink-600/20 via-pink-400/40 to-pink-600/20 backdrop-blur-sm border border-pink-600/20 animate-shine overflow-hidden">
                 {/* Logo container with float animation */}
                 <div className="relative w-full h-full rounded-full overflow-hidden animate-float">
                   <img
@@ -1355,19 +1389,19 @@ function App() {
                   />
                   
                   {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-gold-600/0 to-gold-600/40 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                  <div className="absolute inset-0 bg-gradient-to-tr from-pink-600/0 to-pink-600/40 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                 </div>
               </div>
               
               {/* Extra glow effect on hover */}
-              <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-gold-600 to-gold-800 opacity-0 group-hover:opacity-20 blur-xl transition-all duration-700"></div>
+              <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-pink-600 to-pink-800 opacity-0 group-hover:opacity-20 blur-xl transition-all duration-700"></div>
             </div>
             
-            <h1 className="text-4xl sm:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-white via-gold-500 to-gold-800 bg-clip-text text-transparent px-2">
+            <h1 className="text-4xl sm:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-white via-pink-500 to-pink-800 bg-clip-text text-transparent px-2">
               {config.nome_empresa}
             </h1>
             <p className="text-lg sm:text-2xl text-gray-300 max-w-2xl mx-auto px-4 leading-relaxed">
-              Transformando seu estilo com <span className="text-gold-500">excelência</span> e <span className="text-gold-500">tradição</span>
+              Transformando seu estilo com <span className="text-pink-500">excelência</span> e <span className="text-pink-500">tradição</span>
             </p>
           </div>
           
@@ -1382,23 +1416,23 @@ function App() {
                   sounds.play('click')
                 }}
                 onMouseEnter={() => sounds.play('hover')}
-                className="group relative w-full overflow-hidden bg-gradient-to-br from-gold-600 to-gold-800 rounded-xl sm:rounded-2xl p-1 hover:shadow-lg hover:shadow-gold-600/20 transition-all duration-500"
+                className="group relative w-full overflow-hidden bg-gradient-to-br from-pink-600 to-pink-800 rounded-xl sm:rounded-2xl p-1 hover:shadow-lg hover:shadow-pink-600/20 transition-all duration-500"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-gold-400 to-gold-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-pink-400 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,215,0,0.1),transparent_70%)] opacity-0 group-hover:opacity-100 animate-pulse-slow"></div>
                 <div className="relative bg-[#1a1a1a] rounded-lg sm:rounded-xl p-3 sm:p-4 h-full transform group-hover:translate-y-1 group-hover:translate-x-1 transition-transform duration-300">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 sm:gap-4">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-gold-500/20 to-gold-700/20 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-pink-500/20 to-pink-700/20 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
                         <span className="text-xl sm:text-2xl group-hover:animate-bounce">👤</span>
                       </div>
                       <div className="text-left">
-                        <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-gold-400 transition-colors duration-300">Área do Cliente</h3>
-                        <p className="text-xs sm:text-sm text-gray-400 group-hover:text-gold-500/70 transition-colors duration-300">Acesse sua conta</p>
+                        <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-pink-400 transition-colors duration-300">Área do Cliente</h3>
+                        <p className="text-xs sm:text-sm text-gray-400 group-hover:text-pink-500/70 transition-colors duration-300">Acesse sua conta</p>
                       </div>
                     </div>
-                    <span className="text-gold-500 transform group-hover:translate-x-2 group-hover:scale-110 transition-all duration-300">→</span>
+                    <span className="text-pink-500 transform group-hover:translate-x-2 group-hover:scale-110 transition-all duration-300">→</span>
                   </div>
                 </div>
               </button>
@@ -1450,23 +1484,23 @@ function App() {
                   sounds.play('click')
                 }}
                 onMouseEnter={() => sounds.play('hover')}
-                className="group relative w-full overflow-hidden bg-gradient-to-br from-gold-600 to-gold-800 rounded-xl sm:rounded-2xl p-1 hover:shadow-lg hover:shadow-gold-600/20 transition-all duration-500"
+                className="group relative w-full overflow-hidden bg-gradient-to-br from-pink-600 to-pink-800 rounded-xl sm:rounded-2xl p-1 hover:shadow-lg hover:shadow-pink-600/20 transition-all duration-500"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-gold-400 to-gold-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-pink-400 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,215,0,0.1),transparent_70%)] opacity-0 group-hover:opacity-100 animate-pulse-slow"></div>
                 <div className="relative bg-[#1a1a1a] rounded-lg sm:rounded-xl p-3 sm:p-4 h-full transform group-hover:translate-y-1 group-hover:translate-x-1 transition-transform duration-300">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 sm:gap-4">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-gold-500/20 to-gold-700/20 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-pink-500/20 to-pink-700/20 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
                         <span className="text-xl sm:text-2xl group-hover:animate-bounce">✨</span>
                       </div>
                       <div className="text-left">
-                        <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-gold-400 transition-colors duration-300">Serviços & Produtos</h3>
-                        <p className="text-xs sm:text-sm text-gray-400 group-hover:text-gold-500/70 transition-colors duration-300">Explore nossos tratamentos e produtos</p>
+                        <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-pink-400 transition-colors duration-300">Serviços & Produtos</h3>
+                        <p className="text-xs sm:text-sm text-gray-400 group-hover:text-pink-500/70 transition-colors duration-300">Explore nossos tratamentos e produtos</p>
                       </div>
                     </div>
-                    <span className="text-gold-500 transform group-hover:translate-x-2 group-hover:scale-110 transition-all duration-300">→</span>
+                    <span className="text-pink-500 transform group-hover:translate-x-2 group-hover:scale-110 transition-all duration-300">→</span>
                   </div>
                 </div>
               </button>
@@ -1475,10 +1509,10 @@ function App() {
             {/* Decorative Line */}
             <div className="relative px-4">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gold-600/20"></div>
+                <div className="w-full border-t border-pink-600/20"></div>
               </div>
               <div className="relative flex justify-center text-xs sm:text-sm">
-                <span className="px-4 text-gold-500 bg-black">Transforme seu estilo</span>
+                <span className="px-4 text-pink-500 bg-black">Transforme seu estilo</span>
               </div>
             </div>
           </div>
@@ -1489,8 +1523,8 @@ function App() {
       <section className="relative py-16 sm:py-24 bg-[#0a0a0a] overflow-hidden">
         {/* Decorative Elements */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-gradient-to-bl from-gold-600/10 opacity-30 blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-gradient-to-tr from-gold-800/10 opacity-30 blur-3xl"></div>
+          <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-gradient-to-bl from-pink-600/10 opacity-30 blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-gradient-to-tr from-pink-800/10 opacity-30 blur-3xl"></div>
         </div>
 
         <div className="relative container mx-auto px-4">
@@ -1498,24 +1532,24 @@ function App() {
             {/* Localização */}
             <div className="group relative">
               <div className="absolute inset-0 bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl sm:rounded-2xl transform transition-transform duration-300 group-hover:scale-[0.98]"></div>
-              <div className="absolute inset-0 bg-gradient-to-br from-gold-600/20 to-gold-800/20 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative p-4 sm:p-8 border border-gold-600/10 rounded-xl sm:rounded-2xl backdrop-blur-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-pink-600/20 to-pink-800/20 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative p-4 sm:p-8 border border-pink-600/10 rounded-xl sm:rounded-2xl backdrop-blur-sm">
                 <div className="relative w-12 h-12 sm:w-16 sm:h-16 mb-4 sm:mb-6 transform group-hover:scale-110 transition-transform duration-300">
-                  <div className="absolute inset-0 bg-gradient-to-br from-gold-600 to-gold-800 rounded-xl blur opacity-40 group-hover:opacity-60 transition-opacity duration-300"></div>
-                  <div className="relative w-full h-full bg-gradient-to-br from-gold-600 to-gold-800 rounded-xl flex items-center justify-center text-2xl sm:text-3xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-pink-600 to-pink-800 rounded-xl blur opacity-40 group-hover:opacity-60 transition-opacity duration-300"></div>
+                  <div className="relative w-full h-full bg-gradient-to-br from-pink-600 to-pink-800 rounded-xl flex items-center justify-center text-2xl sm:text-3xl">
                     📍
                   </div>
                 </div>
-                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-white via-gold-500 to-gold-800 bg-clip-text text-transparent">
+                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-white via-pink-500 to-pink-800 bg-clip-text text-transparent">
                   LOCALIZAÇÃO
                 </h2>
                 <div className="space-y-2 sm:space-y-3 text-sm sm:text-base text-gray-400">
                   <p className="flex items-center gap-2 sm:gap-3 group/item">
-                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gold-600 group-hover/item:bg-gold-500 transition-colors"></span>
+                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-pink-600 group-hover/item:bg-pink-500 transition-colors"></span>
                     {config.endereco}
                   </p>
                   <p className="flex items-center gap-2 sm:gap-3 group/item">
-                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gold-600 group-hover/item:bg-gold-500 transition-colors"></span>
+                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-pink-600 group-hover/item:bg-pink-500 transition-colors"></span>
                     {config.bairro} - {config.cidade}, {config.estado}
                   </p>
                 </div>
@@ -1525,21 +1559,21 @@ function App() {
             {/* Horário */}
             <div className="group relative">
               <div className="absolute inset-0 bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl sm:rounded-2xl transform transition-transform duration-300 group-hover:scale-[0.98]"></div>
-              <div className="absolute inset-0 bg-gradient-to-br from-gold-600/20 to-gold-800/20 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative p-4 sm:p-8 border border-gold-600/10 rounded-xl sm:rounded-2xl backdrop-blur-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-pink-600/20 to-pink-800/20 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative p-4 sm:p-8 border border-pink-600/10 rounded-xl sm:rounded-2xl backdrop-blur-sm">
                 <div className="relative w-12 h-12 sm:w-16 sm:h-16 mb-4 sm:mb-6 transform group-hover:scale-110 transition-transform duration-300">
-                  <div className="absolute inset-0 bg-gradient-to-br from-gold-600 to-gold-800 rounded-xl blur opacity-40 group-hover:opacity-60 transition-opacity duration-300"></div>
-                  <div className="relative w-full h-full bg-gradient-to-br from-gold-600 to-gold-800 rounded-xl flex items-center justify-center text-2xl sm:text-3xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-pink-600 to-pink-800 rounded-xl blur opacity-40 group-hover:opacity-60 transition-opacity duration-300"></div>
+                  <div className="relative w-full h-full bg-gradient-to-br from-pink-600 to-pink-800 rounded-xl flex items-center justify-center text-2xl sm:text-3xl">
                     ⏰
                   </div>
                 </div>
-                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-white via-gold-500 to-gold-800 bg-clip-text text-transparent">
+                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-white via-pink-500 to-pink-800 bg-clip-text text-transparent">
                   HORÁRIOS
                 </h2>
                 <div className="space-y-2 sm:space-y-3 text-sm sm:text-base text-gray-400">
                   {config.horario_funcionamento.split('|').map((horario: string, index: number) => (
                     <p key={index} className="flex items-center gap-2 sm:gap-3 group/item">
-                      <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gold-600 group-hover/item:bg-gold-500 transition-colors"></span>
+                      <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-pink-600 group-hover/item:bg-pink-500 transition-colors"></span>
                       {horario}
                     </p>
                   ))}
@@ -1550,24 +1584,24 @@ function App() {
             {/* Contatos */}
             <div className="group relative">
               <div className="absolute inset-0 bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl sm:rounded-2xl transform transition-transform duration-300 group-hover:scale-[0.98]"></div>
-              <div className="absolute inset-0 bg-gradient-to-br from-gold-600/20 to-gold-800/20 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative p-4 sm:p-8 border border-gold-600/10 rounded-xl sm:rounded-2xl backdrop-blur-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-pink-600/20 to-pink-800/20 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative p-4 sm:p-8 border border-pink-600/10 rounded-xl sm:rounded-2xl backdrop-blur-sm">
                 <div className="relative w-12 h-12 sm:w-16 sm:h-16 mb-4 sm:mb-6 transform group-hover:scale-110 transition-transform duration-300">
-                  <div className="absolute inset-0 bg-gradient-to-br from-gold-600 to-gold-800 rounded-xl blur opacity-40 group-hover:opacity-60 transition-opacity duration-300"></div>
-                  <div className="relative w-full h-full bg-gradient-to-br from-gold-600 to-gold-800 rounded-xl flex items-center justify-center text-2xl sm:text-3xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-pink-600 to-pink-800 rounded-xl blur opacity-40 group-hover:opacity-60 transition-opacity duration-300"></div>
+                  <div className="relative w-full h-full bg-gradient-to-br from-pink-600 to-pink-800 rounded-xl flex items-center justify-center text-2xl sm:text-3xl">
                     📱
                   </div>
                 </div>
-                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-white via-gold-500 to-gold-800 bg-clip-text text-transparent">
+                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-white via-pink-500 to-pink-800 bg-clip-text text-transparent">
                   CONTATOS
                 </h2>
                 <div className="space-y-2 sm:space-y-3 text-sm sm:text-base text-gray-400">
                   <p className="flex items-center gap-2 sm:gap-3 group/item">
-                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gold-600 group-hover/item:bg-gold-500 transition-colors"></span>
+                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-pink-600 group-hover/item:bg-pink-500 transition-colors"></span>
                     {config.telefone}
                   </p>
                   <p className="flex items-center gap-2 sm:gap-3 group/item">
-                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gold-600 group-hover/item:bg-gold-500 transition-colors"></span>
+                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-pink-600 group-hover/item:bg-pink-500 transition-colors"></span>
                     {config.whatsapp}
                   </p>
                 </div>
@@ -1577,24 +1611,24 @@ function App() {
             {/* Redes Sociais */}
             <div className="group relative">
               <div className="absolute inset-0 bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl sm:rounded-2xl transform transition-transform duration-300 group-hover:scale-[0.98]"></div>
-              <div className="absolute inset-0 bg-gradient-to-br from-gold-600/20 to-gold-800/20 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative p-4 sm:p-8 border border-gold-600/10 rounded-xl sm:rounded-2xl backdrop-blur-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-pink-600/20 to-pink-800/20 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative p-4 sm:p-8 border border-pink-600/10 rounded-xl sm:rounded-2xl backdrop-blur-sm">
                 <div className="relative w-12 h-12 sm:w-16 sm:h-16 mb-4 sm:mb-6 transform group-hover:scale-110 transition-transform duration-300">
-                  <div className="absolute inset-0 bg-gradient-to-br from-gold-600 to-gold-800 rounded-xl blur opacity-40 group-hover:opacity-60 transition-opacity duration-300"></div>
-                  <div className="relative w-full h-full bg-gradient-to-br from-gold-600 to-gold-800 rounded-xl flex items-center justify-center text-2xl sm:text-3xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-pink-600 to-pink-800 rounded-xl blur opacity-40 group-hover:opacity-60 transition-opacity duration-300"></div>
+                  <div className="relative w-full h-full bg-gradient-to-br from-pink-600 to-pink-800 rounded-xl flex items-center justify-center text-2xl sm:text-3xl">
                     💈
                   </div>
                 </div>
-                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-white via-gold-500 to-gold-800 bg-clip-text text-transparent">
+                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-white via-pink-500 to-pink-800 bg-clip-text text-transparent">
                   REDES SOCIAIS
                 </h2>
                 <div className="space-y-2 sm:space-y-3 text-sm sm:text-base text-gray-400">
                   <p className="flex items-center gap-2 sm:gap-3 group/item">
-                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gold-600 group-hover/item:bg-gold-500 transition-colors"></span>
+                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-pink-600 group-hover/item:bg-pink-500 transition-colors"></span>
                     {config.instagram}
                   </p>
                   <p className="flex items-center gap-2 sm:gap-3 group/item">
-                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gold-600 group-hover/item:bg-gold-500 transition-colors"></span>
+                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-pink-600 group-hover/item:bg-pink-500 transition-colors"></span>
                     {config.facebook}
                   </p>
                 </div>

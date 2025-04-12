@@ -45,14 +45,18 @@ interface Agendamento {
 interface Servico {
   id: string
   nome: string
+  descricao: string
   preco: number
   duracao_minutos: number
-  descricao: string
+  categoria: string
+  foto_url?: string | null
+  preco_promocional?: number
   preco_original?: number
   promocao_ativa?: boolean
   promocao_fim?: string
-  preco_promocional?: number
 }
+
+type CargoFuncionario = 'barbeiro' | 'cabeleireiro' | 'manicure' | 'esteticista' | 'maquiador' | 'designer_sobrancelhas' | 'massagista' | 'depilador' | 'admin'
 
 interface Funcionario {
   id: string
@@ -61,9 +65,9 @@ interface Funcionario {
   telefone: string
   foto_url: string | null
   status: boolean
-  cargo: 'barbeiro' | 'cabeleireiro' | 'manicure' | 'esteticista' | 'maquiador' | 'designer_sobrancelhas' | 'massagista' | 'depilador' | 'admin'
   comissao: number
   especialidades: string[]
+  funcoes?: { funcao: CargoFuncionario; principal: boolean }[]
 }
 
 interface Horario {
@@ -177,7 +181,13 @@ function AgendarHorario() {
     try {
       const { data, error } = await supabase
         .from('funcionarios')
-        .select('*')
+        .select(`
+          *,
+          funcoes:funcionario_funcoes (
+            funcao,
+            principal
+          )
+        `)
         .eq('status', true)
         .order('nome')
 
@@ -529,9 +539,20 @@ function AgendarHorario() {
                         }`}>
                           {profissional.nome}
                         </h3>
-                        <p className="text-sm text-gray-400">
-                          {CARGO_LABELS[profissional.cargo] || profissional.cargo}
-                        </p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {profissional.funcoes?.map((funcao, index) => (
+                            <span
+                              key={index}
+                              className={`text-xs px-2 py-0.5 rounded-full ${
+                                funcao.principal
+                                  ? 'bg-red-500/20 text-red-400'
+                                  : 'bg-gray-500/20 text-gray-400'
+                              }`}
+                            >
+                              {CARGO_LABELS[funcao.funcao] || funcao.funcao}
+                            </span>
+                          ))}
+                        </div>
                         {profissional.especialidades && profissional.especialidades.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {profissional.especialidades.map((esp, index) => (

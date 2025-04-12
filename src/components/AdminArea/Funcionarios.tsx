@@ -53,15 +53,15 @@ export default function Funcionarios() {
   const { uploadImagem } = useStorage()
   const [modalAberto, setModalAberto] = useState(false)
   const [funcionarioEmEdicao, setFuncionarioEmEdicao] = useState<Funcionario | null>(null)
-  const [novoFuncionario, setNovoFuncionario] = useState<Omit<Funcionario, 'id' | 'created_at'>>({
+  const [novoFuncionario, setNovoFuncionario] = useState<Omit<Funcionario, 'id' | 'created_at'> & { funcoes: { funcao: CargoFuncionario; principal: boolean }[] }>({
     nome: '',
     email: '',
     telefone: '',
     foto_url: null,
-    cargo: 'esteticista',
     comissao: 30,
     especialidades: [],
-    status: true
+    status: true,
+    funcoes: [{ funcao: 'esteticista', principal: true }]
   })
   const [senha, setSenha] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -85,7 +85,10 @@ export default function Funcionarios() {
       const dadosFuncionario = {
         ...novoFuncionario,
         telefone: formatarTelefone(novoFuncionario.telefone),
-        cargo: novoFuncionario.cargo.trim() as CargoFuncionario
+        funcoes: novoFuncionario.funcoes.map(f => ({
+          funcao: f.funcao.trim() as CargoFuncionario,
+          principal: f.principal
+        }))
       }
 
       if (funcionarioEmEdicao) {
@@ -130,9 +133,9 @@ export default function Funcionarios() {
         telefone: '',
         foto_url: null,
         status: true,
-        cargo: 'esteticista',
         comissao: 30,
-        especialidades: []
+        especialidades: [],
+        funcoes: [{ funcao: 'esteticista', principal: true }]
       })
       setSenha('')
     } catch (err) {
@@ -230,9 +233,9 @@ export default function Funcionarios() {
               telefone: '',
               foto_url: null,
               status: true,
-              cargo: 'esteticista',
               comissao: 30,
-              especialidades: []
+              especialidades: [],
+              funcoes: [{ funcao: 'esteticista', principal: true }]
             })
           }}
           className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-800 text-white px-4 py-2 rounded-lg hover:from-red-700 hover:to-red-900 transition-all whitespace-nowrap"
@@ -249,7 +252,7 @@ export default function Funcionarios() {
               <tr className="border-b border-red-600/20">
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Nome</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Telefone</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Função</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Funções</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Status</th>
                 <th className="px-6 py-4 text-right text-sm font-semibold text-gray-400">Ações</th>
               </tr>
@@ -275,7 +278,20 @@ export default function Funcionarios() {
                   </td>
                   <td className="px-6 py-4 text-gray-400">{funcionario.telefone}</td>
                   <td className="px-6 py-4 text-gray-400">
-                    {funcoes.find(f => f.value === funcionario.cargo)?.label || funcionario.cargo}
+                    <div className="flex flex-wrap gap-1">
+                      {funcionario.funcoes?.map((funcao, index) => (
+                        <span 
+                          key={index}
+                          className={`px-2 py-0.5 rounded-full text-xs ${
+                            funcao.principal 
+                              ? 'bg-red-500/20 text-red-400'
+                              : 'bg-gray-500/20 text-gray-400'
+                          }`}
+                        >
+                          {funcoes.find(f => f.value === funcao.funcao)?.label}
+                        </span>
+                      ))}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-sm ${
@@ -296,9 +312,9 @@ export default function Funcionarios() {
                           telefone: funcionario.telefone,
                           foto_url: funcionario.foto_url || null,
                           status: funcionario.status,
-                          cargo: funcionario.cargo,
+                          comissao: funcionario.comissao,
                           especialidades: funcionario.especialidades,
-                          comissao: funcionario.comissao
+                          funcoes: funcionario.funcoes || [{ funcao: 'esteticista', principal: true }]
                         })
                         setModalAberto(true)
                       }}
@@ -383,42 +399,71 @@ export default function Funcionarios() {
                 </div>
 
                 <div>
-                  <label className="block text-gray-400 text-sm mb-2">Função</label>
-                  <select
-                    value={novoFuncionario.cargo}
-                    onChange={e => setNovoFuncionario(prev => ({ 
-                      ...prev, 
-                      cargo: e.target.value as CargoFuncionario
-                    }))}
-                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                    required
-                  >
-                    {funcoes.map(funcao => (
-                      <option key={funcao.value} value={funcao.value}>
-                        {funcao.label}
-                      </option>
+                  <label className="block text-gray-400 text-sm mb-2">Funções</label>
+                  <div className="space-y-2">
+                    {novoFuncionario.funcoes.map((funcao, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <select
+                          value={funcao.funcao}
+                          onChange={e => {
+                            const novasFuncoes = [...novoFuncionario.funcoes]
+                            novasFuncoes[index] = {
+                              ...novasFuncoes[index],
+                              funcao: e.target.value as CargoFuncionario
+                            }
+                            setNovoFuncionario(prev => ({ ...prev, funcoes: novasFuncoes }))
+                          }}
+                          className="flex-1 bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
+                        >
+                          {funcoes.map(f => (
+                            <option key={f.value} value={f.value}>
+                              {f.label}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="funcao_principal"
+                            checked={funcao.principal}
+                            onChange={() => {
+                              const novasFuncoes = novoFuncionario.funcoes.map((f, i) => ({
+                                ...f,
+                                principal: i === index
+                              }))
+                              setNovoFuncionario(prev => ({ ...prev, funcoes: novasFuncoes }))
+                            }}
+                            className="form-radio bg-[#2a2a2a] border-red-600/20 text-red-600"
+                          />
+                          <span className="text-gray-400 text-sm">Principal</span>
+                        </div>
+                        {novoFuncionario.funcoes.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const novasFuncoes = novoFuncionario.funcoes.filter((_, i) => i !== index)
+                              setNovoFuncionario(prev => ({ ...prev, funcoes: novasFuncoes }))
+                            }}
+                            className="text-red-500 hover:text-red-400"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
                     ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-gray-400 text-sm mb-2">Foto</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFotoChange}
-                    className="w-full bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                  />
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={novoFuncionario.status}
-                    onChange={e => setNovoFuncionario(prev => ({ ...prev, status: e.target.checked }))}
-                    className="form-checkbox bg-[#2a2a2a] border-red-600/20 text-red-600 rounded"
-                  />
-                  <label className="text-gray-400">Ativo</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNovoFuncionario(prev => ({
+                          ...prev,
+                          funcoes: [...prev.funcoes, { funcao: 'barbeiro', principal: false }]
+                        }))
+                      }}
+                      className="text-red-500 hover:text-red-400 text-sm"
+                    >
+                      + Adicionar outra função
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex gap-4 pt-4">
@@ -439,9 +484,9 @@ export default function Funcionarios() {
                         telefone: '',
                         foto_url: null,
                         status: true,
-                        cargo: 'esteticista',
                         comissao: 30,
-                        especialidades: []
+                        especialidades: [],
+                        funcoes: [{ funcao: 'esteticista', principal: true }]
                       })
                     }}
                     className="flex-1 border border-red-600/20 text-white py-3 rounded-lg hover:bg-red-600/10 transition-all"

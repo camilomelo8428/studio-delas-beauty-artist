@@ -27,11 +27,11 @@ export interface Funcionario {
   telefone: string
   foto_url: string | null
   status: boolean
-  cargo: CargoFuncionario
   comissao: number
   especialidades: string[]
   created_at?: string
   updated_at?: string
+  funcoes?: { funcao: CargoFuncionario; principal: boolean }[]
 }
 
 export interface Servico {
@@ -92,22 +92,22 @@ export interface NovoFuncionario {
   email: string
   telefone: string
   foto_url: string | null
-  cargo: CargoFuncionario
   comissao: number
   especialidades: string[]
   status: boolean
+  funcoes: { funcao: CargoFuncionario; principal: boolean }[]
 }
 
 export interface AtualizarFuncionario {
   nome?: string
   email?: string
   senha?: string
-  cargo?: CargoFuncionario
   telefone?: string
   foto_url?: string | null
   comissao?: number
   especialidades?: string[]
   status?: boolean
+  funcoes?: { funcao: CargoFuncionario; principal: boolean }[]
 }
 
 export interface NovoServico {

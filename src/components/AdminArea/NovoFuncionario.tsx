@@ -131,8 +131,8 @@ export default function NovoFuncionario({ onSubmit, onCancel }: NovoFuncionarioP
   }
 
   return (
-    <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] p-6 rounded-xl border border-gold-600/20">
-      <h2 className="text-2xl font-bold text-gold-500 mb-6">Novo Funcionário</h2>
+    <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] p-6 rounded-xl border border-pink-600/20">
+      <h2 className="text-2xl font-bold text-pink-500 mb-6">Novo Funcionário</h2>
 
       {erro && (
         <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500">
@@ -147,7 +147,7 @@ export default function NovoFuncionario({ onSubmit, onCancel }: NovoFuncionarioP
             type="text"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            className="w-full bg-[#1a1a1a] border border-gold-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-gold-600/40"
+            className="w-full bg-[#1a1a1a] border border-pink-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-pink-600/40"
             required
           />
         </div>
@@ -158,7 +158,7 @@ export default function NovoFuncionario({ onSubmit, onCancel }: NovoFuncionarioP
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-[#1a1a1a] border border-gold-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-gold-600/40"
+            className="w-full bg-[#1a1a1a] border border-pink-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-pink-600/40"
             required
           />
         </div>
@@ -169,7 +169,7 @@ export default function NovoFuncionario({ onSubmit, onCancel }: NovoFuncionarioP
             type="password"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
-            className="w-full bg-[#1a1a1a] border border-gold-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-gold-600/40"
+            className="w-full bg-[#1a1a1a] border border-pink-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-pink-600/40"
             required
           />
         </div>
@@ -180,7 +180,7 @@ export default function NovoFuncionario({ onSubmit, onCancel }: NovoFuncionarioP
             type="tel"
             value={telefone}
             onChange={(e) => setTelefone(e.target.value)}
-            className="w-full bg-[#1a1a1a] border border-gold-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-gold-600/40"
+            className="w-full bg-[#1a1a1a] border border-pink-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-pink-600/40"
             required
           />
         </div>
@@ -190,7 +190,7 @@ export default function NovoFuncionario({ onSubmit, onCancel }: NovoFuncionarioP
           <select
             value={cargo}
             onChange={handleCargoChange}
-            className="w-full bg-[#1a1a1a] border border-gold-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-gold-600/40"
+            className="w-full bg-[#1a1a1a] border border-pink-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-pink-600/40"
             required
           >
             {CARGOS.map(({ value, label }) => (
@@ -215,7 +215,7 @@ export default function NovoFuncionario({ onSubmit, onCancel }: NovoFuncionarioP
                         setEspecialidades(especialidades.filter(e => e !== esp))
                       }
                     }}
-                    className="form-checkbox bg-[#1a1a1a] border border-gold-600/20 text-gold-600 rounded focus:ring-0 focus:ring-offset-0"
+                    className="form-checkbox bg-[#1a1a1a] border border-pink-600/20 text-pink-600 rounded focus:ring-0 focus:ring-offset-0"
                   />
                   <span className="text-white">{esp}</span>
                 </label>
@@ -230,7 +230,7 @@ export default function NovoFuncionario({ onSubmit, onCancel }: NovoFuncionarioP
             type="file"
             onChange={handleFotoChange}
             accept="image/*"
-            className="w-full bg-[#1a1a1a] border border-gold-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-gold-600/40"
+            className="w-full bg-[#1a1a1a] border border-pink-600/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-pink-600/40"
           />
         </div>
 
@@ -238,13 +238,13 @@ export default function NovoFuncionario({ onSubmit, onCancel }: NovoFuncionarioP
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 border border-gold-600/20 text-white rounded-lg hover:bg-gold-600/10 transition-colors"
+            className="px-4 py-2 border border-pink-600/20 text-white rounded-lg hover:bg-pink-600/10 transition-colors"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            className="px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-700 text-white rounded-lg hover:from-gold-700 hover:to-gold-800 transition-colors"
+            className="px-4 py-2 bg-gradient-to-r from-pink-600 to-pink-700 text-white rounded-lg hover:from-pink-700 hover:to-pink-800 transition-colors"
           >
             Salvar
           </button>

@@ -9,19 +9,19 @@ export default function Configuracoes() {
   
   const [config, setConfig] = useState<Configuracoes>({
     id: '1',
-    nome_empresa: 'Barbearia Skull',
+    nome_empresa: "",
     logo_url: null,
-    telefone: '(91) 3333-4444',
-    email: 'contato@barbeariaskull.com',
-    endereco: 'Av. Principal, 1234',
-    bairro: 'Centro',
-    cidade: 'Belém',
-    estado: 'PA',
-    cep: '66000-000',
+    telefone: '',
+    email: '',
+    endereco: '',
+    bairro: '',
+    cidade: '',
+    estado: '',
+    cep: '',
     horario_funcionamento: 'Seg à Sex: 09h - 20h | Sáb: 09h - 18h | Dom: Fechado',
-    instagram: '@barbeariaskull',
-    facebook: '/barbeariaskull',
-    whatsapp: '(91) 98184-5943',
+    instagram: '',
+    facebook: '',
+    whatsapp: '',
     updated_at: new Date().toISOString()
   })
 

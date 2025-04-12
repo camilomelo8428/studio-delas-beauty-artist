@@ -26,7 +26,10 @@ interface Servico {
 interface Funcionario {
   id: string;
   nome: string;
-  cargo: string;
+  email: string;
+  telefone: string;
+  funcoes: { funcao: string }[];
+  status: boolean;
   foto_url?: string;
 }
 
@@ -93,7 +96,10 @@ export default function Agendamentos() {
         .select(`
           *,
           cliente:clientes(nome, telefone),
-          funcionario:funcionarios(nome, cargo),
+          funcionario:funcionarios!inner(
+            nome,
+            funcoes:funcionario_funcoes!inner(funcao)
+          ),
           servico:servicos(nome, preco, preco_promocional, promocao_ativa)
         `)
         .gte('data', dataInicialFormatada)
@@ -481,7 +487,7 @@ export default function Agendamentos() {
                       {agendamento.funcionario.nome}
                     </div>
                     <div className="text-xs text-gray-400 truncate">
-                      {CARGO_LABELS[agendamento.funcionario.cargo]}
+                      {CARGO_LABELS[agendamento.funcionario.funcoes[0].funcao]}
                     </div>
                   </div>
                 </div>
@@ -569,7 +575,7 @@ export default function Agendamentos() {
                             {agendamento.funcionario.nome}
                           </div>
                           <div className="text-xs text-gray-400 truncate">
-                            {CARGO_LABELS[agendamento.funcionario.cargo]}
+                            {CARGO_LABELS[agendamento.funcionario.funcoes[0].funcao]}
                           </div>
                         </div>
                       </div>
