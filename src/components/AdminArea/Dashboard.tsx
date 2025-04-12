@@ -102,12 +102,45 @@ export default function Dashboard() {
     totalServicos: 0,
     mediaTicket: 0
   })
+  const [configEmpresa, setConfigEmpresa] = useState<any>({
+    nome_empresa: '',
+    logo_url: null,
+    telefone: '',
+    email: '',
+    endereco: '',
+    bairro: '',
+    cidade: '',
+    estado: '',
+    cep: '',
+    horario_funcionamento: '',
+    instagram: '',
+    facebook: '',
+    whatsapp: ''
+  })
 
   // Dados para os gráficos
   const [dadosFaturamento, setDadosFaturamento] = useState<any[]>([])
   const [dadosAgendamentosPorStatus, setDadosAgendamentosPorStatus] = useState<any[]>([])
   const [dadosAgendamentosPorHora, setDadosAgendamentosPorHora] = useState<any[]>([])
   const [periodoSelecionado, setPeriodoSelecionado] = useState<'hoje' | '7dias' | 'mes'>('hoje')
+
+  // Carregar configurações da empresa
+  useEffect(() => {
+    const carregarConfiguracoes = async () => {
+      try {
+        const { data: configData, error: configError } = await supabase
+          .from('configuracoes')
+          .select('*')
+          .single()
+
+        if (configError) throw configError
+        setConfigEmpresa(configData)
+      } catch (err) {
+        console.error('Erro ao carregar configurações:', err)
+      }
+    }
+    carregarConfiguracoes()
+  }, [])
 
   const carregarDados = useCallback(async () => {
     try {
@@ -404,153 +437,95 @@ export default function Dashboard() {
     try {
       // Configuração inicial do documento
       const doc = new jsPDF({
-        orientation: 'portrait',
+        orientation: 'landscape',
         unit: 'mm',
         format: 'a4'
       })
 
       // Adicionar logo e cabeçalho
       doc.setFillColor(255, 192, 0)
-      doc.rect(0, 0, doc.internal.pageSize.width, 40, 'F')
+      doc.rect(0, 0, doc.internal.pageSize.width, 30, 'F')
       
+      // Informações do Estabelecimento
       doc.setTextColor(0, 0, 0)
-      doc.setFontSize(24)
+      doc.setFontSize(20)
       doc.setFont('helvetica', 'bold')
-      doc.text('Studio Delas Beauty Artist', 105, 20, { align: 'center' })
+      doc.text(configEmpresa.nome_empresa, doc.internal.pageSize.width / 2, 15, { align: 'center' })
       
-      doc.setFontSize(16)
-      doc.text('Relatório Financeiro', 105, 30, { align: 'center' })
-
-      let posicaoY = 50
-
-      // Período do relatório
       doc.setFontSize(12)
-      doc.setFont('helvetica', 'normal')
-      doc.text(
-        `Período: ${format(toZonedTime(parseISO(dataInicial), 'America/Sao_Paulo'), 'dd/MM/yyyy')} a ${format(toZonedTime(parseISO(dataFinal), 'America/Sao_Paulo'), 'dd/MM/yyyy')}`,
-        105,
-        posicaoY,
-        { align: 'center' }
-      )
-      posicaoY += 15
+      doc.text(`CNPJ: ${configEmpresa.cnpj || 'XX.XXX.XXX/0001-XX'}`, 15, 40)
+      doc.text(`Endereço: ${configEmpresa.endereco}, ${configEmpresa.bairro}`, 15, 47)
+      doc.text(`${configEmpresa.cidade} - ${configEmpresa.estado}, CEP: ${configEmpresa.cep}`, 15, 54)
+      doc.text(`Tel: ${configEmpresa.telefone} | WhatsApp: ${configEmpresa.whatsapp}`, 15, 61)
+      doc.text(`E-mail: ${configEmpresa.email}`, 15, 68)
+      doc.text(`Horário: ${configEmpresa.horario_funcionamento}`, 15, 75)
 
-      // Resumo Financeiro
+      // Título do Relatório
+      doc.setFontSize(16)
+      doc.setTextColor(255, 192, 0)
+      doc.text('Relatório Financeiro Detalhado', doc.internal.pageSize.width / 2, 90, { align: 'center' })
+
+      // Período e Data de Geração
+      doc.setFontSize(10)
+      doc.setTextColor(0, 0, 0)
+      const periodoText = `Período de Análise: ${format(toZonedTime(parseISO(dataInicial), 'America/Sao_Paulo'), 'dd/MM/yyyy')} a ${format(toZonedTime(parseISO(dataFinal), 'America/Sao_Paulo'), 'dd/MM/yyyy')}`
+      const dataGeracaoText = `Data de Geração: ${format(toZonedTime(new Date(), 'America/Sao_Paulo'), 'dd/MM/yyyy HH:mm')}`
+      doc.text(periodoText, 15, 100)
+      doc.text(dataGeracaoText, doc.internal.pageSize.width - 15, 100, { align: 'right' })
+
+      let posicaoY = 110
+
+      // 1. Indicadores Financeiros Principais
       doc.setFontSize(14)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(255, 192, 0)
-      doc.text('Resumo Financeiro', 20, posicaoY)
+      doc.text('1. Indicadores Financeiros Principais', 15, posicaoY)
       posicaoY += 10
 
-      const dadosResumo = [
-        ['Lucro Total', formatarMoeda(resumo.lucroTotal)],
-        ['Total de Serviços', resumo.totalServicos.toString()],
+      // Calcular métricas adicionais
+      const totalDias = dadosLucro.length || 1
+      const mediaServicosporDia = resumo.totalServicos / totalDias
+      const taxaCrescimento = dadosLucro.length > 1 ? 
+        ((dadosLucro[dadosLucro.length - 1].lucroTotal - dadosLucro[0].lucroTotal) / dadosLucro[0].lucroTotal) * 100 : 0
+
+      const dadosIndicadores = [
+        ['Receita Bruta Total', formatarMoeda(resumo.lucroTotal)],
+        ['Média Diária de Faturamento', formatarMoeda(resumo.lucroTotal / totalDias)],
+        ['Total de Serviços Realizados', resumo.totalServicos.toString()],
+        ['Média de Serviços por Dia', mediaServicosporDia.toFixed(1)],
         ['Ticket Médio', formatarMoeda(resumo.mediaTicket)],
-        ['Média Diária', formatarMoeda(resumo.lucroTotal / (dadosLucro.length || 1))]
+        ['Taxa de Crescimento no Período', `${taxaCrescimento.toFixed(1)}%`],
+        ['Taxa de Conversão (Concluídos/Total)', `${((estatisticas.concluidos / estatisticas.total) * 100).toFixed(1)}%`]
       ]
 
       autoTable(doc, {
         startY: posicaoY,
-        head: [['Métrica', 'Valor']],
-        body: dadosResumo,
+        head: [['Indicador', 'Valor']],
+        body: dadosIndicadores,
         theme: 'grid',
         headStyles: {
           fillColor: [255, 192, 0],
           textColor: [0, 0, 0],
           fontStyle: 'bold',
-          fontSize: 12
-        },
-        styles: {
-          fontSize: 10,
-          textColor: [0, 0, 0],
-          cellPadding: 5
-        },
-        alternateRowStyles: {
-          fillColor: [255, 248, 225]
-        }
-      })
-
-      posicaoY = (doc as any).lastAutoTable.finalY + 20
-
-      // Estatísticas de Agendamentos
-      doc.setFontSize(14)
-      doc.setFont('helvetica', 'bold')
-      doc.setTextColor(255, 192, 0)
-      doc.text('Estatísticas de Agendamentos', 20, posicaoY)
-      posicaoY += 10
-
-      const dadosEstatisticas = [
-        ['Pendentes', estatisticas.pendentes.toString(), `${((estatisticas.pendentes / estatisticas.total) * 100).toFixed(1)}%`],
-        ['Confirmados', estatisticas.confirmados.toString(), `${((estatisticas.confirmados / estatisticas.total) * 100).toFixed(1)}%`],
-        ['Concluídos', estatisticas.concluidos.toString(), `${((estatisticas.concluidos / estatisticas.total) * 100).toFixed(1)}%`],
-        ['Cancelados', estatisticas.cancelados.toString(), `${((estatisticas.cancelados / estatisticas.total) * 100).toFixed(1)}%`],
-        ['Total', estatisticas.total.toString(), '100%']
-      ]
-
-      autoTable(doc, {
-        startY: posicaoY,
-        head: [['Status', 'Quantidade', 'Taxa']],
-        body: dadosEstatisticas,
-        theme: 'grid',
-        headStyles: {
-          fillColor: [255, 192, 0],
-          textColor: [0, 0, 0],
-          fontStyle: 'bold',
-          fontSize: 12
-        },
-        styles: {
-          fontSize: 10,
-          textColor: [0, 0, 0],
-          cellPadding: 5
-        },
-        alternateRowStyles: {
-          fillColor: [255, 248, 225]
-        }
-      })
-
-      posicaoY = (doc as any).lastAutoTable.finalY + 20
-
-      // Detalhamento por Dia
-      doc.setFontSize(14)
-      doc.setFont('helvetica', 'bold')
-      doc.setTextColor(255, 192, 0)
-      doc.text('Detalhamento por Dia', 20, posicaoY)
-      posicaoY += 10
-
-      const dadosDetalhados = dadosLucro.map(dado => [
-        dado.data,
-        formatarMoeda(dado.lucroTotal),
-        dado.totalServicos.toString(),
-        formatarMoeda(dado.lucroTotal / dado.totalServicos || 0)
-      ])
-
-      autoTable(doc, {
-        startY: posicaoY,
-        head: [['Data', 'Lucro Total', 'Serviços', 'Ticket Médio']],
-        body: dadosDetalhados,
-        theme: 'grid',
-        headStyles: {
-          fillColor: [255, 192, 0],
-          textColor: [0, 0, 0],
-          fontStyle: 'bold',
-          fontSize: 12
+          fontSize: 10
         },
         styles: {
           fontSize: 9,
-          textColor: [0, 0, 0],
           cellPadding: 5
         },
-        alternateRowStyles: {
-          fillColor: [255, 248, 225]
+        columnStyles: {
+          0: { cellWidth: 100 },
+          1: { cellWidth: 50, halign: 'right' }
         }
       })
 
       posicaoY = (doc as any).lastAutoTable.finalY + 20
 
-      // Nova seção: Detalhamento dos Serviços Concluídos
+      // 2. Análise de Serviços
       doc.setFontSize(14)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(255, 192, 0)
-      doc.text('Detalhamento dos Serviços Concluídos', 20, posicaoY)
+      doc.text('2. Análise Detalhada de Serviços', 15, posicaoY)
       posicaoY += 10
 
       // Agrupar serviços por tipo
@@ -563,6 +538,7 @@ export default function Dashboard() {
               quantidade: 0,
               valorTotal: 0,
               valorOriginal: 0,
+              ticketMedio: 0,
               duracaoTotal: 0,
               promocoes: 0
             }
@@ -572,6 +548,7 @@ export default function Dashboard() {
           const valorOriginal = agendamento.servico.preco_original || agendamento.servico.preco
           acc[servicoNome].valorTotal += valorEfetivo
           acc[servicoNome].valorOriginal += valorOriginal
+          acc[servicoNome].ticketMedio = acc[servicoNome].valorTotal / acc[servicoNome].quantidade
           if (agendamento.servico.em_promocao) {
             acc[servicoNome].promocoes++
           }
@@ -581,49 +558,65 @@ export default function Dashboard() {
           quantidade: number; 
           valorTotal: number; 
           valorOriginal: number;
+          ticketMedio: number;
           duracaoTotal: number;
           promocoes: number;
         }>)
 
-      const dadosServicos = Object.entries(servicosPorTipo).map(([servico, dados]) => [
+      // Preparar dados de serviços com métricas adicionais
+      const dadosServicosDetalhados = Object.entries(servicosPorTipo).map(([servico, dados]) => [
         servico,
         dados.quantidade.toString(),
         formatarMoeda(dados.valorTotal),
         formatarMoeda(dados.valorOriginal),
-        formatarMoeda(dados.valorTotal / dados.quantidade),
+        formatarMoeda(dados.ticketMedio),
         `${Math.floor(dados.duracaoTotal / 60)}h${dados.duracaoTotal % 60}min`,
         `${((dados.quantidade / resumo.totalServicos) * 100).toFixed(1)}%`,
-        dados.promocoes > 0 ? `${dados.promocoes} promoções` : 'Sem promoção'
+        formatarMoeda(dados.valorTotal / dados.duracaoTotal * 60), // Receita por Hora
+        dados.promocoes > 0 ? `${dados.promocoes} (${((dados.promocoes / dados.quantidade) * 100).toFixed(1)}%)` : 'Não'
       ])
 
       autoTable(doc, {
         startY: posicaoY,
-        head: [['Serviço', 'Quantidade', 'Valor Total', 'Valor Original', 'Ticket Médio', 'Tempo Total', 'Taxa', 'Promoções']],
-        body: dadosServicos,
+        head: [
+          ['Serviço', 'Qtde', 'Valor Total', 'Val. Original', 'Ticket Médio', 
+           'Tempo Total', 'Part.(%)', 'Receita/Hora', 'Promoções']
+        ],
+        body: dadosServicosDetalhados,
         theme: 'grid',
         headStyles: {
           fillColor: [255, 192, 0],
           textColor: [0, 0, 0],
           fontStyle: 'bold',
-          fontSize: 12
+          fontSize: 9
         },
         styles: {
-          fontSize: 9,
-          textColor: [0, 0, 0],
-          cellPadding: 5
+          fontSize: 8,
+          cellPadding: 4
         },
-        alternateRowStyles: {
-          fillColor: [255, 248, 225]
+        columnStyles: {
+          0: { cellWidth: 40 },
+          1: { cellWidth: 15, halign: 'center' },
+          2: { cellWidth: 25, halign: 'right' },
+          3: { cellWidth: 25, halign: 'right' },
+          4: { cellWidth: 25, halign: 'right' },
+          5: { cellWidth: 20, halign: 'center' },
+          6: { cellWidth: 15, halign: 'center' },
+          7: { cellWidth: 25, halign: 'right' },
+          8: { cellWidth: 25 }
         }
       })
 
       posicaoY = (doc as any).lastAutoTable.finalY + 20
 
-      // Nova seção: Detalhamento por Profissional
+      // 3. Análise por Profissional
+      doc.addPage('landscape')
+      posicaoY = 30
+      
       doc.setFontSize(14)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(255, 192, 0)
-      doc.text('Detalhamento por Profissional', 20, posicaoY)
+      doc.text('3. Análise por Profissional', 15, posicaoY)
       posicaoY += 10
 
       // Agrupar serviços por profissional
@@ -634,19 +627,21 @@ export default function Dashboard() {
           if (!acc[profissionalNome]) {
             acc[profissionalNome] = {
               cargo: agendamento.funcionario.cargo,
-              quantidade: 0,
+              atendimentos: 0,
               valorTotal: 0,
               valorOriginal: 0,
+              ticketMedio: 0,
               duracaoTotal: 0,
               servicosRealizados: new Set<string>(),
               promocoes: 0
             }
           }
-          acc[profissionalNome].quantidade++
+          acc[profissionalNome].atendimentos++
           const valorEfetivo = agendamento.servico.preco_efetivo || agendamento.servico.preco
           const valorOriginal = agendamento.servico.preco_original || agendamento.servico.preco
           acc[profissionalNome].valorTotal += valorEfetivo
           acc[profissionalNome].valorOriginal += valorOriginal
+          acc[profissionalNome].ticketMedio = acc[profissionalNome].valorTotal / acc[profissionalNome].atendimentos
           if (agendamento.servico.em_promocao) {
             acc[profissionalNome].promocoes++
           }
@@ -654,59 +649,147 @@ export default function Dashboard() {
           acc[profissionalNome].servicosRealizados.add(agendamento.servico.nome)
           return acc
         }, {} as Record<string, { 
-          cargo: string; 
-          quantidade: number; 
-          valorTotal: number; 
+          cargo: string;
+          atendimentos: number;
+          valorTotal: number;
           valorOriginal: number;
+          ticketMedio: number;
           duracaoTotal: number;
           servicosRealizados: Set<string>;
           promocoes: number;
         }>)
 
-      const dadosProfissionais = Object.entries(servicosPorProfissional).map(([profissional, dados]) => [
-        profissional,
-        dados.cargo,
-        dados.quantidade.toString(),
-        formatarMoeda(dados.valorTotal),
-        formatarMoeda(dados.valorOriginal),
-        formatarMoeda(dados.valorTotal / dados.quantidade),
-        `${Math.floor(dados.duracaoTotal / 60)}h${dados.duracaoTotal % 60}min`,
-        Array.from(dados.servicosRealizados).join(', '),
-        dados.promocoes > 0 ? `${dados.promocoes} promoções` : 'Sem promoção'
-      ])
+      // Preparar dados dos profissionais com métricas adicionais
+      const dadosProfissionaisDetalhados = Object.entries(servicosPorProfissional).map(([profissional, dados]) => {
+        const horasTrabalhadas = dados.duracaoTotal / 60
+        return [
+          profissional,
+          dados.cargo,
+          dados.atendimentos.toString(),
+          formatarMoeda(dados.valorTotal),
+          formatarMoeda(dados.ticketMedio),
+          `${Math.floor(dados.duracaoTotal / 60)}h${dados.duracaoTotal % 60}min`,
+          formatarMoeda(dados.valorTotal / horasTrabalhadas), // Produtividade (R$/hora)
+          `${((dados.atendimentos / resumo.totalServicos) * 100).toFixed(1)}%`,
+          Array.from(dados.servicosRealizados).join(', '),
+          dados.promocoes > 0 ? `${dados.promocoes} (${((dados.promocoes / dados.atendimentos) * 100).toFixed(1)}%)` : 'Não'
+        ]
+      })
 
       autoTable(doc, {
         startY: posicaoY,
-        head: [['Profissional', 'Cargo', 'Atendimentos', 'Valor Total', 'Valor Original', 'Ticket Médio', 'Tempo Total', 'Serviços Realizados', 'Promoções']],
-        body: dadosProfissionais,
+        head: [
+          ['Profissional', 'Cargo', 'Atend.', 'Valor Total', 'Ticket Médio', 
+           'Tempo Total', 'Produtiv.(R$/h)', 'Part.(%)', 'Serviços Realizados', 'Promoções']
+        ],
+        body: dadosProfissionaisDetalhados,
         theme: 'grid',
         headStyles: {
           fillColor: [255, 192, 0],
           textColor: [0, 0, 0],
           fontStyle: 'bold',
-          fontSize: 12
+          fontSize: 9
         },
         styles: {
           fontSize: 8,
-          textColor: [0, 0, 0],
-          cellPadding: 5
+          cellPadding: 4,
+          overflow: 'linebreak',
+          cellWidth: 'wrap'
         },
-        alternateRowStyles: {
-          fillColor: [255, 248, 225]
-        }
+        columnStyles: {
+          0: { cellWidth: 30 },
+          1: { cellWidth: 25 },
+          2: { cellWidth: 15, halign: 'center' },
+          3: { cellWidth: 25, halign: 'right' },
+          4: { cellWidth: 25, halign: 'right' },
+          5: { cellWidth: 20, halign: 'center' },
+          6: { cellWidth: 25, halign: 'right' },
+          7: { cellWidth: 15, halign: 'center' },
+          8: { cellWidth: 50 },
+          9: { cellWidth: 25 }
+        },
+        margin: { left: 15, right: 15 }
       })
 
-      // Rodapé
-      const dataGeracao = format(toZonedTime(new Date(), 'America/Sao_Paulo'), 'dd/MM/yyyy HH:mm')
-      doc.setFontSize(10)
-      doc.setFont('helvetica', 'italic')
-      doc.setTextColor(128, 128, 128)
-      doc.text(
-        `Relatório gerado em ${dataGeracao}`,
-        doc.internal.pageSize.width / 2,
-        doc.internal.pageSize.height - 10,
-        { align: 'center' }
-      )
+      posicaoY = (doc as any).lastAutoTable.finalY + 20
+
+      // 4. Análise Diária
+      doc.addPage('landscape')
+      posicaoY = 30
+
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(255, 192, 0)
+      doc.text('4. Análise Diária Detalhada', 15, posicaoY)
+      posicaoY += 10
+
+      // Preparar dados diários com métricas adicionais
+      const dadosDiariosDetalhados = dadosLucro.map(dado => {
+        const servicosDia = dado.totalServicos || 1
+        const ticketMedioDia = dado.lucroTotal / servicosDia
+        return [
+          dado.data,
+          formatarMoeda(dado.lucroTotal),
+          servicosDia.toString(),
+          formatarMoeda(ticketMedioDia),
+          `${((dado.lucroTotal / resumo.lucroTotal) * 100).toFixed(1)}%`,
+          `${((servicosDia / resumo.totalServicos) * 100).toFixed(1)}%`
+        ]
+      })
+
+      autoTable(doc, {
+        startY: posicaoY,
+        head: [
+          ['Data', 'Faturamento', 'Qtde Serviços', 'Ticket Médio', 
+           'Part. Fatur.(%)', 'Part. Serviços(%)']
+        ],
+        body: dadosDiariosDetalhados,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [255, 192, 0],
+          textColor: [0, 0, 0],
+          fontStyle: 'bold',
+          fontSize: 9
+        },
+        styles: {
+          fontSize: 8,
+          cellPadding: 4
+        },
+        columnStyles: {
+          0: { cellWidth: 25, halign: 'center' },
+          1: { cellWidth: 30, halign: 'right' },
+          2: { cellWidth: 25, halign: 'center' },
+          3: { cellWidth: 30, halign: 'right' },
+          4: { cellWidth: 25, halign: 'center' },
+          5: { cellWidth: 25, halign: 'center' }
+        },
+        margin: { left: 15, right: 15 }
+      })
+
+      // Rodapé em todas as páginas
+      const numPages = doc.getNumberOfPages()
+      for (let i = 1; i <= numPages; i++) {
+        doc.setPage(i)
+        doc.setFontSize(8)
+        doc.setTextColor(128, 128, 128)
+        doc.text(
+          `Página ${i} de ${numPages}`,
+          doc.internal.pageSize.width / 2,
+          doc.internal.pageSize.height - 10,
+          { align: 'center' }
+        )
+        doc.text(
+          'Documento Confidencial - Uso Interno',
+          15,
+          doc.internal.pageSize.height - 10
+        )
+        doc.text(
+          `Gerado em: ${format(toZonedTime(new Date(), 'America/Sao_Paulo'), 'dd/MM/yyyy HH:mm')}`,
+          doc.internal.pageSize.width - 15,
+          doc.internal.pageSize.height - 10,
+          { align: 'right' }
+        )
+      }
 
       // Salvar o PDF
       const nomeArquivo = `relatorio-financeiro-${format(toZonedTime(parseISO(dataInicial), 'America/Sao_Paulo'), 'dd-MM-yyyy')}-a-${format(toZonedTime(parseISO(dataFinal), 'America/Sao_Paulo'), 'dd-MM-yyyy')}.pdf`
