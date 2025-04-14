@@ -1386,7 +1386,7 @@ function App() {
       
       {/* Header com Navegação */}
       <header className="fixed w-full z-40 bg-gradient-to-b from-black via-black/80 to-transparent">
-        <div className="container mx-auto px-4">
+        <div className="w-full px-2 sm:container sm:mx-auto sm:px-4">
           <div className="flex items-center justify-between py-3 sm:py-4">
             {/* Logo e Botão Admin */}
             <div className="flex items-center gap-3 sm:gap-6">
@@ -1433,7 +1433,7 @@ function App() {
         </div>
 
         {/* Conteúdo Hero */}
-        <div className="relative z-30 container mx-auto px-4 flex flex-col items-center py-20 sm:py-0">
+        <div className="relative z-30 w-full px-2 sm:container sm:mx-auto sm:px-4 flex flex-col items-center py-20 sm:py-0">
           {/* Banner de Páscoa */}
           {!isAuthenticated && !isClientLoginOpen && !isLoginOpen && <EasterBanner />}
 
@@ -1587,6 +1587,20 @@ function App() {
         </div>
       </section>
 
+      {/* Seção de Serviços */}
+      <section className="py-16 relative" id="servicos">
+        <div className="relative w-full px-2 sm:container sm:mx-auto sm:px-4">
+          {/* ... existing code ... */}
+        </div>
+      </section>
+
+      {/* Seção de Contato */}
+      <section className="py-16 relative" id="contato">
+        <div className="relative w-full px-2 sm:container sm:mx-auto sm:px-4">
+          {/* ... existing code ... */}
+        </div>
+      </section>
+
       {/* Informações */}
       <section className="relative py-16 sm:py-24 bg-[#0a0a0a] overflow-hidden">
         {/* Decorative Elements */}
@@ -1714,7 +1728,7 @@ function App() {
           <div className="absolute top-0 right-0 w-1/3 h-1/2 bg-gradient-to-bl from-red-800/10 opacity-30 blur-3xl"></div>
         </div>
 
-        <div className="relative container mx-auto px-4">
+        <div className="relative w-full px-2 sm:container sm:mx-auto sm:px-4">
           <div className="flex flex-col items-center justify-center text-center space-y-6">
             {/* Logo */}
             <div className="flex items-center gap-3 group">

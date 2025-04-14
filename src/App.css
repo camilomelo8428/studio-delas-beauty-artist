@@ -6,6 +6,7 @@ body {
   background-color: black;
   color: white;
   font-family: 'Inter', sans-serif;
+  overflow-x: hidden; /* Prevenir scroll horizontal */
 }
 
 #root {
@@ -13,6 +14,14 @@ body {
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+}
+
+/* Otimização para mobile */
+@media (max-width: 768px) {
+  #root {
+    max-width: 100%;
+    padding: 1rem;
+  }
 }
 
 /* Remove limitações de largura na área administrativa */
