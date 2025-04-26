@@ -403,7 +403,7 @@ export default function Funcionarios() {
                   <div className="space-y-2">
                     {novoFuncionario.funcoes.map((funcao, index) => (
                       <div key={index} className="flex items-center gap-2">
-                        <select
+                  <select
                           value={funcao.funcao}
                           onChange={e => {
                             const novasFuncoes = [...novoFuncionario.funcoes]
@@ -414,15 +414,15 @@ export default function Funcionarios() {
                             setNovoFuncionario(prev => ({ ...prev, funcoes: novasFuncoes }))
                           }}
                           className="flex-1 bg-[#2a2a2a] border border-red-600/20 rounded-lg p-3 text-white focus:border-red-600 focus:outline-none"
-                        >
+                  >
                           {funcoes.map(f => (
                             <option key={f.value} value={f.value}>
                               {f.label}
-                            </option>
-                          ))}
-                        </select>
-                        <div className="flex items-center gap-2">
-                          <input
+                      </option>
+                    ))}
+                  </select>
+                <div className="flex items-center gap-2">
+                  <input
                             type="radio"
                             name="funcao_principal"
                             checked={funcao.principal}

@@ -333,9 +333,9 @@ function FuncionarioPanel({ onLogout }: { onLogout: () => void }) {
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
               </svg>
-            </button>
-          </div>
-        </div>
+                      </button>
+                    </div>
+                        </div>
       </header>
 
       {/* Informações do Funcionário */}
@@ -355,19 +355,19 @@ function FuncionarioPanel({ onLogout }: { onLogout: () => void }) {
                 </span>
               </div>
             )}
-            <div>
+                              <div>
               <h2 className="text-xl font-bold text-white">{funcionario.nome}</h2>
               <div className="flex items-center gap-4 mt-1">
                 <p className="text-gray-400 text-sm">{funcionario.email}</p>
                 {funcaoPrincipal && (
-                  <span className="inline-block px-2 py-1 bg-red-600/20 text-red-500 text-xs rounded-full">
+                <span className="inline-block px-2 py-1 bg-red-600/20 text-red-500 text-xs rounded-full">
                     {funcaoNomes[funcaoPrincipal] || funcaoPrincipal}
-                  </span>
+                            </span>
                 )}
-              </div>
-            </div>
-          </div>
-        </div>
+                              </div>
+                              </div>
+                  </div>
+                </div>
 
         {/* Navegação */}
         <div className="flex gap-2 mb-6">
@@ -380,7 +380,7 @@ function FuncionarioPanel({ onLogout }: { onLogout: () => void }) {
             }`}
           >
             Meus Agendamentos
-          </button>
+                  </button>
           <button
             onClick={() => setActiveTab('perfil')}
             className={`px-4 py-2 rounded-lg transition-colors ${
@@ -390,17 +390,17 @@ function FuncionarioPanel({ onLogout }: { onLogout: () => void }) {
             }`}
           >
             Meu Perfil
-          </button>
-        </div>
+                  </button>
+                </div>
 
         {/* Conteúdo */}
-        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6">
+                  <div className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border border-red-600/20 p-6">
           {activeTab === 'agendamentos' ? (
             <FuncionarioAgendamentos funcionarioId={funcionario.id} />
           ) : (
             <FuncionarioPerfil />
-          )}
-        </div>
+            )}
+          </div>
       </div>
     </div>
   )
@@ -1238,62 +1238,6 @@ function MobileMenu({ isOpen, onClose, onClientLogin, onAdminLogin }: {
   )
 }
 
-// Componente de Decoração de Páscoa
-function EasterDecoration() {
-  return (
-    <div className="easter-container">
-      {/* Ovos de Páscoa Flutuantes */}
-      <div className="easter-egg" style={{ top: '5%', left: '5%', animationDelay: '0s' }}>
-        🥚
-      </div>
-      <div className="easter-egg" style={{ top: '15%', right: '10%', animationDelay: '1s' }}>
-        🐰
-      </div>
-      <div className="easter-egg" style={{ bottom: '20%', left: '8%', animationDelay: '2s' }}>
-        🌸
-      </div>
-      <div className="easter-egg" style={{ top: '40%', right: '5%', animationDelay: '3s' }}>
-        🥚
-      </div>
-      
-      {/* Brilhos */}
-      {Array.from({ length: 20 }).map((_, i) => (
-        <div
-          key={i}
-          className="easter-sparkle"
-          style={{
-            top: `${Math.random() * 100}%`,
-            left: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 2}s`
-          }}
-        />
-      ))}
-    </div>
-  )
-}
-
-function EasterBanner() {
-  return (
-    <div className="relative overflow-hidden bg-gradient-to-r from-pink-600/10 to-purple-600/10 rounded-xl border border-pink-600/20 p-4 mb-8">
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20"></div>
-      <div className="relative flex items-center justify-between">
-        <div className="flex-1">
-          <h3 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent mb-2">
-            Especial de Páscoa 🐰
-          </h3>
-          <p className="text-gray-300 text-sm sm:text-base">
-            Celebre a Páscoa com looks especiais! Agende seu horário e ganhe um tratamento exclusivo.
-          </p>
-        </div>
-        <div className="hidden sm:flex items-center gap-4">
-          <span className="text-3xl animate-bounce">🥚</span>
-          <span className="text-3xl animate-float">🌸</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoginOpen, setIsLoginOpen] = useState(false)
@@ -1382,8 +1326,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-black text-white bg-gradient-custom">
-      {!isAuthenticated && !isClientLoginOpen && !isLoginOpen && <EasterDecoration />}
-      
       {/* Header com Navegação */}
       <header className="fixed w-full z-40 bg-gradient-to-b from-black via-black/80 to-transparent">
         <div className="w-full px-2 sm:container sm:mx-auto sm:px-4">
@@ -1434,9 +1376,6 @@ function App() {
 
         {/* Conteúdo Hero */}
         <div className="relative z-30 w-full px-2 sm:container sm:mx-auto sm:px-4 flex flex-col items-center py-20 sm:py-0">
-          {/* Banner de Páscoa */}
-          {!isAuthenticated && !isClientLoginOpen && !isLoginOpen && <EasterBanner />}
-
           {/* Logo e Título */}
           <div className="text-center mb-8 sm:mb-12">
             <div className="relative w-32 h-32 sm:w-56 sm:h-56 mx-auto mb-6 sm:mb-8 group">
